@@ -6,35 +6,49 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
-import static java.lang.String.format;
+import diarsid.support.objects.consumers.Consumers;
+
 import static java.nio.file.Files.list;
 import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
+import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
 
 class RealDirectory implements Directory {
 
-    private static final AtomicLong COUNTER = new AtomicLong(0);
-
-    private final Path path;
-    private final String name;
-    private final String fullName;
+    private final UUID uuid;
     private final FS fs;
+    private final Consumers<Directory> changeListeners;
+
+    private Path path;
+    private String name;
+    private String fullName;
 
     RealDirectory(Path path, FS fs) {
-        this.path = path;
+        this.uuid = randomUUID();
         this.fs = fs;
+        this.changeListeners = new Consumers<>();
+        this.path = path.toAbsolutePath();
+        this.name = getNameFrom(path);
+        this.fullName = this.path.toString();
+        System.out.println("Directory created - " + this.fullName);
+    }
+
+    private static String getNameFrom(Path path) {
+        String name;
         Path fileName = path.getFileName();
         if (isNull(fileName)) {
-            this.name = path.toString();
+            name = path.toString();
         }
         else {
-            this.name = fileName.toString();
+            name = fileName.toString();
         }
-        this.fullName = this.path.toAbsolutePath().toString();
-        System.out.println(format("%s:%s created - %s", this.getClass().getSimpleName(), COUNTER.incrementAndGet(), fullName));
+        return name;
     }
 
     @Override
@@ -43,14 +57,35 @@ class RealDirectory implements Directory {
     }
 
     @Override
-    public String fullName() {
+    public String path() {
         return this.fullName;
     }
 
     @Override
+    public Optional<Directory> parent() {
+        Path parent = this.path.getParent();
+        if ( nonNull(parent) ) {
+            return Optional.of(fs.toDirectory(parent));
+        }
+        else {
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public boolean isRoot() {
+        return false;
+    }
+
+    @Override
+    public List<Directory> parents() {
+        return this.fs.parentsOf(this);
+    }
+
+    @Override
     public void checkChildrenPresence(Consumer<Boolean> consumer) {
-        try {
-            consumer.accept(list(this.path).count() > 0);
+        try (Stream<Path> pathsStream = list(this.path)) {
+            consumer.accept(pathsStream.count() > 0);
         }
         catch (AccessDeniedException denied) {
             consumer.accept(false);
@@ -62,8 +97,8 @@ class RealDirectory implements Directory {
 
     @Override
     public void checkDirectoriesPresence(Consumer<Boolean> consumer) {
-        try {
-            consumer.accept(list(this.path).anyMatch(fs::isDirectory));
+        try (Stream<Path> pathsStream = list(this.path)) {
+            consumer.accept(pathsStream.anyMatch(fs::isDirectory));
         }
         catch (AccessDeniedException denied) {
             consumer.accept(false);
@@ -75,8 +110,8 @@ class RealDirectory implements Directory {
 
     @Override
     public void checkFilesPresence(Consumer<Boolean> consumer) {
-        try {
-            consumer.accept(list(this.path).anyMatch(fs::isFile));
+        try (Stream<Path> pathsStream = list(this.path)) {
+            consumer.accept(pathsStream.anyMatch(fs::isFile));
         }
         catch (AccessDeniedException denied) {
             consumer.accept(false);
@@ -88,49 +123,56 @@ class RealDirectory implements Directory {
 
     @Override
     public void feedChildren(Consumer<List<FSEntry>> consumer) {
-        try {
-            List<FSEntry> entries = list(this.path)
-                    .map(fs::toFSEntry)
-                    .sorted()
-                    .collect(toList());
+        Stream<FSEntry> entriesStream = this.fs.list(this);
 
-            consumer.accept(entries);
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
+        List<FSEntry> entries = entriesStream
+                .sorted()
+                .collect(toList());
+
+        entriesStream.close();
+
+        consumer.accept(entries);
     }
 
     @Override
     public void feedDirectories(Consumer<List<Directory>> consumer) {
-        try {
-            List<Directory> directories = list(this.path)
-                    .filter(fs::isDirectory)
-                    .map(fs::toDirectory)
-                    .sorted()
-                    .collect(toList());
+        Stream<FSEntry> entriesStream = this.fs.list(this);
 
-            consumer.accept(directories);
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
+        List<Directory> directories = entriesStream
+                .filter(FSEntry::isDirectory)
+                .map(FSEntry::asDirectory)
+                .sorted()
+                .collect(toList());
+
+        entriesStream.close();
+
+        consumer.accept(directories);
     }
 
     @Override
     public void feedFiles(Consumer<List<File>> consumer) {
-        try {
-            List<File> files = list(this.path)
-                    .filter(fs::isFile)
-                    .map(fs::toFile)
-                    .sorted()
-                    .collect(toList());
+        Stream<FSEntry> entriesStream = this.fs.list(this);
 
-            consumer.accept(files);
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
+        List<File> files = entriesStream
+                .filter(FSEntry::isFile)
+                .map(FSEntry::asFile)
+                .sorted()
+                .collect(toList());
+
+        entriesStream.close();
+
+        consumer.accept(files);
+    }
+
+    @Override
+    public void host(FSEntry newEntry, Consumer<Boolean> callback) {
+        boolean result = this.fs.move(newEntry, this);
+        callback.accept(result);
+    }
+
+    @Override
+    public boolean host(FSEntry newEntry) {
+        return this.fs.move(newEntry, this);
     }
 
     @Override
@@ -155,6 +197,31 @@ class RealDirectory implements Directory {
     }
 
     @Override
+    public boolean moveTo(Directory newPlace) {
+        return this.fs.move(this, newPlace);
+    }
+
+    @Override
+    public boolean remove() {
+        return this.fs.remove(this);
+    }
+
+    @Override
+    public boolean canBeIgnored() {
+        return nonNull(this.path.getParent());
+    }
+
+    @Override
+    public UUID listenForChanges(Consumer<Directory> listener) {
+        return this.changeListeners.add(listener);
+    }
+
+    @Override
+    public Consumer<Directory> removeListener(UUID uuid) {
+        return this.changeListeners.remove(uuid);
+    }
+
+    @Override
     public int compareTo(FSEntry otherFSEntry) {
         if ( otherFSEntry.isFile() ) {
             return -1;
@@ -168,12 +235,30 @@ class RealDirectory implements Directory {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof RealDirectory)) return false;
-        RealDirectory that = (RealDirectory) o;
-        return this.fullName.equals(that.fullName);
+        RealDirectory directory = (RealDirectory) o;
+        return uuid.equals(directory.uuid);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.fullName);
+        return Objects.hash(uuid);
+    }
+
+    @Override
+    public Path nioPath() {
+        return this.path;
+    }
+
+    @Override
+    public void movedTo(Path newPath) {
+        this.path = newPath;
+        this.name = getNameFrom(this.path);
+        this.fullName = this.path.toString();
+        this.changeListeners.accept(this);
+    }
+
+    @Override
+    public void contentChanged() {
+        this.changeListeners.accept(this);
     }
 }

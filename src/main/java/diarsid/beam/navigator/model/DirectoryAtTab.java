@@ -14,7 +14,7 @@ public class DirectoryAtTab {
     DirectoryAtTab(Tab tab, Directory directory) {
         this.tab = tab;
         this.directory = directory;
-        System.out.println(format("%s created - %s", this.getClass().getSimpleName(), directory.name()));
+        System.out.println(format("%s created - %s", this.getClass().getSimpleName(), directory.path()));
     }
 
     public Tab tab() {

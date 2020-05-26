@@ -19,32 +19,50 @@ import static diarsid.support.objects.references.real.Presents.presentOf;
 
 public class Tab {
 
+    public static final String DEFAULT_NAME = "/";
+
     private final UUID uuid;
-    private final PossibleListenable<DirectoryAtTab> selection;
+    private final PresentListenable<Boolean> isActive;
+    private final PossibleListenable<DirectoryAtTab> selectedDirectory;
     private final PresentListenable<String> visibleName;
     private final Present<Boolean> isPinned;
+    private final Listening<DirectoryAtTab> listenSelectedDirectoryToChangeVisibleName;
 
-    public Tab(String name) {
+    Tab() {
         this.uuid = randomUUID();
-        this.selection = listeneable(possibleButEmpty());
-        this.visibleName = listenablePresent("/", format("Tab[%s].visibleName", this.uuid));
+        this.isActive = listenablePresent(false, format("Tab[%s].isActive", this.uuid));
+        this.selectedDirectory = listeneable(possibleButEmpty());
+        this.visibleName = listenablePresent(DEFAULT_NAME, format("Tab[%s].visibleName", this.uuid));
         this.isPinned = presentOf(false, format("Tab[%s].isPinned", this.uuid));
 
-        this.selection.listen((oldSelected, newSelected) -> {
+        this.listenSelectedDirectoryToChangeVisibleName = this.selectedDirectory.listen((oldSelected, newSelected) -> {
             this.visibleName.resetTo(newSelected.directory().name());
         });
+        System.out.println("New Tab");
     }
 
     public Listening<String> listenToRename(BiConsumer<String, String> listener) {
         return this.visibleName.listen(listener);
     }
 
-    public PossibleListenable<DirectoryAtTab> selection() {
-        return this.selection;
+    public PresentListenable<Boolean> active() {
+        return this.isActive;
+    }
+
+    public PossibleListenable<DirectoryAtTab> selectedDirectory() {
+        return this.selectedDirectory;
     }
 
     public String name() {
         return this.visibleName.get();
+    }
+
+    public void appendPathToVisibleName(String path) {
+        this.visibleName.modify(oldName -> path + "/" + oldName);
+    }
+
+    public boolean hasSelection() {
+        return this.selectedDirectory.isPresent();
     }
 
     @Override
