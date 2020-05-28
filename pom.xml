@@ -55,7 +55,7 @@
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.3</version>
                 <configuration>
-                    <mainClass>diarsid.beam.navigator.Main</mainClass>
+                    <mainClass>diarsid.navigator.Main</mainClass>
                 </configuration>
             </plugin>
 

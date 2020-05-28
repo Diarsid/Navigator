@@ -1,0 +1,121 @@
+.root {
+    /*-fx-focus-color: transparent;*/
+    /*-fx-faint-focus-color: transparent;*/
+    /*-fx-inner-border: transparent;*/
+    /*-fx-body-color: transparent;*/
+    -fx-cell-focus-inner-border: transparent;
+    -fx-table-cell-border-color: transparent;
+}
+
+.split-pane > .split-pane-divider {
+    -fx-padding: 0 1px 0 1px;
+}
+
+.tree-cell {
+    -fx-font-size: 13px ;
+    -fx-padding: 1px 0px 1px 0px ;
+    -fx-border-style: none;
+}
+
+.tree-cell:selected {
+    /*-fx-font-weight: bold ;*/
+    -fx-background-color: rgba(175, 238, 238, 0.4);
+    -fx-text-background-color: black;
+}
+
+.tree-cell > .tree-disclosure-node > .arrow  {
+    -fx-background-color: darkgrey;
+}
+.tree-cell:expanded > .tree-disclosure-node > .arrow {
+    -fx-background-color: darkgrey;
+}
+
+/*.column-header-background {*/
+/*    -fx-background-color: white;*/
+/*}*/
+
+.table-view {
+    -fx-table-cell-border-color: transparent;
+}
+
+.table-view .column-header {
+    -fx-background-color: lightgrey;
+    -fx-text-background-color: black;
+    -fx-font-size: 14px;
+    -fx-border-width: 0 1 0 0;
+    -fx-border-color: grey;
+}
+
+.table-view .filler {
+    -fx-background-color: lightgrey;
+    -fx-text-background-color: black;
+}
+
+.table-view .table-row-cell {
+    -fx-padding: 0px;
+    -fx-border-width: 1px;
+    -fx-text-background-color: black;
+}
+
+.table-view .table-cell {
+    -fx-padding: 0px;
+    -fx-background-color: null;
+    -fx-border-color: transparent;
+    -fx-table-cell-border-color: transparent;
+    -fx-text-background-color: black;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: transparent;
+}
+
+.table-row-cell:even {
+    -fx-background-color: transparent;
+}
+
+.table-row-cell:odd:selected {
+    -fx-background-color: rgba(175, 238, 238, 0.4);
+    /*-fx-text-background-color: black;*/
+}
+
+.table-row-cell:even:selected {
+    -fx-background-color: rgba(175, 238, 238, 0.4);
+    /*-fx-text-background-color: black;*/
+}
+
+.table-row-cell:focused:odd:selected {
+    -fx-background-color: rgba(175, 238, 238, 0.4);
+    /*-fx-text-background-color: black;*/
+}
+
+.table-row-cell:focused:even:selected {
+    -fx-background-color: rgba(175, 238, 238, 0.4);
+    /*-fx-text-background-color: black;*/
+}
+
+.label-at-tab {
+    -fx-background-color: white;
+}
+
+.label-at-tab:selected {
+    -fx-background-color: rgba(175, 238, 238, 0.4);
+}
+
+.label-at-tab:replace-candidate {
+    -fx-background-color: lightcyan;
+}
+
+.label-at-tab:moved {
+    -fx-background-color: lightgrey;
+}
+
+.icon {
+    -fx-diarsid-size: 15px;
+}
+
+.files-table-frame-selection {
+    -fx-fill: rgba(175, 238, 238, 0.4);
+    -fx-stroke: grey;
+    -fx-stroke-width: 1;
+}
+
