@@ -13,6 +13,7 @@ import diarsid.navigator.view.ViewComponent;
 import diarsid.navigator.view.dragdrop.DragAndDropContext;
 import diarsid.navigator.view.tree.DirectoriesTree;
 
+import static java.lang.Double.POSITIVE_INFINITY;
 import static javafx.geometry.Pos.CENTER;
 import static javafx.geometry.Pos.TOP_CENTER;
 import static javafx.scene.input.TransferMode.MOVE;
@@ -81,10 +82,10 @@ public class TabsPanel implements ViewComponent {
         this.tabsPanel.setAlignment(TOP_CENTER);
 
         this.addLabel = new Label();
-        this.addLabel.setStyle("-fx-background-color: white;");
+        this.addLabel.getStyleClass().add("add-tab-button");
         this.addLabel.setText("+");
         this.addLabel.setMinWidth(50);
-        this.addLabel.setPrefWidth(Double.POSITIVE_INFINITY);
+        this.addLabel.setPrefWidth(POSITIVE_INFINITY);
         this.addLabel.setAlignment(CENTER);
         this.addLabel.setOnMouseClicked(event -> {
             this.newTab(true);

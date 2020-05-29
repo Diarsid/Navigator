@@ -22,9 +22,9 @@ import diarsid.navigator.view.ViewComponent;
 import diarsid.navigator.view.dragdrop.DragAndDropContext;
 import diarsid.navigator.view.icons.Icons;
 
+import static java.lang.Double.POSITIVE_INFINITY;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
-import static javafx.scene.control.SelectionMode.MULTIPLE;
 import static javafx.scene.input.MouseEvent.MOUSE_PRESSED;
 
 public class DirectoriesTree implements ViewComponent {
@@ -57,9 +57,7 @@ public class DirectoriesTree implements ViewComponent {
                 this::onTreeItemCollapsed);
 
         this.treeView = new TreeView<>();
-        this.treeView.setStyle("-fx-background-color: lightgrey;");
-        this.treeView.setStyle("-fx-focus-color: transparent;");
-        this.treeView.setPrefHeight(Double.POSITIVE_INFINITY);
+        this.treeView.setPrefHeight(POSITIVE_INFINITY);
         this.treeView.setMinSize(100, 100);
         this.treeView.setPrefSize(100, 100);
         this.treeView.setShowRoot(false);

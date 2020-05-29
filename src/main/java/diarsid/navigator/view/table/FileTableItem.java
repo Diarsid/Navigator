@@ -1,5 +1,6 @@
 package diarsid.navigator.view.table;
 
+import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.scene.image.ImageView;
 
 import diarsid.navigator.filesystem.FSEntry;
@@ -13,11 +14,20 @@ public class FileTableItem implements Comparable<FileTableItem> {
     private final Icons icons;
     private final FSEntry entry;
     private final Possible<FileTableRow> row;
+    private final ImageView iconView;
 
     public FileTableItem(Icons icons, FSEntry entry) {
         this.entry = entry;
         this.icons = icons;
         this.row = possibleButEmpty();
+        this.iconView = new ImageView();
+
+        ReadOnlyDoubleProperty size = this.icons.sizeProperty();
+        this.iconView.fitWidthProperty().bind(size);
+        this.iconView.fitHeightProperty().bind(size);
+        this.iconView.setPreserveRatio(true);
+        this.iconView.getStyleClass().add("icon");
+        this.iconView.setImage(this.icons.getFor(this.entry).image());
     }
 
     public FSEntry fsEntry() {
@@ -42,7 +52,7 @@ public class FileTableItem implements Comparable<FileTableItem> {
     }
 
     public ImageView getIcon() {
-        return new ImageView(this.icons.getFor(this.entry).image());
+        return this.iconView;
     }
 
     @Override

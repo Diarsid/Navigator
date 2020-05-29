@@ -1,10 +1,7 @@
 package diarsid.navigator.view.table;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -29,25 +26,16 @@ import static javafx.scene.layout.Priority.ALWAYS;
 
 public class FilesTable implements ViewComponent {
 
-    private static final DataFormat SERIALIZED_MIME_TYPE = new DataFormat("application/x-java-serialized-object");
     private final Icons icons;
     private final TableView<FileTableItem> tableView;
     private final FileTableItems fileTableItems;
     private final FilesTableFrameSelection selection;
-
-    private final AtomicInteger counter;
-
-    private final Set<FileTableRow> rows;
 
     public FilesTable(Icons icons, Consumer<FileTableItem> onItemInvoked) {
         this.icons = icons;
         this.tableView = new TableView<>();
         this.fileTableItems = new FileTableItems(icons);
         this.selection = new FilesTableFrameSelection();
-
-        this.rows = new HashSet<>();
-
-        this.counter = new AtomicInteger();
 
         TableColumn<FileTableItem, ImageView> columnIcons = new TableColumn<>();
         TableColumn<FileTableItem, String> columnNames = new TableColumn<>("Name");
@@ -129,7 +117,6 @@ public class FilesTable implements ViewComponent {
             return tableRow;
         });
 
-        this.tableView.setStyle("-fx-focus-color: transparent;");
         HBox.setHgrow(this.tableView, ALWAYS);
     }
 

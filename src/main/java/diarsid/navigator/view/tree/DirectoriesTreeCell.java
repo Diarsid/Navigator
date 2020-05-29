@@ -31,6 +31,7 @@ public class DirectoriesTreeCell extends TreeCell<String> {
         this.iconView.fitWidthProperty().bind(size);
         this.iconView.fitHeightProperty().bind(size);
         this.iconView.setPreserveRatio(true);
+        this.iconView.getStyleClass().add("icon");
 
         super.setOnDragOver(this::onDragOver);
         super.setOnDragExited(this::onDragExited);

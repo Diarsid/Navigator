@@ -1,8 +1,8 @@
 .root {
-    /*-fx-focus-color: transparent;*/
-    /*-fx-faint-focus-color: transparent;*/
-    /*-fx-inner-border: transparent;*/
-    /*-fx-body-color: transparent;*/
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+    -fx-inner-border: transparent;
+    -fx-body-color: transparent;
     -fx-cell-focus-inner-border: transparent;
     -fx-table-cell-border-color: transparent;
 }
@@ -11,10 +11,15 @@
     -fx-padding: 0 1px 0 1px;
 }
 
+.tree-view {
+    -fx-focus-color: transparent;
+}
+
 .tree-cell {
     -fx-font-size: 13px ;
     -fx-padding: 1px 0px 1px 0px ;
     -fx-border-style: none;
+    -fx-background-color: white;
 }
 
 .tree-cell:selected {
@@ -35,6 +40,7 @@
 /*}*/
 
 .table-view {
+    -fx-focus-color: transparent;
     -fx-table-cell-border-color: transparent;
 }
 
@@ -107,6 +113,10 @@
 
 .label-at-tab:moved {
     -fx-background-color: lightgrey;
+}
+
+.add-tab-button {
+    -fx-background-color: white;
 }
 
 .icon {

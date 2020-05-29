@@ -9,7 +9,7 @@ public class FileTableCellForIcon extends TableCell<FileTableItem, ImageView> {
 
     public FileTableCellForIcon() {
         this.setAlignment(CENTER);
-}
+    }
 
     @Override
     protected void updateItem(ImageView icon, boolean empty) {
