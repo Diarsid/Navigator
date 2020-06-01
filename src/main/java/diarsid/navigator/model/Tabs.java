@@ -3,9 +3,9 @@ package diarsid.navigator.model;
 import java.util.HashSet;
 import java.util.Set;
 
-import diarsid.support.objects.references.real.Possible;
+import diarsid.support.objects.references.impl.Possible;
 
-import static diarsid.support.objects.references.real.Possibles.possibleButEmpty;
+import static diarsid.support.objects.references.impl.References.possibleButEmpty;
 
 public class Tabs {
 

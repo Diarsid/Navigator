@@ -6,10 +6,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.function.Consumer;
 
-import diarsid.support.objects.consumers.Consumers;
+import diarsid.support.objects.groups.Runnables;
+import diarsid.support.objects.groups.Running;
 
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
@@ -19,13 +19,13 @@ class MachineDirectory implements Directory {
     private final String machineName;
     private final FS fs;
     private final List<Path> roots;
-    private final Consumers<Directory> changeListeners;
+    private final Runnables changeListeners;
 
     MachineDirectory(FS fs, Iterable<Path> rootPaths) {
         this.machineName = getMachineName();
         this.fs = fs;
         this.roots = new ArrayList<>();
-        this.changeListeners = new Consumers<>();
+        this.changeListeners = new Runnables();
         rootPaths.forEach(this.roots::add);
     }
 
@@ -132,13 +132,13 @@ class MachineDirectory implements Directory {
     }
 
     @Override
-    public UUID listenForChanges(Consumer<Directory> listener) {
+    public Running listenForChanges(Runnable listener) {
         return this.changeListeners.add(listener);
     }
 
     @Override
-    public Consumer<Directory> removeListener(UUID uuid) {
-        return this.changeListeners.remove(uuid);
+    public boolean canBe(Directory.Edit edit) {
+        return false;
     }
 
     @Override
@@ -189,5 +189,9 @@ class MachineDirectory implements Directory {
     @Override
     public int compareTo(FSEntry otherFSEntry) {
         return 1;
+    }
+
+    List<Path> roots() {
+        return this.roots;
     }
 }

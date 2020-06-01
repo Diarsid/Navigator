@@ -2,10 +2,18 @@ package diarsid.navigator.filesystem;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.function.Consumer;
 
+import diarsid.support.objects.groups.Running;
+
 public interface Directory extends FSEntry {
+
+    enum Edit {
+        MOVE,
+        DELETE,
+        RENAME,
+        FILLED
+    }
 
     Optional<Directory> parent();
 
@@ -31,8 +39,8 @@ public interface Directory extends FSEntry {
 
     boolean host(FSEntry newEntry);
 
-    UUID listenForChanges(Consumer<Directory> listener);
+    Running listenForChanges(Runnable listener);
 
-    Consumer<Directory> removeListener(UUID uuid);
+    boolean canBe(Directory.Edit edit);
 
 }

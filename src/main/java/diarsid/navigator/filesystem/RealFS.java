@@ -360,6 +360,16 @@ class RealFS implements FS {
         return this.extensions;
     }
 
+    @Override
+    public boolean isRoot(Directory directory) {
+        return this.machineDirectory.roots().contains(directory.nioPath());
+    }
+
+    @Override
+    public boolean isMachine(Directory directory) {
+        return directory instanceof MachineDirectory;
+    }
+
     private void handle(IOException e) {
         printStackTraceFor(e);
     }

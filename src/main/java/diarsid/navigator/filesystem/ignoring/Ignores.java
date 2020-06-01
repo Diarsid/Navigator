@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import diarsid.navigator.filesystem.FSEntry;
-import diarsid.support.objects.consumers.async.AsyncConsumers;
+import diarsid.support.objects.groups.async.AsyncConsumers;
 
 public interface Ignores {
 

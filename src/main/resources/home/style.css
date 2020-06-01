@@ -17,7 +17,7 @@
 
 .tree-cell {
     -fx-font-size: 13px ;
-    -fx-padding: 1px 0px 1px 0px ;
+    -fx-padding: 2px 0px 2px 0px ;
     -fx-border-style: none;
     -fx-background-color: white;
 }

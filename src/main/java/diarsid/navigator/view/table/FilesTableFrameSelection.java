@@ -4,6 +4,8 @@ import javafx.geometry.Bounds;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.shape.Rectangle;
 
+import static java.util.Objects.isNull;
+
 import static diarsid.navigator.View.VIEW_GROUP;
 
 class FilesTableFrameSelection {
@@ -26,7 +28,6 @@ class FilesTableFrameSelection {
 
     void start(MouseEvent mouseEvent, Bounds bounds) {
         this.bounds = bounds;
-        System.out.println("table drag - started, " + bounds);
 
         this.x = mouseEvent.getSceneX();
         this.y = mouseEvent.getSceneY();
@@ -43,6 +44,9 @@ class FilesTableFrameSelection {
     }
 
     void dragged(MouseEvent mouseEvent) {
+        if ( isNull(this.bounds) ) {
+            return;
+        }
         double mouseX = mouseEvent.getSceneX();
         double mouseY = mouseEvent.getSceneY();
 
@@ -50,10 +54,6 @@ class FilesTableFrameSelection {
         double newHeight;
         double newX;
         double newY;
-
-//        Bounds selectionBounds = this.selection.localToScene(this.selection.getBoundsInLocal());
-//
-//        System.out.println("mouse - x:" + mouseX + ", y:" + mouseY + ", " + selectionBounds);
 
         if ( mouseX <= this.x && mouseY <= this.y ) {
             newWidth = this.x - mouseX;
@@ -111,6 +111,9 @@ class FilesTableFrameSelection {
     }
 
     boolean isIntersectedWith(FileTableRow row) {
+        if ( isNull(this.bounds) ) {
+            return false;
+        }
         Bounds boundsS = this.selection.localToScreen(this.selection.getBoundsInLocal());
         Bounds boundsR = row.localToScreen(row.getBoundsInLocal());
 

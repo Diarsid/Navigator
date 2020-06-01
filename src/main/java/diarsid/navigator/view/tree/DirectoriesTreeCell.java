@@ -1,17 +1,21 @@
 package diarsid.navigator.view.tree;
 
+import java.util.List;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.DragEvent;
+import javafx.scene.input.Dragboard;
 import javafx.scene.input.MouseEvent;
 
 import diarsid.navigator.filesystem.Directory;
+import diarsid.navigator.filesystem.FSEntry;
 import diarsid.navigator.view.icons.Icon;
 import diarsid.navigator.view.icons.Icons;
 
 import static java.util.Objects.nonNull;
+import static javafx.scene.input.DataFormat.PLAIN_TEXT;
 import static javafx.scene.input.TransferMode.MOVE;
 
 public class DirectoriesTreeCell extends TreeCell<String> {
@@ -20,11 +24,12 @@ public class DirectoriesTreeCell extends TreeCell<String> {
     private final ImageView iconView;
     private final DirectoriesTree directoriesTree;
 
-    public DirectoriesTreeCell(Icons icons, DirectoriesTree directoriesTree) {
+    DirectoriesTreeCell(Icons icons, DirectoriesTree directoriesTree) {
         super();
 
         this.icons = icons;
         this.directoriesTree = directoriesTree;
+        this.getStyleClass().add("directories-tree-cell");
 
         this.iconView = new ImageView();
         ReadOnlyDoubleProperty size = this.icons.sizeProperty();
@@ -83,13 +88,20 @@ public class DirectoriesTreeCell extends TreeCell<String> {
 
 
     private void onDragDetected(MouseEvent event) {
-        this.directoriesTree.dragAndDropContext().setTabDraggedContextTo(this);
+        this.directoriesTree.cellDragAndDrop().setTabDraggedContextTo(this);
 //        super.pseudoClassStateChanged(MOVED, true);
         event.consume();
     };
 
     private void onDragOver(DragEvent dragEvent) {
-        if ( this.directoriesTree.dragAndDropContext().isDragOverAcceptable(dragEvent) ) {
+        if ( this.directoriesTree.cellDragAndDrop().isDragOverAcceptable(dragEvent) ) {
+            dragEvent.acceptTransferModes(MOVE);
+            dragEvent.consume();
+//            super.pseudoClassStateChanged(REPLACE_CANDIDATE, true);
+        }
+
+        if ( this.directoriesTree.dragAndDropFiles().isDragAcceptable(dragEvent) ) {
+            System.out.println("dragging files in tree");
             dragEvent.acceptTransferModes(MOVE);
             dragEvent.consume();
 //            super.pseudoClassStateChanged(REPLACE_CANDIDATE, true);
@@ -97,7 +109,11 @@ public class DirectoriesTreeCell extends TreeCell<String> {
     };
 
     private void onDragExited(DragEvent dragEvent) {
-        if ( this.directoriesTree.dragAndDropContext().isDragOverAcceptable(dragEvent) ) {
+        if ( this.directoriesTree.cellDragAndDrop().isDragOverAcceptable(dragEvent) ) {
+//            super.pseudoClassStateChanged(REPLACE_CANDIDATE, false);
+        }
+
+        if ( this.directoriesTree.dragAndDropFiles().isDragAcceptable(dragEvent) ) {
 //            super.pseudoClassStateChanged(REPLACE_CANDIDATE, false);
         }
     };
@@ -105,8 +121,8 @@ public class DirectoriesTreeCell extends TreeCell<String> {
     private void onDragDropped(DragEvent dragEvent) {
         boolean success;
 
-        boolean isDropAcceptable = this.directoriesTree.dragAndDropContext().isDropAcceptable(dragEvent);
-        if ( isDropAcceptable ) {
+        boolean isTreeCellDropAcceptable = this.directoriesTree.cellDragAndDrop().isDropAcceptable(dragEvent);
+        if ( isTreeCellDropAcceptable ) {
             try {
                 DirectoriesTreeCell droppedCell = (DirectoriesTreeCell) dragEvent.getGestureSource();
                 DirectoryAtTabTreeItem droppedItem = droppedCell.directoryAtTabTreeItem();
@@ -147,6 +163,16 @@ public class DirectoriesTreeCell extends TreeCell<String> {
                 e.printStackTrace();
                 success = false;
             }
+        }
+        else if ( this.directoriesTree.dragAndDropFiles().isDropAcceptable(dragEvent) ) {
+            List<FSEntry> fsEntries = this.directoriesTree.dragAndDropFiles().get();
+            Directory acceptingDirectory = this.directoryAtTabTreeItem().directory();
+            System.out.println("dropped into " + acceptingDirectory);
+            fsEntries.forEach(fsEntry -> System.out.println("   -> " + fsEntry.path()));
+
+            fsEntries.forEach(fsEntry -> acceptingDirectory.host(fsEntry));
+
+            success = true;
         }
         else {
             success = false;

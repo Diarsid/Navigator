@@ -6,23 +6,23 @@ import java.util.function.Consumer;
 import javafx.scene.control.Label;
 
 import diarsid.navigator.model.Tab;
-import diarsid.navigator.view.dragdrop.DragAndDropContext;
-import diarsid.support.objects.references.real.Possible;
+import diarsid.navigator.view.dragdrop.DragAndDropNodes;
+import diarsid.support.objects.references.impl.Possible;
 
-import static diarsid.support.objects.references.real.Possibles.possibleButEmpty;
+import static diarsid.support.objects.references.impl.References.possibleButEmpty;
 
 public class LabelsAtTabs {
 
     private final List<Label> draggableTabLabels;
-    protected final DragAndDropContext<Label> dragAndDropContextTab;
+    protected final DragAndDropNodes<Label> dragAndDropLabels;
     protected final Possible<Runnable> onTabsReorderedAction;
 
     protected final Consumer<Tab> onTabSelected;
 
-    public LabelsAtTabs(Consumer<Tab> onTabSelected, DragAndDropContext<Label> dragAndDropContextTab) {
+    public LabelsAtTabs(Consumer<Tab> onTabSelected, DragAndDropNodes<Label> dragAndDropLabels) {
         this.onTabSelected = onTabSelected;
         this.draggableTabLabels = new ArrayList<>();
-        this.dragAndDropContextTab = dragAndDropContextTab;
+        this.dragAndDropLabels = dragAndDropLabels;
         this.onTabsReorderedAction = possibleButEmpty();
     }
 

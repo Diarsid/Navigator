@@ -5,9 +5,9 @@ import javafx.scene.image.ImageView;
 
 import diarsid.navigator.filesystem.FSEntry;
 import diarsid.navigator.view.icons.Icons;
-import diarsid.support.objects.references.real.Possible;
+import diarsid.support.objects.references.impl.Possible;
 
-import static diarsid.support.objects.references.real.Possibles.possibleButEmpty;
+import static diarsid.support.objects.references.impl.References.possibleButEmpty;
 
 public class FileTableItem implements Comparable<FileTableItem> {
 

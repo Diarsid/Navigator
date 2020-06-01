@@ -35,9 +35,7 @@ public class DirectoryAtTabTreeItem extends TreeItem<String> implements Comparab
         this.onTreeItemExpanded = onTreeItemExpanded;
         this.onTreeItemCollapsed = onTreeItemCollapsed;
 
-        this.directory.listenForChanges((changedDirectory) -> {
-            this.initializeItemOrSetPlaceholder();
-        });
+        this.directory.listenForChanges(this::initializeItemOrSetPlaceholder);
 
         this.setPlaceholderIfChildrenPresent();
 

@@ -16,11 +16,12 @@ import diarsid.navigator.filesystem.Extension;
 import diarsid.navigator.filesystem.FS;
 import diarsid.navigator.filesystem.FSEntry;
 import diarsid.navigator.filesystem.File;
-import diarsid.support.objects.references.real.PresentListenable;
+import diarsid.support.objects.references.impl.PresentListenable;
 
 import static java.util.Objects.isNull;
 
-import static diarsid.support.objects.references.real.Presents.listenablePresent;
+import static diarsid.support.objects.references.impl.References.listenablePresent;
+
 
 class RealIcons implements Icons {
 
@@ -34,7 +35,7 @@ class RealIcons implements Icons {
     private final DoubleProperty sizeProperty;
 
     RealIcons(FS fs) {
-        this.size = listenablePresent(24d, "Icons.size");
+        this.size = listenablePresent(20d, "Icons.size");
         this.sizeProperty = new SimpleDoubleProperty(this.size.get());
         this.size.listen((oldSize, newSize) -> this.sizeProperty.set(newSize));
 

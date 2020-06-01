@@ -1,13 +1,12 @@
 package diarsid.navigator.view.table;
 
-import javafx.scene.control.TableCell;
 import javafx.scene.image.ImageView;
 
 import static javafx.geometry.Pos.CENTER;
 
-public class FileTableCellForIcon extends TableCell<FileTableItem, ImageView> {
+public class FilesTableCellForIcon extends FilesTableCell<ImageView> {
 
-    public FileTableCellForIcon() {
+    public FilesTableCellForIcon() {
         this.setAlignment(CENTER);
     }
 

@@ -4,16 +4,17 @@ import java.util.Objects;
 import java.util.function.BiConsumer;
 
 import diarsid.support.objects.references.Listening;
-import diarsid.support.objects.references.real.PossibleListenable;
-import diarsid.support.objects.references.real.Present;
-import diarsid.support.objects.references.real.PresentListenable;
+import diarsid.support.objects.references.impl.PossibleListenable;
+import diarsid.support.objects.references.impl.Present;
+import diarsid.support.objects.references.impl.PresentListenable;
 
 import static java.lang.String.format;
 
-import static diarsid.support.objects.references.real.Possibles.listeneable;
-import static diarsid.support.objects.references.real.Possibles.possibleButEmpty;
-import static diarsid.support.objects.references.real.Presents.listenablePresent;
-import static diarsid.support.objects.references.real.Presents.presentOf;
+import static diarsid.support.objects.references.impl.References.listenablePresent;
+import static diarsid.support.objects.references.impl.References.listeneable;
+import static diarsid.support.objects.references.impl.References.possibleButEmpty;
+import static diarsid.support.objects.references.impl.References.presentOf;
+
 
 public class Tab {
 

@@ -1,12 +1,10 @@
 package diarsid.navigator.view.table;
 
-import javafx.scene.control.TableCell;
-
 import static javafx.geometry.Pos.CENTER_RIGHT;
 
-public class FileTableCellForSize extends TableCell<FileTableItem, String> {
+public class FilesTableCellForSize extends FilesTableCell<String> {
 
-    public FileTableCellForSize() {
+    public FilesTableCellForSize() {
         this.setAlignment(CENTER_RIGHT);
     }
 
