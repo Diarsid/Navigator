@@ -7,6 +7,8 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
+import diarsid.navigator.model.ImageExtension;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -20,6 +22,7 @@ import diarsid.support.objects.references.real.PresentListenable;
 
 import static java.util.Objects.isNull;
 
+import static diarsid.navigator.model.ImageExtension.findExtensionIn;
 import static diarsid.support.objects.references.real.Presents.listenablePresent;
 
 class RealIcons implements Icons {
@@ -48,8 +51,18 @@ class RealIcons implements Icons {
         try {
             Files.list(Paths.get("home/icons/by_names"))
                     .forEach((path) -> {
-                        Image icon = this.loadFrom(path.toAbsolutePath().toString());
-                        this.predefinedImagesByNames.put(path.getFileName().toString().toLowerCase(), icon);
+                        try {
+                            Image icon = this.loadFrom(path.toAbsolutePath().toString());
+                            String file = path.getFileName().toString().toLowerCase();
+                            Optional<ImageExtension> extension = findExtensionIn(file);
+                            if ( extension.isPresent() ) {
+                                file = file.substring(0, file.length() - extension.)
+                            }
+                            this.predefinedImagesByNames.put(, icon);
+                        }
+                        catch (IllegalArgumentException e) {
+                            System.out.println("Cannot load image: " + path);
+                        }
                     });
 
             Files.list(Paths.get("home/icons/by_extensions"))
