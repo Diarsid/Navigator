@@ -1,6 +1,10 @@
 package diarsid.navigator.view.tabs;
 
 import java.util.HashMap;
+import java.util.List;
+
+import diarsid.navigator.filesystem.FSEntry;
+import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;

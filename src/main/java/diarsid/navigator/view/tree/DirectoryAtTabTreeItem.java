@@ -109,6 +109,10 @@ public class DirectoryAtTabTreeItem extends TreeItem<String> implements Comparab
         return this.directory.compareTo(other.directory);
     }
 
+    boolean isParentOf(DirectoryAtTabTreeItem other) {
+        return this.directory.isParentOf(other.directory);
+    }
+
 //    public DirectoryAtTab directoryAtTab() {
 //        return this.directoryAtTab;
 //    }

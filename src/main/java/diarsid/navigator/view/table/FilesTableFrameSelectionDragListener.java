@@ -1,6 +1,8 @@
 package diarsid.navigator.view.table;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import javafx.geometry.Bounds;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
@@ -13,7 +15,10 @@ import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;
 import diarsid.support.javafx.ClickOrDragDetector;
 
 import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static java.util.stream.Collectors.toList;
+
+import static diarsid.navigator.filesystem.Directory.Edit.MOVED;
 
 public class FilesTableFrameSelectionDragListener implements ClickOrDragDetector.DragListener {
 
@@ -72,13 +77,33 @@ public class FilesTableFrameSelectionDragListener implements ClickOrDragDetector
                 this.selection.start(mouseEvent, bounds);
                 break;
             case MOVE:
+                AtomicBoolean containsNotMovableEntries = new AtomicBoolean(false);
+
                 List<FSEntry> entries = this.tableView
                         .getSelectionModel()
                         .getSelectedItems()
                         .stream()
                         .map(FileTableItem::fsEntry)
+                        .peek(fsEntry -> {
+                            if ( containsNotMovableEntries.get() ) {
+                                return;
+                            }
+
+                            if ( fsEntry.isDirectory() ) {
+                                containsNotMovableEntries.set(fsEntry.asDirectory().canNotBe(MOVED));
+                            }
+                        })
                         .collect(toList());
-                this.dragAndDropFiles.startDragAndDrop(this.tableView, entries);
+
+                if ( containsNotMovableEntries.get() ) {
+                    return;
+                }
+
+                FileTableRow row = this.getClickedRowFrom(mouseEvent);
+                if ( nonNull(row) ) {
+                    this.dragAndDropFiles.startDragAndDrop(row, entries);
+                }
+
                 break;
             default:
                 throwBehaviorNotSpecifiedException(this.dragMode);
@@ -112,7 +137,7 @@ public class FilesTableFrameSelectionDragListener implements ClickOrDragDetector
                 this.selection.stop(mouseEvent);
                 break;
             case MOVE:
-                List<FileTableItem> selected = tableView.getSelectionModel().getSelectedItems();
+                List<FileTableItem> selected = this.tableView.getSelectionModel().getSelectedItems();
                 System.out.println("STOPPED");
                 break;
             default:
@@ -123,23 +148,33 @@ public class FilesTableFrameSelectionDragListener implements ClickOrDragDetector
     }
 
     @SuppressWarnings("unchecked")
-    private TableRow<FileTableItem> getClickedRowFrom(MouseEvent mouseEvent) {
+    private FileTableRow getClickedRowFrom(MouseEvent mouseEvent) {
         Object target = mouseEvent.getTarget();
+
+        TableRow<FileTableItem> row;
 
         if ( target instanceof FilesTableCell ) {
             FilesTableCell<Object> draggedCell = (FilesTableCell<Object>) target;
-            return draggedCell.getTableRow();
+            row = draggedCell.getTableRow();
         }
         else if ( target instanceof TableRow ) {
-            return (TableRow<FileTableItem>) target;
+            row = (TableRow<FileTableItem>) target;
         }
         else if ( target instanceof Text) {
             Text text = (Text) target;
             FilesTableCell<Object> draggedCell = (FilesTableCell<Object>) text.getParent();
-            return draggedCell.getTableRow();
+            row = draggedCell.getTableRow();
+        }
+        else {
+            row = null;
         }
 
-        return null;
+        if ( nonNull(row) ) {
+            return (FileTableRow) row;
+        }
+        else {
+            return null;
+        }
     }
 
     @SuppressWarnings("unchecked")

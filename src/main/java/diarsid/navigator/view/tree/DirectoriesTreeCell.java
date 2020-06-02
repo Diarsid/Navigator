@@ -1,21 +1,22 @@
 package diarsid.navigator.view.tree;
 
 import java.util.List;
-import javafx.beans.property.ReadOnlyDoubleProperty;
-import javafx.scene.control.TreeCell;
-import javafx.scene.control.TreeItem;
-import javafx.scene.image.ImageView;
-import javafx.scene.input.DragEvent;
-import javafx.scene.input.Dragboard;
-import javafx.scene.input.MouseEvent;
 
 import diarsid.navigator.filesystem.Directory;
 import diarsid.navigator.filesystem.FSEntry;
 import diarsid.navigator.view.icons.Icon;
 import diarsid.navigator.view.icons.Icons;
+import javafx.beans.property.ReadOnlyDoubleProperty;
+import javafx.scene.control.TreeCell;
+import javafx.scene.control.TreeItem;
+import javafx.scene.image.ImageView;
+import javafx.scene.input.DragEvent;
+import javafx.scene.input.MouseEvent;
 
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
-import static javafx.scene.input.DataFormat.PLAIN_TEXT;
+
+import static diarsid.navigator.filesystem.Directory.Edit.MOVED;
 import static javafx.scene.input.TransferMode.MOVE;
 
 public class DirectoriesTreeCell extends TreeCell<String> {
@@ -88,25 +89,95 @@ public class DirectoriesTreeCell extends TreeCell<String> {
 
 
     private void onDragDetected(MouseEvent event) {
+        if ( super.isEmpty() ) {
+            return;
+        }
+
+        TreeItem<String> item = super.getTreeItem();
+
+        if ( ! (item instanceof DirectoryAtTabTreeItem) ) {
+            return;
+        }
+
+        DirectoryAtTabTreeItem directoryItem = (DirectoryAtTabTreeItem) item;
+
+        if ( directoryItem.directory().canNotBe(MOVED) ) {
+            return;
+        }
+
         this.directoriesTree.cellDragAndDrop().setTabDraggedContextTo(this);
 //        super.pseudoClassStateChanged(MOVED, true);
         event.consume();
     };
 
     private void onDragOver(DragEvent dragEvent) {
+        if ( super.isEmpty() ) {
+            return;
+        }
+
         if ( this.directoriesTree.cellDragAndDrop().isDragOverAcceptable(dragEvent) ) {
-            dragEvent.acceptTransferModes(MOVE);
-            dragEvent.consume();
-//            super.pseudoClassStateChanged(REPLACE_CANDIDATE, true);
+            DirectoriesTreeCell droppedCell = (DirectoriesTreeCell) dragEvent.getGestureSource();
+            DirectoryAtTabTreeItem droppedItem = droppedCell.directoryAtTabTreeItem();
+            DirectoryAtTabTreeItem acceptingItem = this.directoryAtTabTreeItem();
+
+            if ( nonNull(droppedItem) && nonNull(acceptingItem) ) {
+                if ( droppedItem.equals(acceptingItem) ) {
+                    System.out.println("MOVE NOT ACCEPTABLE : items are the same");
+                }
+                else if ( droppedItem.isParentOf(acceptingItem) ) {
+                    System.out.println("MOVE NOT ACCEPTABLE : " + acceptingItem.directory() + " is child of " + droppedItem.directory());
+                }
+                else {
+                    dragEvent.acceptTransferModes(MOVE);
+                    dragEvent.consume();
+//                  super.pseudoClassStateChanged(REPLACE_CANDIDATE, true);
+                }
+            }
         }
 
         if ( this.directoriesTree.dragAndDropFiles().isDragAcceptable(dragEvent) ) {
-            System.out.println("dragging files in tree");
-            dragEvent.acceptTransferModes(MOVE);
-            dragEvent.consume();
-//            super.pseudoClassStateChanged(REPLACE_CANDIDATE, true);
+            System.out.println("dragging files into tree");
+            List<FSEntry> fsEntries = this.directoriesTree.dragAndDropFiles().get();
+
+            DirectoryAtTabTreeItem acceptingItem = this.directoryAtTabTreeItem();
+            if ( isNull(acceptingItem) ) {
+                return;
+            }
+            Directory acceptingDirectory = acceptingItem.directory();
+
+            if ( fsEntries.size() == 1 ) {
+                FSEntry fsEntry = fsEntries.get(0);
+                if ( fsEntry.isFile() ) {
+                    dragEvent.acceptTransferModes(MOVE);
+                    dragEvent.consume();
+//                  super.pseudoClassStateChanged(REPLACE_CANDIDATE, true);
+                }
+                else {
+                    Directory droppedDirectory = fsEntry.asDirectory();
+
+                    if ( acceptingDirectory.canHost(droppedDirectory) ) {
+                        dragEvent.acceptTransferModes(MOVE);
+                        dragEvent.consume();
+//                      super.pseudoClassStateChanged(REPLACE_CANDIDATE, true);
+                    }
+                }
+            }
+            else if ( fsEntries.size() > 1 ) {
+                boolean canNotHost = fsEntries
+                        .stream()
+                        .anyMatch(fsEntry -> fsEntry.isDirectory() && acceptingDirectory.canNotHost(fsEntry));
+
+                if ( ! canNotHost ) {
+                    dragEvent.acceptTransferModes(MOVE);
+                    dragEvent.consume();
+//                  super.pseudoClassStateChanged(REPLACE_CANDIDATE, true);
+                }
+            }
+            else {
+
+            }
         }
-    };
+    }
 
     private void onDragExited(DragEvent dragEvent) {
         if ( this.directoriesTree.cellDragAndDrop().isDragOverAcceptable(dragEvent) ) {

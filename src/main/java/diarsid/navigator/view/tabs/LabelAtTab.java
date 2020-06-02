@@ -81,6 +81,10 @@ public class LabelAtTab {
             dragEvent.consume();
             this.label.pseudoClassStateChanged(REPLACE_CANDIDATE, true);
         }
+        if ( this.labelsAtTabs.dragAndDropFiles.isDragAcceptable(dragEvent) ) {
+            dragEvent.acceptTransferModes(MOVE);
+            dragEvent.consume();
+        }
     };
 
     private void onDragExited(DragEvent dragEvent) {

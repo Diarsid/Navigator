@@ -9,6 +9,7 @@
 
 .split-pane > .split-pane-divider {
     -fx-padding: 0 1px 0 1px;
+    -fx-background-color: gainsboro;
 }
 
 .tree-view {
@@ -45,16 +46,15 @@
 }
 
 .table-view .column-header {
-    -fx-background-color: lightgrey;
+    -fx-background-color: whitesmoke;
     -fx-text-background-color: black;
     -fx-font-size: 14px;
     -fx-border-width: 0 1 0 0;
-    -fx-border-color: grey;
+    -fx-border-color: gainsboro;
 }
 
 .table-view .filler {
-    -fx-background-color: lightgrey;
-    -fx-text-background-color: black;
+    -fx-background-color: whitesmoke;
 }
 
 .table-view .table-row-cell {
@@ -112,7 +112,7 @@
 }
 
 .label-at-tab:moved {
-    -fx-background-color: lightgrey;
+    -fx-background-color: gainsboro;
 }
 
 .add-tab-button {

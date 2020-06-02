@@ -74,6 +74,12 @@ class RealDirectory implements Directory {
     }
 
     @Override
+    public boolean isParentOf(FSEntry fsEntry) {
+        List<Directory> parents = fsEntry.parents();
+        return parents.contains(this);
+    }
+
+    @Override
     public boolean isRoot() {
         return this.fs.isRoot(this);
     }
@@ -177,8 +183,19 @@ class RealDirectory implements Directory {
     }
 
     @Override
+    public void hostAll(List<FSEntry> newEntries, Consumer<Boolean> callback, ProgressTracker<FSEntry> progressTracker) {
+        boolean result = this.fs.moveAll(newEntries, this, progressTracker);
+        callback.accept(result);
+    }
+
+    @Override
     public boolean host(FSEntry newEntry) {
         return this.fs.move(newEntry, this);
+    }
+
+    @Override
+    public boolean hostAll(List<FSEntry> newEntries, ProgressTracker<FSEntry> progressTracker) {
+        return this.fs.moveAll(newEntries, this, progressTracker);
     }
 
     @Override
@@ -225,9 +242,9 @@ class RealDirectory implements Directory {
     @Override
     public boolean canBe(Directory.Edit edit) {
         switch ( edit ) {
-            case MOVE:
-            case DELETE:
-            case RENAME:
+            case MOVED:
+            case DELETED:
+            case RENAMED:
                 return ! this.fs.isRoot(this);
             case FILLED: return true;
             default: return false;

@@ -7,6 +7,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.Node;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.ImageView;
@@ -18,7 +19,6 @@ import diarsid.navigator.view.ViewComponent;
 import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;
 import diarsid.navigator.view.icons.Icons;
 import diarsid.support.javafx.ClickOrDragDetector;
-import diarsid.support.javafx.DoubleClickDetector;
 import diarsid.support.objects.groups.Running;
 import diarsid.support.objects.references.impl.Possible;
 import diarsid.support.objects.references.impl.PresentListenable;
@@ -26,7 +26,6 @@ import diarsid.support.objects.references.impl.PresentListenable;
 import static java.util.Objects.nonNull;
 import static java.util.stream.Collectors.toList;
 import static javafx.scene.control.SelectionMode.MULTIPLE;
-import static javafx.scene.input.MouseEvent.MOUSE_PRESSED;
 import static javafx.scene.layout.Priority.ALWAYS;
 
 import static diarsid.support.objects.references.impl.References.possibleButEmpty;
@@ -40,6 +39,7 @@ public class FilesTable implements ViewComponent {
     private final DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles;
     private final Possible<Directory> directory;
     private final Possible<Running> directoryChangeListener;
+    private final Consumer<FileTableItem> onItemInvoked;
 
     public FilesTable(
             Icons icons,
@@ -50,6 +50,7 @@ public class FilesTable implements ViewComponent {
         this.fileTableItems = new FileTableItems(icons);
         this.selection = new FilesTableFrameSelection();
         this.dragAndDropFiles = dragAndDropFiles;
+        this.onItemInvoked = onItemInvoked;
         this.directory = possibleButEmpty();
         this.directoryChangeListener = possibleButEmpty();
 
@@ -89,14 +90,20 @@ public class FilesTable implements ViewComponent {
 
         columnIcons.setResizable(false);
 
+        columnIcons.setReorderable(false);
+        columnNames.setReorderable(false);
+        columnSizes.setReorderable(false);
+
         columnIcons.minWidthProperty().bind(doubleProperty);
         columnIcons.maxWidthProperty().bind(doubleProperty);
-        columnIcons.setReorderable(false);
         columnIcons.setSortable(false);
 
         this.tableView.getColumns().add(columnIcons);
         this.tableView.getColumns().add(columnNames);
         this.tableView.getColumns().add(columnSizes);
+
+        columnNames.prefWidthProperty().bind(this.tableView.widthProperty().subtract(columnIcons.widthProperty()).multiply(0.8));
+        columnSizes.prefWidthProperty().bind(this.tableView.widthProperty().subtract(columnIcons.widthProperty()).multiply(0.15));
 
         this.tableView.getSelectionModel().setSelectionMode(MULTIPLE);
 
@@ -112,34 +119,7 @@ public class FilesTable implements ViewComponent {
                 .withPressedDurationThreshold(200)
                 .build();
 
-        this.tableView.setRowFactory(tableView -> {
-            FileTableRow tableRow = new FileTableRow();
-
-            DoubleClickDetector doubleClickDetector = DoubleClickDetector.Builder
-                    .createFor(tableRow)
-                    .withMillisBetweenClicks(200)
-                    .withDoOnDoubleClick(mouseEvent -> {
-                        FileTableItem tableItem = tableRow.getItem();
-                        onItemInvoked.accept(tableItem);
-                    })
-                    .build();
-
-            tableRow.addEventFilter(MOUSE_PRESSED, mouseEvent -> {
-                if ( mouseEvent.isSecondaryButtonDown() ) {
-                    mouseEvent.consume();
-                }
-            });
-
-            tableRow.addEventHandler(MOUSE_PRESSED, mouseEvent -> {
-                if ( tableRow.isEmpty() ) {
-                    tableView.getSelectionModel().clearSelection();
-                }
-
-                tableView.getSelectionModel().select(tableRow.getIndex());
-            });
-
-            return tableRow;
-        });
+        this.tableView.setRowFactory(this::newTableRow);
 
         HBox.setHgrow(this.tableView, ALWAYS);
     }
@@ -191,5 +171,9 @@ public class FilesTable implements ViewComponent {
                 .findFirst();
 
         fileTableItem.ifPresent(tableItem -> tableView.getItems().remove(tableItem));
+    }
+
+    private TableRow<FileTableItem> newTableRow(TableView<FileTableItem> tableView) {
+        return new FileTableRow(this.tableView, this.onItemInvoked, this.dragAndDropFiles);
     }
 }

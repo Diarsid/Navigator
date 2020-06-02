@@ -13,6 +13,20 @@ public class ProgressTracker<T> {
         void accept(long progressIndex, T item);
     }
 
+    public static ProgressTracker<FSEntry> DEFAULT = new ProgressTracker<>(
+            () -> {
+                System.out.println("[PROGRESS] begin");
+            },
+            (fsEntry) -> {
+                System.out.println("[PROGRESS] ...item start : " + fsEntry.path());
+            },
+            (index, fsEntry) -> {
+                System.out.println("[PROGRESS] ...item done  : " + index + " " + fsEntry.path());
+            },
+            () ->  {
+                System.out.println("[PROGRESS] completed");
+            });
+
     private final Runnable onStart;
     private final Consumer<T> onItemStart;
     private final ProgressConsumer<T> onItemDone;

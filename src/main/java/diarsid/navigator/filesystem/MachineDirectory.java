@@ -60,6 +60,11 @@ class MachineDirectory implements Directory {
     }
 
     @Override
+    public boolean isParentOf(FSEntry fsEntry) {
+        return true;
+    }
+
+    @Override
     public boolean isRoot() {
         return true;
     }
@@ -127,7 +132,17 @@ class MachineDirectory implements Directory {
     }
 
     @Override
+    public void hostAll(List<FSEntry> newEntries, Consumer<Boolean> callback, ProgressTracker<FSEntry> progressTracker) {
+        throw new UnsupportedOperationException("This directory is root");
+    }
+
+    @Override
     public boolean host(FSEntry newEntry) {
+        throw new UnsupportedOperationException("This directory is root");
+    }
+
+    @Override
+    public boolean hostAll(List<FSEntry> newEntries, ProgressTracker<FSEntry> progressTracker) {
         throw new UnsupportedOperationException("This directory is root");
     }
 

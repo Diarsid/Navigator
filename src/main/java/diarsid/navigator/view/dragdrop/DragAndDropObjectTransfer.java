@@ -2,11 +2,13 @@ package diarsid.navigator.view.dragdrop;
 
 import java.util.Map;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 
 import diarsid.support.objects.references.impl.Possible;
+import javafx.scene.text.Text;
 
 import static java.util.Objects.isNull;
 import static javafx.scene.input.TransferMode.MOVE;
@@ -47,24 +49,29 @@ public class DragAndDropObjectTransfer<T> {
 
         Object target = dragEvent.getGestureTarget();
 
-        if ( isNull(target) ) {
+        if ( isNull(target) || ! (target instanceof Node) ) {
             target = dragEvent.getTarget();
         }
 
-        String styleClass = this.javaClassesAndStyleClasses.get(target.getClass());
+        if ( ! (target instanceof Node) ) {
+            return false;
+        }
+
+        Node targetNode = (Node) target;
+
+        if ( target instanceof Text ) {
+            targetNode = targetNode.getParent();
+        }
+
+        String styleClass = this.javaClassesAndStyleClasses.get(targetNode.getClass());
 
         if ( isNull(styleClass) ) {
             return false;
         }
 
-        Node targetNode = (Node) target;
         boolean hasStyleClass = targetNode.getStyleClass().contains(styleClass);
 
         boolean acceptable = hasStyleClass && this.whatToDrag.isPresent();
-
-        if ( ! acceptable ) {
-            int a = 5;
-        }
 
         return acceptable;
     }

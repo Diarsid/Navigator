@@ -84,9 +84,10 @@ public class View {
                 onFSEntryIgnored,
                 dragAndDropFiles);
 
-        LabelsAtTabs labelsAtTabs = new LabelsAtTabs(this::onTabSelected, dragAndDropLabels);
+        LabelsAtTabs labelsAtTabs = new LabelsAtTabs(this::onTabSelected, dragAndDropLabels, dragAndDropFiles);
 
-        this.tabsPanel = new TabsPanel(this.tabs, this.directoriesAtTabs, labelsAtTabs, this.directoriesTree, dragAndDropLabels);
+        this.tabsPanel = new TabsPanel(
+                this.tabs, this.directoriesAtTabs, labelsAtTabs, this.directoriesTree, dragAndDropLabels);
 
         FilesView filesView = new FilesView(tabsPanel, directoriesTree, filesTable);
 
@@ -97,7 +98,7 @@ public class View {
         group.autosize();
 
         Scene scene = new Scene(group, 800, 600);
-        scene.getStylesheets().add("file:D:/DEV/1__Projects/Diarsid/IntelliJ/BeamNavigator/src/main/resources/home/style.css");
+        scene.getStylesheets().add("file:./home/style.css");
         stage.setScene(scene);
 
         view.prefHeightProperty().bind(stage.getScene().heightProperty());

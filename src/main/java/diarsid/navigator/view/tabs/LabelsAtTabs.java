@@ -3,6 +3,9 @@ package diarsid.navigator.view.tabs;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+
+import diarsid.navigator.filesystem.FSEntry;
+import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;
 import javafx.scene.control.Label;
 
 import diarsid.navigator.model.Tab;
@@ -14,15 +17,20 @@ import static diarsid.support.objects.references.impl.References.possibleButEmpt
 public class LabelsAtTabs {
 
     private final List<Label> draggableTabLabels;
+    protected final DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles;
     protected final DragAndDropNodes<Label> dragAndDropLabels;
     protected final Possible<Runnable> onTabsReorderedAction;
 
     protected final Consumer<Tab> onTabSelected;
 
-    public LabelsAtTabs(Consumer<Tab> onTabSelected, DragAndDropNodes<Label> dragAndDropLabels) {
+    public LabelsAtTabs(
+            Consumer<Tab> onTabSelected,
+            DragAndDropNodes<Label> dragAndDropLabels,
+            DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles) {
         this.onTabSelected = onTabSelected;
         this.draggableTabLabels = new ArrayList<>();
         this.dragAndDropLabels = dragAndDropLabels;
+        this.dragAndDropFiles = dragAndDropFiles;
         this.onTabsReorderedAction = possibleButEmpty();
     }
 

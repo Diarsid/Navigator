@@ -114,6 +114,10 @@ class RealFS implements FS {
             RealDirectory directoryToCopy = (RealDirectory) whatToCopy;
             RealDirectory directoryHost = (RealDirectory) whereToCopy;
 
+            if ( directoryToCopy.equals(directoryHost) ) {
+                return false;
+            }
+
             Path directoryToCopyParentPath = directoryToCopy.nioPath().getParent();
 
             try {
@@ -147,9 +151,16 @@ class RealFS implements FS {
         boolean success;
 
         if ( whatToMove.isFile() ) {
-            RealFile file = (RealFile) whatToMove;
+            RealFile fileToMove = (RealFile) whatToMove;
             try {
-                Files.move(file.nioPath(), whereToMove.nioPath().resolve(file.name()), REPLACE_EXISTING);
+                Optional<Directory> previousParent = fileToMove.parent();
+
+                Files.move(fileToMove.nioPath(), whereToMove.nioPath().resolve(fileToMove.name()), REPLACE_EXISTING);
+
+                if ( previousParent.isPresent() ) {
+                    previousParent.get().contentChanged();
+                }
+
                 success = true;
             }
             catch (IOException e) {
@@ -161,12 +172,18 @@ class RealFS implements FS {
             RealDirectory directoryToMove = (RealDirectory) whatToMove;
             RealDirectory directoryHost = (RealDirectory) whereToMove;
 
+            if ( directoryToMove.equals(directoryHost) ) {
+                return false;
+            }
+
+            if ( directoryToMove.isParentOf(directoryHost) ) {
+                return false;
+            }
+
             try {
                 Path oldPath = directoryToMove.nioPath();
                 Path newPath = directoryHost.nioPath().resolve(directoryToMove.name());
-                System.out.println(" move ");
-                System.out.println(" old : " + oldPath);
-                System.out.println(" new : " + newPath);
+                System.out.println("[FS] [move] " + oldPath + " -> " + newPath);
                 Files.move(oldPath, newPath);
 
                 this.directoriesByPath.remove(oldPath.toString());
@@ -239,10 +256,16 @@ class RealFS implements FS {
 
         whatToMove.sort(FSEntry.compareByDepth);
 
+        boolean moved;
         for (FSEntry entry : whatToMove) {
             progressTracker.processing(entry);
-            this.move(entry, parentDirectoryWhereToMove);
-            progressTracker.processingDone(entry);
+            moved = this.move(entry, parentDirectoryWhereToMove);
+            if ( moved ) {
+                progressTracker.processingDone(entry);
+            }
+            else {
+
+            }
         }
 
         progressTracker.completed();
