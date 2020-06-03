@@ -70,21 +70,25 @@ public class LabelAtTab {
     }
 
     private void onDragDetected(MouseEvent event) {
-        this.labelsAtTabs.dragAndDropContextTab.setTabDraggedContextTo(this.label);
+        this.labelsAtTabs.dragAndDropLabels.setTabDraggedContextTo(this.label);
         this.label.pseudoClassStateChanged(MOVED, true);
         event.consume();
     };
 
     private void onDragOver(DragEvent dragEvent) {
-        if ( this.labelsAtTabs.dragAndDropContextTab.isDragOverAcceptable(dragEvent) ) {
+        if ( this.labelsAtTabs.dragAndDropLabels.isDragOverAcceptable(dragEvent) ) {
             dragEvent.acceptTransferModes(MOVE);
             dragEvent.consume();
             this.label.pseudoClassStateChanged(REPLACE_CANDIDATE, true);
         }
+        if ( this.labelsAtTabs.dragAndDropFiles.isDragAcceptable(dragEvent) ) {
+            dragEvent.acceptTransferModes(MOVE);
+            dragEvent.consume();
+        }
     };
 
     private void onDragExited(DragEvent dragEvent) {
-        if ( this.labelsAtTabs.dragAndDropContextTab.isDragOverAcceptable(dragEvent) ) {
+        if ( this.labelsAtTabs.dragAndDropLabels.isDragOverAcceptable(dragEvent) ) {
             this.label.pseudoClassStateChanged(REPLACE_CANDIDATE, false);
         }
     };
@@ -92,7 +96,7 @@ public class LabelAtTab {
     private void onDragDropped(DragEvent dragEvent) {
         boolean success;
 
-        boolean isDropAcceptable = this.labelsAtTabs.dragAndDropContextTab.isDropAcceptable(dragEvent);
+        boolean isDropAcceptable = this.labelsAtTabs.dragAndDropLabels.isDropAcceptable(dragEvent);
         if ( isDropAcceptable && this.labelsAtTabs.onTabsReorderedAction.isPresent() ) {
             try {
                 Label draggedTab = (Label) dragEvent.getGestureSource();

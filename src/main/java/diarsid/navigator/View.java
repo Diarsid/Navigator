@@ -1,8 +1,12 @@
 package diarsid.navigator;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 import javafx.scene.Group;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
@@ -18,14 +22,16 @@ import diarsid.navigator.model.DirectoryAtTab;
 import diarsid.navigator.model.Tab;
 import diarsid.navigator.model.Tabs;
 import diarsid.navigator.view.FilesView;
+import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;
 import diarsid.navigator.view.tree.DirectoriesTree;
 import diarsid.navigator.view.icons.Icons;
-import diarsid.navigator.view.table.FileTableItem;
+import diarsid.navigator.view.table.FilesTableItem;
 import diarsid.navigator.view.table.FilesTable;
-import diarsid.navigator.view.dragdrop.DragAndDropContext;
+import diarsid.navigator.view.dragdrop.DragAndDropNodes;
 import diarsid.navigator.view.tabs.LabelsAtTabs;
 import diarsid.navigator.view.tabs.TabsPanel;
-import diarsid.support.objects.references.real.Possible;
+import diarsid.navigator.view.tree.DirectoriesTreeCell;
+import diarsid.support.objects.references.impl.Possible;
 
 import static javafx.stage.StageStyle.DECORATED;
 
@@ -47,13 +53,20 @@ public class View {
         stage.initStyle(DECORATED);
 
         this.ignores = Ignores.INSTANCE;
-        DragAndDropContext<Label> dragAndDropContext = new DragAndDropContext<>("tab");
+        DragAndDropNodes<Label> dragAndDropLabels = new DragAndDropNodes<>("tab");
         this.fs = FS.INSTANCE;
         this.icons = Icons.INSTANCE;
         this.tabs = new Tabs();
         this.directoriesAtTabs = new DirectoriesAtTabs();
 
-        this.filesTable = new FilesTable(this.icons, this::onTableItemInvoked);
+        Map<Class<? extends Node>, String> classes = new HashMap<>();
+        classes.put(Label.class, "label-at-tab");
+        classes.put(DirectoriesTreeCell.class, "directories-tree-cell");
+        DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles = new DragAndDropObjectTransfer<>(
+                "drag-and-drop-files",
+                classes);
+
+        this.filesTable = new FilesTable(this.icons, this::onTableItemInvoked, dragAndDropFiles);
 
         Consumer<FSEntry> onFSEntryIgnored = (fsEntry) -> {
             if ( fsEntry.canBeIgnored() ) {
@@ -67,12 +80,14 @@ public class View {
                 this.fs,
                 this.icons,
                 this.directoriesAtTabs,
-                this.filesTable::set,
-                onFSEntryIgnored);
+                this::onDirectorySelected,
+                onFSEntryIgnored,
+                dragAndDropFiles);
 
-        LabelsAtTabs labelsAtTabs = new LabelsAtTabs(this::onTabSelected, dragAndDropContext);
+        LabelsAtTabs labelsAtTabs = new LabelsAtTabs(this::onTabSelected, dragAndDropLabels, dragAndDropFiles);
 
-        this.tabsPanel = new TabsPanel(this.tabs, this.directoriesAtTabs, labelsAtTabs, this.directoriesTree, dragAndDropContext);
+        this.tabsPanel = new TabsPanel(
+                this.tabs, this.directoriesAtTabs, labelsAtTabs, this.directoriesTree, dragAndDropLabels);
 
         FilesView filesView = new FilesView(tabsPanel, directoriesTree, filesTable);
 
@@ -83,7 +98,7 @@ public class View {
         group.autosize();
 
         Scene scene = new Scene(group, 800, 600);
-        scene.getStylesheets().add("file:D:/DEV/1__Projects/Diarsid/IntelliJ/BeamNavigator/src/main/resources/home/style.css");
+        scene.getStylesheets().add("file:./home/style.css");
         stage.setScene(scene);
 
         view.prefHeightProperty().bind(stage.getScene().heightProperty());
@@ -98,7 +113,7 @@ public class View {
         this.tabsPanel.newTab(true, directory);
     }
 
-    private void onTableItemInvoked(FileTableItem tableItem) {
+    private void onTableItemInvoked(FilesTableItem tableItem) {
         FSEntry itemFsEntry = tableItem.fsEntry();
         if ( itemFsEntry.isDirectory() ) {
             Optional<Directory> parentDirectory = itemFsEntry.parent();
@@ -133,11 +148,15 @@ public class View {
 
         if ( directorySelection.isPresent() ) {
             DirectoryAtTab selectedDirectoryAtTab = directorySelection.orThrow();
-            selectedDirectoryAtTab.directory().feedChildren(this.filesTable::set);
+            this.filesTable.show(selectedDirectoryAtTab.directory());
             this.directoriesTree.select(selectedDirectoryAtTab);
         }
         else {
             this.filesTable.clear();
         }
+    }
+
+    private void onDirectorySelected(Directory directory) {
+        this.filesTable.show(directory);
     }
 }

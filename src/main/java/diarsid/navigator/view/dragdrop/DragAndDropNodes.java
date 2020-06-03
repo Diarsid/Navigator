@@ -5,18 +5,18 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 
-import diarsid.support.objects.references.real.Possible;
+import diarsid.support.objects.references.impl.Possible;
 
 import static javafx.scene.input.TransferMode.MOVE;
 
-import static diarsid.support.objects.references.real.Possibles.possibleButEmpty;
+import static diarsid.support.objects.references.impl.References.possibleButEmpty;
 
-public class DragAndDropContext<T extends Node> {
+public class DragAndDropNodes<T extends Node> {
 
     private final String dragboardKey;
     private final Possible<T> draggedNode;
 
-    public DragAndDropContext(String key) {
+    public DragAndDropNodes(String key) {
         this.dragboardKey = key;
         this.draggedNode = possibleButEmpty();
     }

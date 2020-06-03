@@ -19,7 +19,8 @@ import diarsid.navigator.model.DirectoriesAtTabs;
 import diarsid.navigator.model.DirectoryAtTab;
 import diarsid.navigator.model.Tab;
 import diarsid.navigator.view.ViewComponent;
-import diarsid.navigator.view.dragdrop.DragAndDropContext;
+import diarsid.navigator.view.dragdrop.DragAndDropNodes;
+import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;
 import diarsid.navigator.view.icons.Icons;
 
 import static java.lang.Double.POSITIVE_INFINITY;
@@ -33,23 +34,26 @@ public class DirectoriesTree implements ViewComponent {
     private final Icons icons;
     private final DirectoriesAtTabs directoriesAtTabs;
     private final DirectoryAtTabTreeItems directoryAtTabTreeItems;
-    private final Consumer<List<FSEntry>> setFSEntriesInTable;
+    private final Consumer<Directory> onDirectorySelected;
     private final TreeView<String> treeView;
     private final Map<Tab, TreeItem<String>> tabsTreeRoots;
-    private final DragAndDropContext<DirectoriesTreeCell> dragAndDropContextCell;
+    private final DragAndDropNodes<DirectoriesTreeCell> dragAndDropTreeCell;
+    private final DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles;
 
     public DirectoriesTree(
             FS fs,
             Icons icons,
             DirectoriesAtTabs directoriesAtTabs,
-            Consumer<List<FSEntry>> setFSEntriesInTable,
-            Consumer<FSEntry> onIgnore) {
+            Consumer<Directory> onDirectorySelected,
+            Consumer<FSEntry> onIgnore,
+            DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles) {
         this.fs = fs;
         this.icons = icons;
         this.directoriesAtTabs = directoriesAtTabs;
-        this.setFSEntriesInTable = setFSEntriesInTable;
+        this.onDirectorySelected = onDirectorySelected;
         this.tabsTreeRoots = new HashMap<>();
-        this.dragAndDropContextCell = new DragAndDropContext<>("tree-cell");
+        this.dragAndDropTreeCell = new DragAndDropNodes<>("tree-cell");
+        this.dragAndDropFiles = dragAndDropFiles;
 
         this.directoryAtTabTreeItems = new DirectoryAtTabTreeItems(
                 this.directoriesAtTabs,
@@ -62,7 +66,7 @@ public class DirectoriesTree implements ViewComponent {
         this.treeView.setPrefSize(100, 100);
         this.treeView.setShowRoot(false);
 
-        treeView.addEventFilter(MOUSE_PRESSED, event -> {
+        this.treeView.addEventFilter(MOUSE_PRESSED, event -> {
             if ( event.isSecondaryButtonDown() ) {
                 Node target = (Node) event.getTarget();
                 if ( target instanceof TreeCell ) {
@@ -124,7 +128,8 @@ public class DirectoriesTree implements ViewComponent {
         if ( nonNull(newItem) ) {
             if ( newItem instanceof DirectoryAtTabTreeItem ) {
                 DirectoryAtTabTreeItem treeItem = (DirectoryAtTabTreeItem) newItem;
-                treeItem.directory().feedChildren(this.setFSEntriesInTable);
+                Directory directory = treeItem.directory();
+                this.onDirectorySelected.accept(directory);
                 treeItem.setSelectedToTab();
             }
             else {
@@ -242,7 +247,11 @@ public class DirectoriesTree implements ViewComponent {
         return rootTreeItem;
     }
 
-    DragAndDropContext<DirectoriesTreeCell> dragAndDropContext() {
-        return this.dragAndDropContextCell;
+    DragAndDropNodes<DirectoriesTreeCell> cellDragAndDrop() {
+        return this.dragAndDropTreeCell;
+    }
+
+    DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles() {
+        return this.dragAndDropFiles;
     }
 }

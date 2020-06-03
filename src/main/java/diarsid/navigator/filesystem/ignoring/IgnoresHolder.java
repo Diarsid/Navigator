@@ -13,7 +13,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import diarsid.navigator.filesystem.FSEntry;
-import diarsid.support.objects.consumers.async.AsyncConsumers;
+import diarsid.support.objects.groups.async.AsyncConsumers;
 
 import static java.util.Objects.isNull;
 

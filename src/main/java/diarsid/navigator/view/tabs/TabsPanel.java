@@ -1,6 +1,10 @@
 package diarsid.navigator.view.tabs;
 
 import java.util.HashMap;
+import java.util.List;
+
+import diarsid.navigator.filesystem.FSEntry;
+import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
@@ -10,7 +14,7 @@ import diarsid.navigator.model.DirectoriesAtTabs;
 import diarsid.navigator.model.Tab;
 import diarsid.navigator.model.Tabs;
 import diarsid.navigator.view.ViewComponent;
-import diarsid.navigator.view.dragdrop.DragAndDropContext;
+import diarsid.navigator.view.dragdrop.DragAndDropNodes;
 import diarsid.navigator.view.tree.DirectoriesTree;
 
 import static java.lang.Double.POSITIVE_INFINITY;
@@ -26,7 +30,7 @@ public class TabsPanel implements ViewComponent {
     private final Label addLabel;
     private final LabelsAtTabs labelsAtTabs;
     private final DirectoriesTree directoriesTree;
-    private final DragAndDropContext<Label> dragAndDropContext;
+    private final DragAndDropNodes<Label> dragAndDropLabels;
     private final TabNames tabNames;
 
     public TabsPanel(
@@ -34,13 +38,13 @@ public class TabsPanel implements ViewComponent {
             DirectoriesAtTabs directoriesAtTabs,
             LabelsAtTabs labelsAtTabs,
             DirectoriesTree directoriesTree,
-            DragAndDropContext<Label> dragAndDropContext) {
+            DragAndDropNodes<Label> dragAndDropLabels) {
         this.tabs = tabs;
         this.directoriesAtTabs = directoriesAtTabs;
         this.labelsAtTabs = labelsAtTabs;
         this.directoriesTree = directoriesTree;
         this.labelsAtTabs.onTabsReordered(this::refresh);
-        this.dragAndDropContext = dragAndDropContext;
+        this.dragAndDropLabels = dragAndDropLabels;
         this.tabNames = new TabNames(new HashMap<>());
 
         this.tabsPanel = new VBox();
@@ -50,7 +54,7 @@ public class TabsPanel implements ViewComponent {
         this.tabsPanel.setMaxWidth(200);
 
         this.tabsPanel.setOnDragOver((dragEvent) -> {
-            if ( this.dragAndDropContext.isDragOverAcceptable(dragEvent) ) {
+            if ( this.dragAndDropLabels.isDragOverAcceptable(dragEvent) ) {
                 dragEvent.acceptTransferModes(MOVE);
                 dragEvent.consume();
             }
@@ -58,7 +62,7 @@ public class TabsPanel implements ViewComponent {
 
         this.tabsPanel.setOnDragDropped(dragEvent -> {
             boolean success;
-            if ( this.dragAndDropContext.isDropAcceptable(dragEvent) ) {
+            if ( this.dragAndDropLabels.isDropAcceptable(dragEvent) ) {
                 try {
                     Label source = (Label) dragEvent.getGestureSource();
                     boolean isOk = this.labelsAtTabs.acceptDroppedOnPanel(source);

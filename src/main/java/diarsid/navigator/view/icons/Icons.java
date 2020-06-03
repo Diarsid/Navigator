@@ -4,7 +4,7 @@ import javafx.beans.property.ReadOnlyDoubleProperty;
 
 import diarsid.navigator.filesystem.FS;
 import diarsid.navigator.filesystem.FSEntry;
-import diarsid.support.objects.references.real.PresentListenable;
+import diarsid.support.objects.references.impl.PresentListenable;
 
 public interface Icons {
 

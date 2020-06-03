@@ -5,18 +5,18 @@ import javafx.scene.image.ImageView;
 
 import diarsid.navigator.filesystem.FSEntry;
 import diarsid.navigator.view.icons.Icons;
-import diarsid.support.objects.references.real.Possible;
+import diarsid.support.objects.references.impl.Possible;
 
-import static diarsid.support.objects.references.real.Possibles.possibleButEmpty;
+import static diarsid.support.objects.references.impl.References.possibleButEmpty;
 
-public class FileTableItem implements Comparable<FileTableItem> {
+public class FilesTableItem implements Comparable<FilesTableItem> {
 
     private final Icons icons;
     private final FSEntry entry;
-    private final Possible<FileTableRow> row;
+    private final Possible<FilesTableRow> row;
     private final ImageView iconView;
 
-    public FileTableItem(Icons icons, FSEntry entry) {
+    public FilesTableItem(Icons icons, FSEntry entry) {
         this.entry = entry;
         this.icons = icons;
         this.row = possibleButEmpty();
@@ -34,7 +34,7 @@ public class FileTableItem implements Comparable<FileTableItem> {
         return this.entry;
     }
 
-    public Possible<FileTableRow> row() {
+    public Possible<FilesTableRow> row() {
         return this.row;
     }
 
@@ -56,7 +56,7 @@ public class FileTableItem implements Comparable<FileTableItem> {
     }
 
     @Override
-    public int compareTo(FileTableItem other) {
+    public int compareTo(FilesTableItem other) {
         System.out.println("sort");
         return this.entry.compareTo(other.entry);
     }

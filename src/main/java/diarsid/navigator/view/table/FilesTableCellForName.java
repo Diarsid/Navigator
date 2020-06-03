@@ -1,15 +1,14 @@
 package diarsid.navigator.view.table;
 
 import java.util.concurrent.atomic.AtomicLong;
-import javafx.scene.control.TableCell;
 
 import static javafx.geometry.Pos.CENTER_LEFT;
 
-public class FileTableCellForName extends TableCell<FileTableItem, String> {
+public class FilesTableCellForName extends FilesTableCell<String> {
 
     private static final AtomicLong COUNTER = new AtomicLong(0);
 
-    public FileTableCellForName() {
+    public FilesTableCellForName() {
         this.setAlignment(CENTER_LEFT);
     }
 

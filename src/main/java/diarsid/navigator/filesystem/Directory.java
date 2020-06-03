@@ -2,12 +2,22 @@ package diarsid.navigator.filesystem;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.function.Consumer;
+
+import diarsid.support.objects.groups.Running;
 
 public interface Directory extends FSEntry {
 
+    enum Edit {
+        MOVED,
+        DELETED,
+        RENAMED,
+        FILLED
+    }
+
     Optional<Directory> parent();
+
+    boolean isParentOf(FSEntry fsEntry);
 
     boolean isRoot();
 
@@ -29,10 +39,47 @@ public interface Directory extends FSEntry {
 
     void host(FSEntry newEntry, Consumer<Boolean> callback);
 
+    void hostAll(List<FSEntry> newEntries, Consumer<Boolean> callback, ProgressTracker<FSEntry> progressTracker);
+
     boolean host(FSEntry newEntry);
 
-    UUID listenForChanges(Consumer<Directory> listener);
+    boolean hostAll(List<FSEntry> newEntries, ProgressTracker<FSEntry> progressTracker);
 
-    Consumer<Directory> removeListener(UUID uuid);
+    default boolean canHost(FSEntry newEntry) {
+        if ( this instanceof MachineDirectory ) {
+            return false;
+        }
+
+        if ( newEntry.isFile() ) {
+            return true;
+        }
+
+        boolean can = true;
+        Directory newDirectory = newEntry.asDirectory();
+
+        if ( newDirectory.equals(this) ) {
+            System.out.println("MOVE NOT ACCEPTABLE : items are the same");
+            can = false;
+        }
+
+        if ( can && newDirectory.isParentOf(this) ) {
+            System.out.println("MOVE NOT ACCEPTABLE : " + this + " is child of " + newDirectory);
+            can = false;
+        }
+
+        return can;
+    }
+
+    default boolean canNotHost(FSEntry newEntry) {
+        return ! this.canHost(newEntry);
+    }
+
+    Running listenForChanges(Runnable listener);
+
+    boolean canBe(Directory.Edit edit);
+
+    default boolean canNotBe(Directory.Edit edit) {
+        return ! this.canBe(edit);
+    }
 
 }

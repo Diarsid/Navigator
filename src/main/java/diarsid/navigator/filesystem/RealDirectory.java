@@ -11,7 +11,8 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import diarsid.support.objects.consumers.Consumers;
+import diarsid.support.objects.groups.Runnables;
+import diarsid.support.objects.groups.Running;
 
 import static java.nio.file.Files.list;
 import static java.util.Objects.isNull;
@@ -23,7 +24,7 @@ class RealDirectory implements Directory {
 
     private final UUID uuid;
     private final FS fs;
-    private final Consumers<Directory> changeListeners;
+    private final Runnables changeListeners;
 
     private Path path;
     private String name;
@@ -32,7 +33,7 @@ class RealDirectory implements Directory {
     RealDirectory(Path path, FS fs) {
         this.uuid = randomUUID();
         this.fs = fs;
-        this.changeListeners = new Consumers<>();
+        this.changeListeners = new Runnables();
         this.path = path.toAbsolutePath();
         this.name = getNameFrom(path);
         this.fullName = this.path.toString();
@@ -73,8 +74,14 @@ class RealDirectory implements Directory {
     }
 
     @Override
+    public boolean isParentOf(FSEntry fsEntry) {
+        List<Directory> parents = fsEntry.parents();
+        return parents.contains(this);
+    }
+
+    @Override
     public boolean isRoot() {
-        return false;
+        return this.fs.isRoot(this);
     }
 
     @Override
@@ -176,8 +183,19 @@ class RealDirectory implements Directory {
     }
 
     @Override
+    public void hostAll(List<FSEntry> newEntries, Consumer<Boolean> callback, ProgressTracker<FSEntry> progressTracker) {
+        boolean result = this.fs.moveAll(newEntries, this, progressTracker);
+        callback.accept(result);
+    }
+
+    @Override
     public boolean host(FSEntry newEntry) {
         return this.fs.move(newEntry, this);
+    }
+
+    @Override
+    public boolean hostAll(List<FSEntry> newEntries, ProgressTracker<FSEntry> progressTracker) {
+        return this.fs.moveAll(newEntries, this, progressTracker);
     }
 
     @Override
@@ -217,13 +235,20 @@ class RealDirectory implements Directory {
     }
 
     @Override
-    public UUID listenForChanges(Consumer<Directory> listener) {
+    public Running listenForChanges(Runnable listener) {
         return this.changeListeners.add(listener);
     }
 
     @Override
-    public Consumer<Directory> removeListener(UUID uuid) {
-        return this.changeListeners.remove(uuid);
+    public boolean canBe(Directory.Edit edit) {
+        switch ( edit ) {
+            case MOVED:
+            case DELETED:
+            case RENAMED:
+                return ! this.fs.isRoot(this);
+            case FILLED: return true;
+            default: return false;
+        }
     }
 
     @Override
@@ -259,12 +284,12 @@ class RealDirectory implements Directory {
         this.path = newPath;
         this.name = getNameFrom(this.path);
         this.fullName = this.path.toString();
-        this.changeListeners.accept(this);
+        this.changeListeners.run();
     }
 
     @Override
     public void contentChanged() {
-        this.changeListeners.accept(this);
+        this.changeListeners.run();
     }
 
     @Override

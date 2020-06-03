@@ -35,9 +35,7 @@ public class DirectoryAtTabTreeItem extends TreeItem<String> implements Comparab
         this.onTreeItemExpanded = onTreeItemExpanded;
         this.onTreeItemCollapsed = onTreeItemCollapsed;
 
-        this.directory.listenForChanges((changedDirectory) -> {
-            this.initializeItemOrSetPlaceholder();
-        });
+        this.directory.listenForChanges(this::initializeItemOrSetPlaceholder);
 
         this.setPlaceholderIfChildrenPresent();
 
@@ -109,6 +107,10 @@ public class DirectoryAtTabTreeItem extends TreeItem<String> implements Comparab
     @Override
     public int compareTo(DirectoryAtTabTreeItem other) {
         return this.directory.compareTo(other.directory);
+    }
+
+    boolean isParentOf(DirectoryAtTabTreeItem other) {
+        return this.directory.isParentOf(other.directory);
     }
 
 //    public DirectoryAtTab directoryAtTab() {

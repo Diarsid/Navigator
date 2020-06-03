@@ -54,4 +54,8 @@ public interface FS {
 
     Extensions extensions();
 
+    boolean isRoot(Directory directory);
+
+    boolean isMachine(Directory directory);
+
 }
