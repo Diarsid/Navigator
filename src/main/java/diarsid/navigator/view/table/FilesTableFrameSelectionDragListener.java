@@ -28,14 +28,14 @@ public class FilesTableFrameSelectionDragListener implements ClickOrDragDetector
         MOVE
     }
 
-    private final TableView<FileTableItem> tableView;
+    private final TableView<FilesTableItem> tableView;
     private final FilesTableFrameSelection selection;
     private final DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles;
-    private VirtualFlow<FileTableRow> tableViewRows;
+    private VirtualFlow<FilesTableRow> tableViewRows;
     private DragMode dragMode;
 
     public FilesTableFrameSelectionDragListener(
-            TableView<FileTableItem> tableView,
+            TableView<FilesTableItem> tableView,
             FilesTableFrameSelection selection,
             DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles) {
         this.tableView = tableView;
@@ -46,7 +46,7 @@ public class FilesTableFrameSelectionDragListener implements ClickOrDragDetector
 
     @Override
     public void onPreClicked(MouseEvent mouseEvent) {
-        TableRow<FileTableItem> row = this.getClickedRowFrom(mouseEvent);
+        TableRow<FilesTableItem> row = this.getClickedRowFrom(mouseEvent);
 
         if ( isNull(row) ) {
             this.dragMode = DragMode.NONE;
@@ -83,7 +83,7 @@ public class FilesTableFrameSelectionDragListener implements ClickOrDragDetector
                         .getSelectionModel()
                         .getSelectedItems()
                         .stream()
-                        .map(FileTableItem::fsEntry)
+                        .map(FilesTableItem::fsEntry)
                         .peek(fsEntry -> {
                             if ( containsNotMovableEntries.get() ) {
                                 return;
@@ -99,7 +99,7 @@ public class FilesTableFrameSelectionDragListener implements ClickOrDragDetector
                     return;
                 }
 
-                FileTableRow row = this.getClickedRowFrom(mouseEvent);
+                FilesTableRow row = this.getClickedRowFrom(mouseEvent);
                 if ( nonNull(row) ) {
                     this.dragAndDropFiles.startDragAndDrop(row, entries);
                 }
@@ -137,7 +137,7 @@ public class FilesTableFrameSelectionDragListener implements ClickOrDragDetector
                 this.selection.stop(mouseEvent);
                 break;
             case MOVE:
-                List<FileTableItem> selected = this.tableView.getSelectionModel().getSelectedItems();
+                List<FilesTableItem> selected = this.tableView.getSelectionModel().getSelectedItems();
                 System.out.println("STOPPED");
                 break;
             default:
@@ -148,17 +148,17 @@ public class FilesTableFrameSelectionDragListener implements ClickOrDragDetector
     }
 
     @SuppressWarnings("unchecked")
-    private FileTableRow getClickedRowFrom(MouseEvent mouseEvent) {
+    private FilesTableRow getClickedRowFrom(MouseEvent mouseEvent) {
         Object target = mouseEvent.getTarget();
 
-        TableRow<FileTableItem> row;
+        TableRow<FilesTableItem> row;
 
         if ( target instanceof FilesTableCell ) {
             FilesTableCell<Object> draggedCell = (FilesTableCell<Object>) target;
             row = draggedCell.getTableRow();
         }
         else if ( target instanceof TableRow ) {
-            row = (TableRow<FileTableItem>) target;
+            row = (TableRow<FilesTableItem>) target;
         }
         else if ( target instanceof Text) {
             Text text = (Text) target;
@@ -170,7 +170,7 @@ public class FilesTableFrameSelectionDragListener implements ClickOrDragDetector
         }
 
         if ( nonNull(row) ) {
-            return (FileTableRow) row;
+            return (FilesTableRow) row;
         }
         else {
             return null;
@@ -183,25 +183,25 @@ public class FilesTableFrameSelectionDragListener implements ClickOrDragDetector
                 .getChildrenUnmodifiable()
                 .stream()
                 .filter(node -> node instanceof VirtualFlow)
-                .map(node -> (VirtualFlow<FileTableRow>) node)
+                .map(node -> (VirtualFlow<FilesTableRow>) node)
                 .findFirst()
                 .get();
     }
 
-    private List<FileTableItem> items() {
+    private List<FilesTableItem> items() {
         return this.tableView.getItems();
     }
 
-    private void select(FileTableRow row) {
+    private void select(FilesTableRow row) {
         this.tableView.getSelectionModel().select(row.getIndex());
     }
 
-    private void unselect(FileTableRow row) {
+    private void unselect(FilesTableRow row) {
         this.tableView.getSelectionModel().clearSelection(row.getIndex());
     }
 
-    private void checkForSelection(FileTableItem tableItem) {
-        FileTableRow row = tableItem.row().orThrow();
+    private void checkForSelection(FilesTableItem tableItem) {
+        FilesTableRow row = tableItem.row().orThrow();
         if (this.selection.isIntersectedWith(row)) {
             this.select(row);
         } else {

@@ -6,19 +6,19 @@ import java.util.Map;
 import diarsid.navigator.filesystem.FSEntry;
 import diarsid.navigator.view.icons.Icons;
 
-class FileTableItems {
+class FilesTableItems {
 
     private final Icons icons;
-    private final Map<FSEntry, FileTableItem> itemsByEntries;
+    private final Map<FSEntry, FilesTableItem> itemsByEntries;
 
-    public FileTableItems(Icons icons) {
+    public FilesTableItems(Icons icons) {
         this.icons = icons;
         this.itemsByEntries = new HashMap<>();
     }
 
-    FileTableItem getFor(FSEntry fsEntry) {
+    FilesTableItem getFor(FSEntry fsEntry) {
         return this.itemsByEntries.computeIfAbsent(
                 fsEntry,
-                newFsEntry -> new FileTableItem(this.icons, newFsEntry));
+                newFsEntry -> new FilesTableItem(this.icons, newFsEntry));
     }
 }

@@ -110,7 +110,7 @@ class FilesTableFrameSelection {
         this.selection.setVisible(false);
     }
 
-    boolean isIntersectedWith(FileTableRow row) {
+    boolean isIntersectedWith(FilesTableRow row) {
         if ( isNull(this.bounds) ) {
             return false;
         }

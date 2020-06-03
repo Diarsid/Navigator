@@ -33,30 +33,30 @@ import static diarsid.support.objects.references.impl.References.possibleButEmpt
 public class FilesTable implements ViewComponent {
 
     private final Icons icons;
-    private final TableView<FileTableItem> tableView;
-    private final FileTableItems fileTableItems;
+    private final TableView<FilesTableItem> tableView;
+    private final FilesTableItems filesTableItems;
     private final FilesTableFrameSelection selection;
     private final DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles;
     private final Possible<Directory> directory;
     private final Possible<Running> directoryChangeListener;
-    private final Consumer<FileTableItem> onItemInvoked;
+    private final Consumer<FilesTableItem> onItemInvoked;
 
     public FilesTable(
             Icons icons,
-            Consumer<FileTableItem> onItemInvoked,
+            Consumer<FilesTableItem> onItemInvoked,
             DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles) {
         this.icons = icons;
         this.tableView = new TableView<>();
-        this.fileTableItems = new FileTableItems(icons);
+        this.filesTableItems = new FilesTableItems(icons);
         this.selection = new FilesTableFrameSelection();
         this.dragAndDropFiles = dragAndDropFiles;
         this.onItemInvoked = onItemInvoked;
         this.directory = possibleButEmpty();
         this.directoryChangeListener = possibleButEmpty();
 
-        TableColumn<FileTableItem, ImageView> columnIcons = new TableColumn<>();
-        TableColumn<FileTableItem, String> columnNames = new TableColumn<>("Name");
-        TableColumn<FileTableItem, String> columnSizes = new TableColumn<>("Size");
+        TableColumn<FilesTableItem, ImageView> columnIcons = new TableColumn<>();
+        TableColumn<FilesTableItem, String> columnNames = new TableColumn<>("Name");
+        TableColumn<FilesTableItem, String> columnSizes = new TableColumn<>("Size");
         PresentListenable<Double> iconsSizeX = this.icons.size();
 
         ObjectProperty<Double> doubleProperty = new SimpleObjectProperty<>(iconsSizeX.get() + 10);
@@ -151,9 +151,9 @@ public class FilesTable implements ViewComponent {
     }
 
     private void set(List<FSEntry> entries) {
-        List<FileTableItem> items = entries
+        List<FilesTableItem> items = entries
                 .stream()
-                .map(this.fileTableItems::getFor)
+                .map(this.filesTableItems::getFor)
                 .collect(toList());
         this.tableView.getItems().setAll(items);
     }
@@ -164,7 +164,7 @@ public class FilesTable implements ViewComponent {
     }
 
     public void remove(FSEntry fsEntry) {
-        Optional<FileTableItem> fileTableItem = tableView
+        Optional<FilesTableItem> fileTableItem = tableView
                 .getItems()
                 .stream()
                 .filter(item -> fsEntry.equals(item.fsEntry()))
@@ -173,7 +173,7 @@ public class FilesTable implements ViewComponent {
         fileTableItem.ifPresent(tableItem -> tableView.getItems().remove(tableItem));
     }
 
-    private TableRow<FileTableItem> newTableRow(TableView<FileTableItem> tableView) {
-        return new FileTableRow(this.tableView, this.onItemInvoked, this.dragAndDropFiles);
+    private TableRow<FilesTableItem> newTableRow(TableView<FilesTableItem> tableView) {
+        return new FilesTableRow(this.tableView, this.onItemInvoked, this.dragAndDropFiles);
     }
 }

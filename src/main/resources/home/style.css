@@ -18,7 +18,7 @@
 
 .tree-cell {
     -fx-font-size: 13px ;
-    -fx-padding: 2px 0px 2px 0px ;
+    -fx-padding: 2px 0px 2px 0px;
     -fx-border-style: none;
     -fx-background-color: white;
 }
@@ -58,14 +58,14 @@
 }
 
 .table-view .table-row-cell {
+    -fx-cell-size: 24px;
     -fx-padding: 0px;
-    -fx-border-width: 1px;
     -fx-text-background-color: black;
 }
 
 .table-view .table-cell {
     -fx-padding: 0px;
-    -fx-background-color: null;
+    -fx-background-color: transparent;
     -fx-border-color: transparent;
     -fx-table-cell-border-color: transparent;
     -fx-text-background-color: black;

@@ -2,41 +2,40 @@ package diarsid.navigator.view.table;
 
 import java.util.List;
 import java.util.function.Consumer;
+import javafx.scene.control.TableRow;
+import javafx.scene.control.TableView;
+import javafx.scene.input.DragEvent;
 
 import diarsid.navigator.filesystem.Directory;
 import diarsid.navigator.filesystem.FSEntry;
 import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;
 import diarsid.support.javafx.DoubleClickDetector;
-import javafx.geometry.Insets;
-import javafx.scene.control.TableRow;
-import javafx.scene.control.TableView;
-import javafx.scene.input.DragEvent;
 
-import static java.lang.String.format;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
-
-import static diarsid.navigator.filesystem.Directory.Edit.FILLED;
-import static diarsid.navigator.filesystem.ProgressTracker.DEFAULT;
+import static javafx.geometry.Pos.CENTER;
 import static javafx.scene.input.MouseEvent.MOUSE_PRESSED;
 import static javafx.scene.input.TransferMode.MOVE;
 
-class FileTableRow extends TableRow<FileTableItem> {
+import static diarsid.navigator.filesystem.Directory.Edit.FILLED;
+import static diarsid.navigator.filesystem.ProgressTracker.DEFAULT;
 
-    private final TableView<FileTableItem> tableView;
+class FilesTableRow extends TableRow<FilesTableItem> {
+
+    private final TableView<FilesTableItem> tableView;
     private final DoubleClickDetector doubleClickDetector;
     private final DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles;
 
-    FileTableRow(
-            TableView<FileTableItem> tableView,
-            Consumer<FileTableItem> onItemInvoked,
+    FilesTableRow(
+            TableView<FilesTableItem> tableView,
+            Consumer<FilesTableItem> onItemInvoked,
             DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles) {
         super();
         this.tableView = tableView;
         this.dragAndDropFiles = dragAndDropFiles;
-        super.setPadding(new Insets(0, 0, 0, 0));
         super.setOnDragOver(this::onDragOver);
         super.setOnDragDropped(this::onDragDrop);
+        super.setAlignment(CENTER);
 
         super.addEventFilter(MOUSE_PRESSED, mouseEvent -> {
             if ( mouseEvent.isSecondaryButtonDown() ) {
@@ -60,7 +59,7 @@ class FileTableRow extends TableRow<FileTableItem> {
                         return;
                     }
 
-                    FileTableItem tableItem = super.getItem();
+                    FilesTableItem tableItem = super.getItem();
                     if ( nonNull(tableItem) ) {
                         onItemInvoked.accept(tableItem);
                     }
@@ -69,7 +68,7 @@ class FileTableRow extends TableRow<FileTableItem> {
     }
 
     @Override
-    protected void updateItem(FileTableItem item, boolean empty) {
+    protected void updateItem(FilesTableItem item, boolean empty) {
         super.updateItem(item, empty);
 
         if (empty || item == null) {
@@ -91,7 +90,7 @@ class FileTableRow extends TableRow<FileTableItem> {
             return false;
         }
 
-        FileTableItem item = super.getItem();
+        FilesTableItem item = super.getItem();
 
         if ( isNull(item) ) {
             return false;
@@ -153,7 +152,7 @@ class FileTableRow extends TableRow<FileTableItem> {
             return format.replace("_", "empty");
         }
 
-        FileTableItem item = super.getItem();
+        FilesTableItem item = super.getItem();
 
         if ( isNull(item) ) {
             return format.replace("_", "null");

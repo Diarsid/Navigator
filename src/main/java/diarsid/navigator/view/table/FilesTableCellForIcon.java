@@ -17,7 +17,7 @@ public class FilesTableCellForIcon extends FilesTableCell<ImageView> {
         if (empty || icon == null ) {
             super.setGraphic(null);
         } else {
-            FileTableItem item = super.getTableRow().getItem();
+            FilesTableItem item = super.getTableRow().getItem();
             super.setGraphic(icon);
         }
     }

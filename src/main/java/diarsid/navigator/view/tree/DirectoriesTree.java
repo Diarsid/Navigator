@@ -66,7 +66,7 @@ public class DirectoriesTree implements ViewComponent {
         this.treeView.setPrefSize(100, 100);
         this.treeView.setShowRoot(false);
 
-        treeView.addEventFilter(MOUSE_PRESSED, event -> {
+        this.treeView.addEventFilter(MOUSE_PRESSED, event -> {
             if ( event.isSecondaryButtonDown() ) {
                 Node target = (Node) event.getTarget();
                 if ( target instanceof TreeCell ) {

@@ -25,7 +25,7 @@ import diarsid.navigator.view.FilesView;
 import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;
 import diarsid.navigator.view.tree.DirectoriesTree;
 import diarsid.navigator.view.icons.Icons;
-import diarsid.navigator.view.table.FileTableItem;
+import diarsid.navigator.view.table.FilesTableItem;
 import diarsid.navigator.view.table.FilesTable;
 import diarsid.navigator.view.dragdrop.DragAndDropNodes;
 import diarsid.navigator.view.tabs.LabelsAtTabs;
@@ -113,7 +113,7 @@ public class View {
         this.tabsPanel.newTab(true, directory);
     }
 
-    private void onTableItemInvoked(FileTableItem tableItem) {
+    private void onTableItemInvoked(FilesTableItem tableItem) {
         FSEntry itemFsEntry = tableItem.fsEntry();
         if ( itemFsEntry.isDirectory() ) {
             Optional<Directory> parentDirectory = itemFsEntry.parent();
