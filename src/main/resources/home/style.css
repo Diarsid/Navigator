@@ -7,8 +7,21 @@
     -fx-table-cell-border-color: transparent;
 }
 
+.split-pane {
+    -fx-padding: 0px;
+    -fx-border-width: 0px;
+    -fx-background-color: transparent;
+    /*-fx-border-color: gainsboro;*/
+}
+
+.files-view {
+    -fx-padding: 0px;
+    -fx-border-width: 1px 0 0 0;
+    -fx-border-color: gainsboro;
+}
+
 .split-pane > .split-pane-divider {
-    -fx-padding: 0 1px 0 1px;
+    -fx-padding: 0 1px 0 0;
     -fx-background-color: gainsboro;
 }
 

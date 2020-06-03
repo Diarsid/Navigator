@@ -1,0 +1,3 @@
+names.machine = {string}
+sizes.icons = {int}
+tree.selections.mode = {SINGLE | MULTIPLE({int})}

@@ -5,7 +5,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javafx.beans.property.DoubleProperty;
@@ -79,7 +78,7 @@ class RealIcons implements Icons {
                         this.imagesByExtensions.put(extension, icon);
                     });
 
-            Files.readAllLines(Paths.get("./home/icons/by_paths/paths_to_icons"))
+            Files.readAllLines(Paths.get("home/icons/by_paths/paths_to_icons.txt"))
                     .forEach(link -> {
                         int indexOfSeparator = link.indexOf(" // ");
                         String path = link.substring(0, indexOfSeparator).strip();
