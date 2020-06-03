@@ -57,9 +57,7 @@ public class FilesTable implements ViewComponent {
         TableColumn<FilesTableItem, ImageView> columnIcons = new TableColumn<>();
         TableColumn<FilesTableItem, String> columnNames = new TableColumn<>("Name");
         TableColumn<FilesTableItem, String> columnSizes = new TableColumn<>("Size");
-        PresentListenable<Double> iconsSizeX = this.icons.size();
 
-        ObjectProperty<Double> doubleProperty = new SimpleObjectProperty<>(iconsSizeX.get() + 10);
 //
 //        Consumer<Insets> paddingListener = (iconPadding) -> {
 //            if ( counter.get() == 0 ) {
@@ -94,8 +92,8 @@ public class FilesTable implements ViewComponent {
         columnNames.setReorderable(false);
         columnSizes.setReorderable(false);
 
-        columnIcons.minWidthProperty().bind(doubleProperty);
-        columnIcons.maxWidthProperty().bind(doubleProperty);
+        columnIcons.minWidthProperty().bind(this.icons.sizeProperty().add(10));
+        columnIcons.maxWidthProperty().bind(this.icons.sizeProperty().add(10));
         columnIcons.setSortable(false);
 
         this.tableView.getColumns().add(columnIcons);

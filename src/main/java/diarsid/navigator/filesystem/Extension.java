@@ -14,6 +14,10 @@ public class Extension {
         return this.name;
     }
 
+    public boolean matches(String fileName) {
+        return fileName.endsWith(this.name);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

@@ -49,8 +49,8 @@
     -fx-background-color: whitesmoke;
     -fx-text-background-color: black;
     -fx-font-size: 14px;
-    -fx-border-width: 0 1 0 0;
-    -fx-border-color: gainsboro;
+    -fx-border-width: 0 3 0 0;
+    -fx-border-color: white;
 }
 
 .table-view .filler {
