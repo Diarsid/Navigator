@@ -12,6 +12,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 
+import diarsid.navigator.breadcrumbs.PathBreadcrumbsBar;
 import diarsid.navigator.filesystem.Directory;
 import diarsid.navigator.filesystem.FS;
 import diarsid.navigator.filesystem.FSEntry;
@@ -80,7 +81,7 @@ public class View {
                 this.fs,
                 this.icons,
                 this.directoriesAtTabs,
-                this::onDirectorySelected,
+                this::onDirectoryAtTabSelected,
                 onFSEntryIgnored,
                 dragAndDropFiles);
 
@@ -89,7 +90,10 @@ public class View {
         this.tabsPanel = new TabsPanel(
                 this.tabs, this.directoriesAtTabs, labelsAtTabs, this.directoriesTree, dragAndDropLabels);
 
-        FilesView filesView = new FilesView(tabsPanel, directoriesTree, filesTable);
+        PathBreadcrumbsBar pathBreadcrumbsBar = new PathBreadcrumbsBar(tabs, fs, icons);
+        pathBreadcrumbsBar.size().bindTo(icons.size());
+
+        FilesView filesView = new FilesView(tabsPanel, directoriesTree, filesTable, pathBreadcrumbsBar);
 
         Region view = (Region) filesView.node();
         Group group = new Group();
@@ -156,7 +160,8 @@ public class View {
         }
     }
 
-    private void onDirectorySelected(Directory directory) {
-        this.filesTable.show(directory);
+    private void onDirectoryAtTabSelected(DirectoryAtTab directoryAtTab) {
+        this.filesTable.show(directoryAtTab.directory());
+        directoryAtTab.tab().selectedDirectory().resetTo(directoryAtTab);
     }
 }

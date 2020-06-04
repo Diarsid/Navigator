@@ -2,6 +2,7 @@ package diarsid.navigator.filesystem;
 
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Stream;
@@ -16,9 +17,17 @@ public interface FS {
 
     FSEntry toFSEntry(Path path);
 
+    default Directory toDirectory(String path) {
+        return this.toDirectory(Paths.get(path));
+    }
+
     Directory toDirectory(Path path);
 
     File toFile(Path path);
+
+    default File toFile(String path) {
+        return this.toFile(Paths.get(path));
+    }
 
     boolean isDirectory(Path path);
 

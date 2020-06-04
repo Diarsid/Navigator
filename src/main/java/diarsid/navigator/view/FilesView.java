@@ -4,7 +4,11 @@ import javafx.scene.Node;
 import javafx.scene.control.SplitPane;
 import javafx.scene.layout.VBox;
 
-import diarsid.navigator.breadcrumb.Breadcrumb;
+import diarsid.navigator.breadcrumbs.BreadcrumbsBar;
+import diarsid.navigator.breadcrumbs.PathBreadcrumbsBar;
+import diarsid.navigator.filesystem.Directory;
+import diarsid.navigator.filesystem.FS;
+import diarsid.navigator.view.icons.Icons;
 import diarsid.navigator.view.table.FilesTable;
 import diarsid.navigator.view.tabs.TabsPanel;
 import diarsid.navigator.view.tree.DirectoriesTree;
@@ -15,14 +19,14 @@ public class FilesView implements ViewComponent {
 
     private final SplitPane splitPane;
 
-    public FilesView(TabsPanel tabsPanel, DirectoriesTree directoriesTree, FilesTable filesTable) {
+    public FilesView(
+            TabsPanel tabsPanel,
+            DirectoriesTree directoriesTree,
+            FilesTable filesTable,
+            PathBreadcrumbsBar pathBreadcrumbsBar) {
         this.splitPane = new SplitPane();
 
         VBox vBox = new VBox();
-        Breadcrumb breadcrumb = new Breadcrumb();
-        breadcrumb.add("Machine");
-        breadcrumb.add("Path");
-        breadcrumb.add("To");
 
         SplitPane splitPane2 = new SplitPane();
         splitPane2.getStyleClass().add("files-view");
@@ -30,7 +34,7 @@ public class FilesView implements ViewComponent {
         splitPane2.setDividerPositions(0.3, 0.7);
         VBox.setVgrow(splitPane2, ALWAYS);
 
-        vBox.getChildren().addAll(breadcrumb.node(), splitPane2);
+        vBox.getChildren().addAll(pathBreadcrumbsBar.node(), splitPane2);
         vBox.autosize();
 
 

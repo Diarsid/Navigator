@@ -8,6 +8,7 @@ import javafx.scene.input.MouseEvent;
 
 import diarsid.navigator.model.Tab;
 
+import static java.lang.Double.POSITIVE_INFINITY;
 import static javafx.scene.input.TransferMode.MOVE;
 
 public class LabelAtTab {
@@ -33,7 +34,7 @@ public class LabelAtTab {
         this.label = new Label();
         this.labelsAtTabs = labelsAtTabs;
 
-        this.label.setPrefWidth(Double.POSITIVE_INFINITY);
+        this.label.setPrefWidth(POSITIVE_INFINITY);
         this.label.setText(tab.name());
 
         this.label.getStyleClass().add(FX_CSS_CLASS);

@@ -1,10 +1,6 @@
 package diarsid.navigator.view.tabs;
 
 import java.util.HashMap;
-import java.util.List;
-
-import diarsid.navigator.filesystem.FSEntry;
-import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
@@ -18,7 +14,6 @@ import diarsid.navigator.view.dragdrop.DragAndDropNodes;
 import diarsid.navigator.view.tree.DirectoriesTree;
 
 import static java.lang.Double.POSITIVE_INFINITY;
-import static javafx.geometry.Pos.CENTER;
 import static javafx.geometry.Pos.TOP_CENTER;
 import static javafx.scene.input.TransferMode.MOVE;
 
@@ -90,7 +85,7 @@ public class TabsPanel implements ViewComponent {
         this.addLabel.setText("+");
         this.addLabel.setMinWidth(50);
         this.addLabel.setPrefWidth(POSITIVE_INFINITY);
-        this.addLabel.setAlignment(CENTER);
+        this.addLabel.setAlignment(TOP_CENTER);
         this.addLabel.setOnMouseClicked(event -> {
             this.newTab(true);
         });
@@ -100,7 +95,7 @@ public class TabsPanel implements ViewComponent {
 
     @Override
     public Node node() {
-        return tabsPanel;
+        return this.tabsPanel;
     }
 
     public void newTab(boolean selectCreated, Directory directory) {

@@ -34,7 +34,7 @@ public class DirectoriesTree implements ViewComponent {
     private final Icons icons;
     private final DirectoriesAtTabs directoriesAtTabs;
     private final DirectoryAtTabTreeItems directoryAtTabTreeItems;
-    private final Consumer<Directory> onDirectorySelected;
+    private final Consumer<DirectoryAtTab> onDirectorySelected;
     private final TreeView<String> treeView;
     private final Map<Tab, TreeItem<String>> tabsTreeRoots;
     private final DragAndDropNodes<DirectoriesTreeCell> dragAndDropTreeCell;
@@ -44,13 +44,13 @@ public class DirectoriesTree implements ViewComponent {
             FS fs,
             Icons icons,
             DirectoriesAtTabs directoriesAtTabs,
-            Consumer<Directory> onDirectorySelected,
+            Consumer<DirectoryAtTab> onDirectoryAtTabSelected,
             Consumer<FSEntry> onIgnore,
             DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles) {
         this.fs = fs;
         this.icons = icons;
         this.directoriesAtTabs = directoriesAtTabs;
-        this.onDirectorySelected = onDirectorySelected;
+        this.onDirectorySelected = onDirectoryAtTabSelected;
         this.tabsTreeRoots = new HashMap<>();
         this.dragAndDropTreeCell = new DragAndDropNodes<>("tree-cell");
         this.dragAndDropFiles = dragAndDropFiles;
@@ -128,9 +128,10 @@ public class DirectoriesTree implements ViewComponent {
         if ( nonNull(newItem) ) {
             if ( newItem instanceof DirectoryAtTabTreeItem ) {
                 DirectoryAtTabTreeItem treeItem = (DirectoryAtTabTreeItem) newItem;
+                DirectoryAtTab directoryAtTab = treeItem.directoryAtTab();
                 Directory directory = treeItem.directory();
-                this.onDirectorySelected.accept(directory);
-                treeItem.setSelectedToTab();
+                this.onDirectorySelected.accept(directoryAtTab);
+//                treeItem.setSelectedToTab();
             }
             else {
 

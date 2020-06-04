@@ -11,7 +11,7 @@ import diarsid.support.objects.references.impl.PresentListenable;
 import static java.lang.String.format;
 
 import static diarsid.support.objects.references.impl.References.listenablePresent;
-import static diarsid.support.objects.references.impl.References.listeneable;
+import static diarsid.support.objects.references.impl.References.listenable;
 import static diarsid.support.objects.references.impl.References.possibleButEmpty;
 import static diarsid.support.objects.references.impl.References.presentOf;
 
@@ -30,13 +30,17 @@ public class Tab {
     Tab(Identity<Tab> identity) {
         this.identity = identity;
         this.isActive = listenablePresent(false, format("Tab[%s].isActive", this.identity.serial()));
-        this.selectedDirectory = listeneable(possibleButEmpty());
+        this.selectedDirectory = listenable(possibleButEmpty());
         this.visibleName = listenablePresent(DEFAULT_NAME, format("Tab[%s].visibleName", this.identity.serial()));
         this.isPinned = presentOf(false, format("Tab[%s].isPinned", this.identity.serial()));
 
         this.listenSelectedDirectoryToChangeVisibleName = this.selectedDirectory.listen((oldSelected, newSelected) -> {
             this.visibleName.resetTo(newSelected.directory().name());
         });
+    }
+
+    public Identity<Tab> identity() {
+        return this.identity;
     }
 
     public Listening<String> listenToRename(BiConsumer<String, String> listener) {

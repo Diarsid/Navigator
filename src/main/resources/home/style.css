@@ -138,7 +138,26 @@
 
 .files-table-frame-selection {
     -fx-fill: rgba(175, 238, 238, 0.4);
-    -fx-stroke: grey;
+    -fx-stroke: darkgrey;
     -fx-stroke-width: 1;
+}
+
+.breadcrumbs-bar {
+    -fx-padding: 4px;
+}
+
+.breadcrumbs-bar .separator {
+    -fx-padding: 0 4px 0 0;
+}
+
+.breadcrumbs-bar .element {
+    -fx-padding: 0 4px 0 0;
+    -fx-spacing: 2px;
+    -fx-background-color: transparent;
+    -fx-background-radius: 6px;
+}
+
+.breadcrumbs-bar .element:hover {
+    -fx-background-color: rgba(175, 238, 238, 0.4);
 }
 

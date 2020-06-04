@@ -80,9 +80,9 @@ public class DirectoryAtTabTreeItem extends TreeItem<String> implements Comparab
         });
     }
 
-    public void setSelectedToTab() {
-        this.tab.selectedDirectory().resetTo(this.directoryAtTab);
-    }
+//    public void setSelectedToTab() {
+//        this.tab.selectedDirectory().resetTo(this.directoryAtTab);
+//    }
 
     public Tab tab() {
         return this.tab;
@@ -90,6 +90,10 @@ public class DirectoryAtTabTreeItem extends TreeItem<String> implements Comparab
 
     public Directory directory() {
         return this.directory;
+    }
+
+    public DirectoryAtTab directoryAtTab() {
+        return this.directoryAtTab;
     }
 
     private void setPlaceholderIfChildrenPresent() {
