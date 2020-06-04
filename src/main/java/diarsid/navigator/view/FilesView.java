@@ -4,11 +4,7 @@ import javafx.scene.Node;
 import javafx.scene.control.SplitPane;
 import javafx.scene.layout.VBox;
 
-import diarsid.navigator.breadcrumbs.BreadcrumbsBar;
-import diarsid.navigator.breadcrumbs.PathBreadcrumbsBar;
-import diarsid.navigator.filesystem.Directory;
-import diarsid.navigator.filesystem.FS;
-import diarsid.navigator.view.icons.Icons;
+import diarsid.navigator.view.breadcrumbs.PathBreadcrumbsBar;
 import diarsid.navigator.view.table.FilesTable;
 import diarsid.navigator.view.tabs.TabsPanel;
 import diarsid.navigator.view.tree.DirectoriesTree;

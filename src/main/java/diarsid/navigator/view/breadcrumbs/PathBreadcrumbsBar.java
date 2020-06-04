@@ -1,4 +1,4 @@
-package diarsid.navigator.breadcrumbs;
+package diarsid.navigator.view.breadcrumbs;
 
 import javafx.scene.Node;
 

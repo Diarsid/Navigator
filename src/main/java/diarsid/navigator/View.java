@@ -12,7 +12,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 
-import diarsid.navigator.breadcrumbs.PathBreadcrumbsBar;
+import diarsid.navigator.view.breadcrumbs.PathBreadcrumbsBar;
 import diarsid.navigator.filesystem.Directory;
 import diarsid.navigator.filesystem.FS;
 import diarsid.navigator.filesystem.FSEntry;
