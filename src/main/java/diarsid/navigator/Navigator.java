@@ -11,15 +11,15 @@ import diarsid.navigator.filesystem.FS;
 public class Navigator {
 
     private final FS fs;
-    private final View view;
+    private final NavigatorView navigatorView;
 
     public Navigator() {
         this.fs = FS.INSTANCE;
-        AtomicReference<View> viewRef = new AtomicReference<>();
+        AtomicReference<NavigatorView> viewRef = new AtomicReference<>();
         CountDownLatch lock = new CountDownLatch(1);
 
         Platform.startup(() -> {
-            viewRef.set(new View());
+            viewRef.set(new NavigatorView());
             lock.countDown();
         });
 
@@ -30,15 +30,15 @@ public class Navigator {
             throw new IllegalStateException();
         }
 
-        this.view = viewRef.get();
+        this.navigatorView = viewRef.get();
     }
 
     public void open(String path) {
         Directory directory = this.fs.toDirectory(Paths.get(path));
-        Platform.runLater(() -> this.view.open(directory));
+        Platform.runLater(() -> this.navigatorView.open(directory));
     }
 
     public void open(Directory directory) {
-        Platform.runLater(() -> this.view.open(directory));
+        Platform.runLater(() -> this.navigatorView.open(directory));
     }
 }

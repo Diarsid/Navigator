@@ -36,7 +36,7 @@ import diarsid.support.objects.references.impl.Possible;
 
 import static javafx.stage.StageStyle.DECORATED;
 
-public class View {
+class NavigatorView {
 
     public static Group VIEW_GROUP;
 
@@ -49,7 +49,7 @@ public class View {
     private FilesTable filesTable;
     private TabsPanel tabsPanel;
 
-    public View() {
+    NavigatorView() {
         Stage stage = new Stage();
         stage.initStyle(DECORATED);
 

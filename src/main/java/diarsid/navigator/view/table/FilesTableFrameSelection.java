@@ -6,7 +6,7 @@ import javafx.scene.shape.Rectangle;
 
 import static java.util.Objects.isNull;
 
-import static diarsid.navigator.View.VIEW_GROUP;
+import static diarsid.navigator.NavigatorView.VIEW_GROUP;
 
 class FilesTableFrameSelection {
 
