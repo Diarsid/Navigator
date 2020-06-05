@@ -3,15 +3,14 @@ package diarsid.navigator.filesystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Stream;
 
 import diarsid.navigator.filesystem.ignoring.Ignores;
 
-public interface FS {
+public interface FileSystem {
 
-    FS INSTANCE = new RealFS(Ignores.INSTANCE, new HashMap<>(), new HashMap<>(), FileSystems.getDefault());
+    FileSystem INSTANCE = new LocalFileSystem(Ignores.INSTANCE, FileSystems.getDefault());
 
     Directory machineDirectory();
 
@@ -66,5 +65,7 @@ public interface FS {
     boolean isRoot(Directory directory);
 
     boolean isMachine(Directory directory);
+
+    FileSystemType type();
 
 }

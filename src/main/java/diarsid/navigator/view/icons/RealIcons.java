@@ -13,7 +13,7 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.image.Image;
 
 import diarsid.navigator.filesystem.Extension;
-import diarsid.navigator.filesystem.FS;
+import diarsid.navigator.filesystem.FileSystem;
 import diarsid.navigator.filesystem.FSEntry;
 import diarsid.navigator.filesystem.File;
 import diarsid.navigator.model.ImageType;
@@ -35,7 +35,7 @@ class RealIcons implements Icons {
     private final PresentListenable<Double> size;
     private final DoubleProperty sizeProperty;
 
-    RealIcons(FS fs) {
+    RealIcons(FileSystem fileSystem) {
         this.size = listenablePresent(18d, "Icons.size");
         this.sizeProperty = new SimpleDoubleProperty(this.size.get());
         this.size.listen((oldSize, newSize) -> this.sizeProperty.set(newSize));
@@ -74,7 +74,7 @@ class RealIcons implements Icons {
                             fileName = imageType.get().removeFrom(fileName);
                         }
 
-                        Extension extension = fs.extensions().getBy(fileName);
+                        Extension extension = fileSystem.extensions().getBy(fileName);
                         this.imagesByExtensions.put(extension, icon);
                     });
 

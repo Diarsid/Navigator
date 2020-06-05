@@ -7,7 +7,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import diarsid.navigator.filesystem.Extension;
-import diarsid.navigator.filesystem.FS;
+import diarsid.navigator.filesystem.FileSystem;
 
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toSet;
@@ -33,7 +33,7 @@ public enum ImageType {
 
     ImageType(String... extensions) {
         this.extensions = stream(extensions)
-                .map(extensionName -> FS.INSTANCE.extensions().getBy(extensionName))
+                .map(extensionName -> FileSystem.INSTANCE.extensions().getBy(extensionName))
                 .collect(toSet());
     }
 

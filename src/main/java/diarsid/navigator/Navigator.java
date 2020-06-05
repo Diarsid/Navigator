@@ -6,15 +6,15 @@ import java.util.concurrent.atomic.AtomicReference;
 import javafx.application.Platform;
 
 import diarsid.navigator.filesystem.Directory;
-import diarsid.navigator.filesystem.FS;
+import diarsid.navigator.filesystem.FileSystem;
 
 public class Navigator {
 
-    private final FS fs;
+    private final FileSystem fileSystem;
     private final NavigatorView navigatorView;
 
     public Navigator() {
-        this.fs = FS.INSTANCE;
+        this.fileSystem = FileSystem.INSTANCE;
         AtomicReference<NavigatorView> viewRef = new AtomicReference<>();
         CountDownLatch lock = new CountDownLatch(1);
 
@@ -34,7 +34,7 @@ public class Navigator {
     }
 
     public void open(String path) {
-        Directory directory = this.fs.toDirectory(Paths.get(path));
+        Directory directory = this.fileSystem.toDirectory(Paths.get(path));
         Platform.runLater(() -> this.navigatorView.open(directory));
     }
 

@@ -14,7 +14,7 @@ import javafx.stage.Stage;
 
 import diarsid.navigator.view.breadcrumbs.PathBreadcrumbsBar;
 import diarsid.navigator.filesystem.Directory;
-import diarsid.navigator.filesystem.FS;
+import diarsid.navigator.filesystem.FileSystem;
 import diarsid.navigator.filesystem.FSEntry;
 import diarsid.navigator.filesystem.File;
 import diarsid.navigator.filesystem.ignoring.Ignores;
@@ -42,7 +42,7 @@ class NavigatorView {
     public static Group VIEW_GROUP;
 
     private Ignores ignores;
-    private FS fs;
+    private FileSystem fileSystem;
     private Tabs tabs;
     private DirectoriesAtTabs directoriesAtTabs;
     private Icons icons;
@@ -56,7 +56,7 @@ class NavigatorView {
 
         this.ignores = Ignores.INSTANCE;
         DragAndDropNodes<Label> dragAndDropLabels = new DragAndDropNodes<>("tab");
-        this.fs = FS.INSTANCE;
+        this.fileSystem = FileSystem.INSTANCE;
         this.icons = Icons.INSTANCE;
         this.tabs = new Tabs();
         this.directoriesAtTabs = new DirectoriesAtTabs();
@@ -81,7 +81,7 @@ class NavigatorView {
         };
 
         this.directoriesTree = new DirectoriesTree(
-                this.fs,
+                this.fileSystem,
                 this.icons,
                 this.directoriesAtTabs,
                 this::onDirectoryAtTabSelected,
@@ -93,10 +93,10 @@ class NavigatorView {
         this.tabsPanel = new TabsPanel(
                 this.tabs, this.directoriesAtTabs, labelsAtTabs, this.directoriesTree, dragAndDropLabels);
 
-        PathBreadcrumbsBar pathBreadcrumbsBar = new PathBreadcrumbsBar(tabs, fs, icons);
-        pathBreadcrumbsBar.size().bindTo(icons.size());
+        PathBreadcrumbsBar pathBreadcrumbsBar = new PathBreadcrumbsBar(this.tabs, this.fileSystem, this.icons);
+        pathBreadcrumbsBar.iconsSize().bindTo(this.icons.size());
 
-        FilesView filesView = new FilesView(tabsPanel, directoriesTree, filesTable, pathBreadcrumbsBar);
+        FilesView filesView = new FilesView(this.tabsPanel, this.directoriesTree, this.filesTable, pathBreadcrumbsBar);
 
         Region view = (Region) filesView.node();
 
@@ -138,7 +138,7 @@ class NavigatorView {
                 Possible<Tab> selectedTab = this.tabs.selected();
                 if ( selectedTab.isPresent() ) {
                     Tab tab = selectedTab.orThrow();
-                    Directory machineDirectory = this.fs.machineDirectory();
+                    Directory machineDirectory = this.fileSystem.machineDirectory();
                     this.directoriesTree.selectAndExpandParent(tab, machineDirectory, directory);
                 }
             }

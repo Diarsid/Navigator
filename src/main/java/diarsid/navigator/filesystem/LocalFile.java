@@ -9,19 +9,19 @@ import java.util.Optional;
 
 import static java.util.Objects.nonNull;
 
-class RealFile implements File {
+class LocalFile implements File {
 
     private final Path path;
     private final String name;
     private final String fullName;
-    private final FS fs;
+    private final FileSystem fileSystem;
 
-    RealFile(Path path, FS fs) {
+    LocalFile(Path path, FileSystem fileSystem) {
         this.path = path;
         this.name = path.getFileName().toString();
         this.fullName = path.toAbsolutePath().toString();
-        this.fs = fs;
-        fs.isFile(this.path);
+        this.fileSystem = fileSystem;
+        fileSystem.isFile(this.path);
     }
 
     @Override
@@ -38,7 +38,7 @@ class RealFile implements File {
     public Optional<Directory> parent() {
         Path parent = this.path.getParent();
         if ( nonNull(parent) ) {
-            return Optional.of(fs.toDirectory(parent));
+            return Optional.of(fileSystem.toDirectory(parent));
         }
         else {
             return Optional.empty();
@@ -47,7 +47,7 @@ class RealFile implements File {
 
     @Override
     public List<Directory> parents() {
-        return this.fs.parentsOf(this);
+        return this.fileSystem.parentsOf(this);
     }
 
     @Override
@@ -78,12 +78,12 @@ class RealFile implements File {
 
     @Override
     public boolean moveTo(Directory newPlace) {
-        return this.fs.move(this, newPlace);
+        return this.fileSystem.move(this, newPlace);
     }
 
     @Override
     public boolean remove() {
-        return this.fs.remove(this);
+        return this.fileSystem.remove(this);
     }
 
     @Override
@@ -93,7 +93,7 @@ class RealFile implements File {
 
     @Override
     public long size() {
-        return this.fs.sizeOf(this);
+        return this.fileSystem.sizeOf(this);
     }
 
     @Override
@@ -123,20 +123,20 @@ class RealFile implements File {
 
     @Override
     public Optional<Extension> extension() {
-        return this.fs.extensions().getFor(this);
+        return this.fileSystem.extensions().getFor(this);
     }
 
     @Override
     public void open() {
-        this.fs.open(this);
+        this.fileSystem.open(this);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof RealFile)) return false;
-        RealFile realFile = (RealFile) o;
-        return path.equals(realFile.path);
+        if (!(o instanceof LocalFile)) return false;
+        LocalFile localFile = (LocalFile) o;
+        return path.equals(localFile.path);
     }
 
     @Override

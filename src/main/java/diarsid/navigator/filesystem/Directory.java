@@ -46,7 +46,7 @@ public interface Directory extends FSEntry {
     boolean hostAll(List<FSEntry> newEntries, ProgressTracker<FSEntry> progressTracker);
 
     default boolean canHost(FSEntry newEntry) {
-        if ( this instanceof MachineDirectory ) {
+        if ( this instanceof LocalMachineDirectory) {
             return false;
         }
 

@@ -3,7 +3,7 @@ package diarsid.navigator.view.breadcrumbs;
 import javafx.scene.Node;
 
 import diarsid.navigator.filesystem.Directory;
-import diarsid.navigator.filesystem.FS;
+import diarsid.navigator.filesystem.FileSystem;
 import diarsid.navigator.model.DirectoryAtTab;
 import diarsid.navigator.model.Tabs;
 import diarsid.navigator.view.icons.Icon;
@@ -13,13 +13,13 @@ import diarsid.support.objects.references.Reference;
 public class PathBreadcrumbsBar {
 
     private final Tabs tabs;
-    private final FS fs;
+    private final FileSystem fileSystem;
     private final Icons icons;
     private final BreadcrumbsBar<Directory> bar;
 
-    public PathBreadcrumbsBar(Tabs tabs, FS fs, Icons icons) {
+    public PathBreadcrumbsBar(Tabs tabs, FileSystem fileSystem, Icons icons) {
         this.tabs = tabs;
-        this.fs = fs;
+        this.fileSystem = fileSystem;
         this.icons = icons;
         this.bar = new BreadcrumbsBar<>(">", Directory::name);
 
@@ -36,7 +36,7 @@ public class PathBreadcrumbsBar {
 
         Directory directory = directoryAtTab.directory();
 
-        Directory machineDirectory = this.fs.machineDirectory();
+        Directory machineDirectory = this.fileSystem.machineDirectory();
         if ( ! directory.equals(machineDirectory) ) {
             this.bar.add(this.icons.getFor(machineDirectory).image(), machineDirectory);
         }
@@ -49,7 +49,7 @@ public class PathBreadcrumbsBar {
         this.bar.add(icon.image(), directory);
     }
 
-    public Reference<Double> size() {
+    public Reference<Double> iconsSize() {
         return this.bar.size();
     }
 

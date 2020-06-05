@@ -13,7 +13,7 @@ import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 
 import diarsid.navigator.filesystem.Directory;
-import diarsid.navigator.filesystem.FS;
+import diarsid.navigator.filesystem.FileSystem;
 import diarsid.navigator.filesystem.FSEntry;
 import diarsid.navigator.model.DirectoriesAtTabs;
 import diarsid.navigator.model.DirectoryAtTab;
@@ -30,7 +30,7 @@ import static javafx.scene.input.MouseEvent.MOUSE_PRESSED;
 
 public class DirectoriesTree implements ViewComponent {
 
-    private final FS fs;
+    private final FileSystem fileSystem;
     private final Icons icons;
     private final DirectoriesAtTabs directoriesAtTabs;
     private final DirectoryAtTabTreeItems directoryAtTabTreeItems;
@@ -41,13 +41,13 @@ public class DirectoriesTree implements ViewComponent {
     private final DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles;
 
     public DirectoriesTree(
-            FS fs,
+            FileSystem fileSystem,
             Icons icons,
             DirectoriesAtTabs directoriesAtTabs,
             Consumer<DirectoryAtTab> onDirectoryAtTabSelected,
             Consumer<FSEntry> onIgnore,
             DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles) {
-        this.fs = fs;
+        this.fileSystem = fileSystem;
         this.icons = icons;
         this.directoriesAtTabs = directoriesAtTabs;
         this.onDirectorySelected = onDirectoryAtTabSelected;
@@ -232,7 +232,7 @@ public class DirectoriesTree implements ViewComponent {
 
     private TreeItem<String> assignRootTreeItemToTab(Tab tab, boolean selectTab) {
 
-        DirectoryAtTab machineDirectoryAtTab = this.directoriesAtTabs.join(tab, this.fs.machineDirectory());
+        DirectoryAtTab machineDirectoryAtTab = this.directoriesAtTabs.join(tab, this.fileSystem.machineDirectory());
         DirectoryAtTabTreeItem machineDirectoryTreeItem = this.directoryAtTabTreeItems.wrap(machineDirectoryAtTab);
 
         machineDirectoryTreeItem.setExpanded(true);

@@ -14,16 +14,16 @@ import diarsid.support.objects.groups.Running;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 
-class MachineDirectory implements Directory {
+class LocalMachineDirectory implements Directory {
 
     private final String machineName;
-    private final FS fs;
+    private final LocalFileSystem fileSystem;
     private final List<Path> roots;
     private final Runnables changeListeners;
 
-    MachineDirectory(FS fs, Iterable<Path> rootPaths) {
+    LocalMachineDirectory(LocalFileSystem fileSystem, Iterable<Path> rootPaths) {
         this.machineName = getMachineName();
-        this.fs = fs;
+        this.fileSystem = fileSystem;
         this.roots = new ArrayList<>();
         this.changeListeners = new Runnables();
         rootPaths.forEach(this.roots::add);
@@ -98,7 +98,7 @@ class MachineDirectory implements Directory {
     public void feedChildren(Consumer<List<FSEntry>> consumer) {
         List<FSEntry> entries = this.roots
                 .stream()
-                .map(this.fs::toFSEntry)
+                .map(this.fileSystem::toFSEntry)
                 .collect(toList());
 
         consumer.accept(entries);
@@ -108,8 +108,8 @@ class MachineDirectory implements Directory {
     public void feedDirectories(Consumer<List<Directory>> consumer) {
         List<Directory> directories = this.roots
                 .stream()
-                .filter(this.fs::isDirectory)
-                .map(this.fs::toDirectory)
+                .filter(this.fileSystem::isDirectory)
+                .map(this.fileSystem::toDirectory)
                 .collect(toList());
 
         consumer.accept(directories);
@@ -119,8 +119,8 @@ class MachineDirectory implements Directory {
     public void feedFiles(Consumer<List<File>> consumer) {
         List<File> files = this.roots
                 .stream()
-                .filter(this.fs::isFile)
-                .map(this.fs::toFile)
+                .filter(this.fileSystem::isFile)
+                .map(this.fileSystem::toFile)
                 .collect(toList());
 
         consumer.accept(files);

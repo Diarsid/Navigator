@@ -20,19 +20,19 @@ import static java.util.Objects.nonNull;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
 
-class RealDirectory implements Directory {
+class LocalDirectory implements Directory {
 
     private final UUID uuid;
-    private final FS fs;
+    private final FileSystem fileSystem;
     private final Runnables changeListeners;
 
     private Path path;
     private String name;
     private String fullName;
 
-    RealDirectory(Path path, FS fs) {
+    LocalDirectory(Path path, FileSystem fileSystem) {
         this.uuid = randomUUID();
-        this.fs = fs;
+        this.fileSystem = fileSystem;
         this.changeListeners = new Runnables();
         this.path = path.toAbsolutePath();
         this.name = getNameFrom(path);
@@ -66,7 +66,7 @@ class RealDirectory implements Directory {
     public Optional<Directory> parent() {
         Path parent = this.path.getParent();
         if ( nonNull(parent) ) {
-            return Optional.of(this.fs.toDirectory(parent));
+            return Optional.of(this.fileSystem.toDirectory(parent));
         }
         else {
             return Optional.empty();
@@ -81,12 +81,12 @@ class RealDirectory implements Directory {
 
     @Override
     public boolean isRoot() {
-        return this.fs.isRoot(this);
+        return this.fileSystem.isRoot(this);
     }
 
     @Override
     public List<Directory> parents() {
-        return this.fs.parentsOf(this);
+        return this.fileSystem.parentsOf(this);
     }
 
     @Override
@@ -110,7 +110,7 @@ class RealDirectory implements Directory {
     @Override
     public void checkDirectoriesPresence(Consumer<Boolean> consumer) {
         try (Stream<Path> pathsStream = list(this.path)) {
-            consumer.accept(pathsStream.anyMatch(this.fs::isDirectory));
+            consumer.accept(pathsStream.anyMatch(this.fileSystem::isDirectory));
         }
         catch (AccessDeniedException denied) {
             consumer.accept(false);
@@ -123,7 +123,7 @@ class RealDirectory implements Directory {
     @Override
     public void checkFilesPresence(Consumer<Boolean> consumer) {
         try (Stream<Path> pathsStream = list(this.path)) {
-            consumer.accept(pathsStream.anyMatch(this.fs::isFile));
+            consumer.accept(pathsStream.anyMatch(this.fileSystem::isFile));
         }
         catch (AccessDeniedException denied) {
             consumer.accept(false);
@@ -135,7 +135,7 @@ class RealDirectory implements Directory {
 
     @Override
     public void feedChildren(Consumer<List<FSEntry>> consumer) {
-        Stream<FSEntry> entriesStream = this.fs.list(this);
+        Stream<FSEntry> entriesStream = this.fileSystem.list(this);
 
         List<FSEntry> entries = entriesStream
                 .sorted()
@@ -148,7 +148,7 @@ class RealDirectory implements Directory {
 
     @Override
     public void feedDirectories(Consumer<List<Directory>> consumer) {
-        Stream<FSEntry> entriesStream = this.fs.list(this);
+        Stream<FSEntry> entriesStream = this.fileSystem.list(this);
 
         List<Directory> directories = entriesStream
                 .filter(FSEntry::isDirectory)
@@ -163,7 +163,7 @@ class RealDirectory implements Directory {
 
     @Override
     public void feedFiles(Consumer<List<File>> consumer) {
-        Stream<FSEntry> entriesStream = this.fs.list(this);
+        Stream<FSEntry> entriesStream = this.fileSystem.list(this);
 
         List<File> files = entriesStream
                 .filter(FSEntry::isFile)
@@ -178,24 +178,27 @@ class RealDirectory implements Directory {
 
     @Override
     public void host(FSEntry newEntry, Consumer<Boolean> callback) {
-        boolean result = this.fs.move(newEntry, this);
+        boolean result = this.fileSystem.move(newEntry, this);
         callback.accept(result);
     }
 
     @Override
-    public void hostAll(List<FSEntry> newEntries, Consumer<Boolean> callback, ProgressTracker<FSEntry> progressTracker) {
-        boolean result = this.fs.moveAll(newEntries, this, progressTracker);
+    public void hostAll(
+            List<FSEntry> newEntries,
+            Consumer<Boolean> callback,
+            ProgressTracker<FSEntry> progressTracker) {
+        boolean result = this.fileSystem.moveAll(newEntries, this, progressTracker);
         callback.accept(result);
     }
 
     @Override
     public boolean host(FSEntry newEntry) {
-        return this.fs.move(newEntry, this);
+        return this.fileSystem.move(newEntry, this);
     }
 
     @Override
     public boolean hostAll(List<FSEntry> newEntries, ProgressTracker<FSEntry> progressTracker) {
-        return this.fs.moveAll(newEntries, this, progressTracker);
+        return this.fileSystem.moveAll(newEntries, this, progressTracker);
     }
 
     @Override
@@ -221,12 +224,12 @@ class RealDirectory implements Directory {
 
     @Override
     public boolean moveTo(Directory newPlace) {
-        return this.fs.move(this, newPlace);
+        return this.fileSystem.move(this, newPlace);
     }
 
     @Override
     public boolean remove() {
-        return this.fs.remove(this);
+        return this.fileSystem.remove(this);
     }
 
     @Override
@@ -245,7 +248,7 @@ class RealDirectory implements Directory {
             case MOVED:
             case DELETED:
             case RENAMED:
-                return ! this.fs.isRoot(this);
+                return ! this.fileSystem.isRoot(this);
             case FILLED: return true;
             default: return false;
         }
@@ -264,8 +267,8 @@ class RealDirectory implements Directory {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof RealDirectory)) return false;
-        RealDirectory directory = (RealDirectory) o;
+        if (!(o instanceof LocalDirectory)) return false;
+        LocalDirectory directory = (LocalDirectory) o;
         return uuid.equals(directory.uuid);
     }
 
@@ -294,7 +297,7 @@ class RealDirectory implements Directory {
 
     @Override
     public String toString() {
-        return "RealDirectory{" +
+        return "LocalDirectory{" +
                 "fullName='" + fullName + '\'' +
                 '}';
     }

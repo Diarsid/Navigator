@@ -1,9 +1,8 @@
 package diarsid.navigator.filesystem;
 
-import java.awt.Desktop;
+import java.awt.*;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
-import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -25,27 +24,27 @@ import static java.util.Comparator.reverseOrder;
 import static java.util.Objects.nonNull;
 import static java.util.stream.Collectors.toList;
 
-class RealFS implements FS {
+import static diarsid.navigator.filesystem.FileSystemType.LOCAL;
+
+class LocalFileSystem implements FileSystem {
 
     private final Ignores ignores;
     private final Function<Path, FSEntry> pathToFSEntry;
     private final HashMap<String, Directory> directoriesByPath;
     private final HashMap<String, File> filesByPath;
-    private final MachineDirectory machineDirectory;
+    private final LocalMachineDirectory localMachineDirectory;
     private final Extensions extensions;
     private final Desktop desktop;
     private final Predicate<FSEntry> notIgnored;
 
 
-    RealFS(
+    LocalFileSystem(
             Ignores ignores,
-            HashMap<String, Directory> directoriesByPath,
-            HashMap<String, File> filesByPath,
-            FileSystem fileSystem) {
+            java.nio.file.FileSystem fileSystem) {
         this.ignores = ignores;
-        this.directoriesByPath = directoriesByPath;
-        this.filesByPath = filesByPath;
-        this.machineDirectory = new MachineDirectory(this, fileSystem.getRootDirectories());
+        this.directoriesByPath = new HashMap<>();
+        this.filesByPath = new HashMap<>();
+        this.localMachineDirectory = new LocalMachineDirectory(this, fileSystem.getRootDirectories());
         this.extensions = new Extensions();
         this.desktop = getDesktop();
 
@@ -63,7 +62,7 @@ class RealFS implements FS {
 
     @Override
     public Directory machineDirectory() {
-        return this.machineDirectory;
+        return this.localMachineDirectory;
     }
 
     @Override
@@ -75,14 +74,14 @@ class RealFS implements FS {
     public Directory toDirectory(Path path) {
         return this.directoriesByPath.computeIfAbsent(
                 path.toAbsolutePath().toString(),
-                fullName -> new RealDirectory(path, this));
+                fullName -> new LocalDirectory(path, this));
     }
 
     @Override
     public File toFile(Path path) {
         return this.filesByPath.computeIfAbsent(
                 path.toAbsolutePath().toString(),
-                fullName -> new RealFile(path, this));
+                fullName -> new LocalFile(path, this));
     }
 
     @Override
@@ -100,7 +99,7 @@ class RealFS implements FS {
         boolean success;
 
         if ( whatToCopy.isFile() ) {
-            RealFile file = (RealFile) whatToCopy;
+            LocalFile file = (LocalFile) whatToCopy;
             try {
                 Files.copy(file.nioPath(), whereToCopy.nioPath().resolve(file.name()));
                 success = true;
@@ -111,8 +110,8 @@ class RealFS implements FS {
             }
         }
         else {
-            RealDirectory directoryToCopy = (RealDirectory) whatToCopy;
-            RealDirectory directoryHost = (RealDirectory) whereToCopy;
+            LocalDirectory directoryToCopy = (LocalDirectory) whatToCopy;
+            LocalDirectory directoryHost = (LocalDirectory) whereToCopy;
 
             if ( directoryToCopy.equals(directoryHost) ) {
                 return false;
@@ -151,7 +150,7 @@ class RealFS implements FS {
         boolean success;
 
         if ( whatToMove.isFile() ) {
-            RealFile fileToMove = (RealFile) whatToMove;
+            LocalFile fileToMove = (LocalFile) whatToMove;
             try {
                 Optional<Directory> previousParent = fileToMove.parent();
 
@@ -169,8 +168,8 @@ class RealFS implements FS {
             }
         }
         else {
-            RealDirectory directoryToMove = (RealDirectory) whatToMove;
-            RealDirectory directoryHost = (RealDirectory) whereToMove;
+            LocalDirectory directoryToMove = (LocalDirectory) whatToMove;
+            LocalDirectory directoryHost = (LocalDirectory) whereToMove;
 
             if ( directoryToMove.equals(directoryHost) ) {
                 return false;
@@ -214,7 +213,7 @@ class RealFS implements FS {
         boolean success;
 
         if ( entry.isFile() ) {
-            RealFile file = (RealFile) entry;
+            LocalFile file = (LocalFile) entry;
             try {
                 Files.delete(file.nioPath());
                 success = true;
@@ -225,7 +224,7 @@ class RealFS implements FS {
             }
         }
         else {
-            RealDirectory directoryToRemove = (RealDirectory) entry;
+            LocalDirectory directoryToRemove = (LocalDirectory) entry;
 
             try {
                 List<Path> paths = Files.walk(directoryToRemove.nioPath())
@@ -385,12 +384,17 @@ class RealFS implements FS {
 
     @Override
     public boolean isRoot(Directory directory) {
-        return this.machineDirectory.roots().contains(directory.nioPath());
+        return this.localMachineDirectory.roots().contains(directory.nioPath());
     }
 
     @Override
     public boolean isMachine(Directory directory) {
-        return directory instanceof MachineDirectory;
+        return directory instanceof LocalMachineDirectory;
+    }
+
+    @Override
+    public FileSystemType type() {
+        return LOCAL;
     }
 
     private void handle(IOException e) {
