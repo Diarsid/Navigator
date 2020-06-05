@@ -10,21 +10,36 @@ import diarsid.navigator.filesystem.FileSystem;
 
 public class Navigator {
 
+    private final static CountDownLatch PLATFORM_STARTUP_LOCK = new CountDownLatch(1);
+
+    static {
+        Platform.startup(PLATFORM_STARTUP_LOCK::countDown);
+    }
+
+    CountDownLatch lock = new CountDownLatch(1);
     private final FileSystem fileSystem;
     private final NavigatorView navigatorView;
 
     public Navigator() {
         this.fileSystem = FileSystem.INSTANCE;
         AtomicReference<NavigatorView> viewRef = new AtomicReference<>();
-        CountDownLatch lock = new CountDownLatch(1);
 
-        Platform.startup(() -> {
+        if ( PLATFORM_STARTUP_LOCK.getCount() > 0 ) {
+            try {
+                PLATFORM_STARTUP_LOCK.await();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                throw new IllegalStateException();
+            }
+        }
+
+        Platform.runLater(() -> {
             viewRef.set(new NavigatorView());
-            lock.countDown();
+            this.lock.countDown();
         });
 
         try {
-            lock.await();
+            this.lock.await();
         } catch (InterruptedException e) {
             e.printStackTrace();
             throw new IllegalStateException();
@@ -33,12 +48,21 @@ public class Navigator {
         this.navigatorView = viewRef.get();
     }
 
-    public void open(String path) {
+    public void openInNewTab(String path) {
         Directory directory = this.fileSystem.toDirectory(Paths.get(path));
-        Platform.runLater(() -> this.navigatorView.open(directory));
+        Platform.runLater(() -> this.navigatorView.openInNewTab(directory));
     }
 
-    public void open(Directory directory) {
-        Platform.runLater(() -> this.navigatorView.open(directory));
+    public void openInCurrentTab(String path) {
+        Directory directory = this.fileSystem.toDirectory(Paths.get(path));
+        Platform.runLater(() -> this.navigatorView.openInCurrentTab(directory));
+    }
+
+    public void openInNewTab(Directory directory) {
+        Platform.runLater(() -> this.navigatorView.openInNewTab(directory));
+    }
+
+    public void openInCurrentTab(Directory directory) {
+        Platform.runLater(() -> this.navigatorView.openInCurrentTab(directory));
     }
 }

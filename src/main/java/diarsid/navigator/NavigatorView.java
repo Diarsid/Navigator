@@ -9,6 +9,7 @@ import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 
@@ -93,7 +94,7 @@ class NavigatorView {
         this.tabsPanel = new TabsPanel(
                 this.tabs, this.directoriesAtTabs, labelsAtTabs, this.directoriesTree, dragAndDropLabels);
 
-        PathBreadcrumbsBar pathBreadcrumbsBar = new PathBreadcrumbsBar(this.tabs, this.fileSystem, this.icons);
+        PathBreadcrumbsBar pathBreadcrumbsBar = new PathBreadcrumbsBar(this.tabs, this.fileSystem, this.icons, this.directoriesAtTabs, this::onBreadcrumbsBarDirectorySelected);
         pathBreadcrumbsBar.iconsSize().bindTo(this.icons.size());
 
         FilesView filesView = new FilesView(this.tabsPanel, this.directoriesTree, this.filesTable, pathBreadcrumbsBar);
@@ -117,8 +118,12 @@ class NavigatorView {
         stage.show();
     }
 
-    public void open(Directory directory) {
+    public void openInNewTab(Directory directory) {
         this.tabsPanel.newTab(true, directory);
+    }
+
+    public void openInCurrentTab(Directory directory) {
+        this.tabsPanel.currentTabTo(directory);
     }
 
     private void onTableItemInvoked(FilesTableItem tableItem) {
@@ -150,18 +155,34 @@ class NavigatorView {
     }
 
     private void onTabSelected(Tab tab) {
-        this.tabs.select(tab);
+        this.selectIfNotSelected(tab);
         this.directoriesTree.setActive(tab);
         Possible<DirectoryAtTab> directorySelection = tab.selectedDirectory();
 
         if ( directorySelection.isPresent() ) {
             DirectoryAtTab selectedDirectoryAtTab = directorySelection.orThrow();
-            this.filesTable.show(selectedDirectoryAtTab.directory());
-            this.directoriesTree.select(selectedDirectoryAtTab);
+            this.select(selectedDirectoryAtTab);
         }
         else {
             this.filesTable.clear();
         }
+    }
+
+    private void selectIfNotSelected(Tab tab) {
+        if ( this.tabs.selected().isNotPresent() || this.tabs.selected().notEqualsTo(tab) ) {
+            this.tabs.select(tab);
+            this.directoriesTree.setActive(tab);
+        }
+    }
+
+    private void select(DirectoryAtTab selectedDirectoryAtTab) {
+        this.filesTable.show(selectedDirectoryAtTab.directory());
+        this.directoriesTree.select(selectedDirectoryAtTab);
+    }
+
+    private void onBreadcrumbsBarDirectorySelected(DirectoryAtTab directoryAtTab, MouseEvent mouseEvent) {
+        this.selectIfNotSelected(directoryAtTab.tab());
+        this.select(directoryAtTab);
     }
 
     private void onDirectoryAtTabSelected(DirectoryAtTab directoryAtTab) {

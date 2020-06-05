@@ -161,3 +161,9 @@
     -fx-background-color: rgba(175, 238, 238, 0.4);
 }
 
+.breadcrumbs-bar .path {
+    -fx-padding: 0;
+    -fx-background-color: transparent ;
+    -fx-background-insets: 0px ;
+ }
+

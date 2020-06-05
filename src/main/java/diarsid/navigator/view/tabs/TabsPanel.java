@@ -7,6 +7,7 @@ import javafx.scene.layout.VBox;
 
 import diarsid.navigator.filesystem.Directory;
 import diarsid.navigator.model.DirectoriesAtTabs;
+import diarsid.navigator.model.DirectoryAtTab;
 import diarsid.navigator.model.Tab;
 import diarsid.navigator.model.Tabs;
 import diarsid.navigator.view.ViewComponent;
@@ -113,6 +114,11 @@ public class TabsPanel implements ViewComponent {
         this.tabNames.add(tab);
 
         this.refresh();
+    }
+
+    public void currentTabTo(Directory directory) {
+        DirectoryAtTab directoryAtTab = this.directoriesAtTabs.join(this.tabs.selected().orThrow(), directory);
+        this.directoriesTree.select(directoryAtTab);
     }
 
     public void newTab(boolean selectCreated) {

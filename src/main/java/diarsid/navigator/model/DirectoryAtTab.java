@@ -25,6 +25,10 @@ public class DirectoryAtTab {
         return directory;
     }
 
+    public String directoryName() {
+        return this.directory.name();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
