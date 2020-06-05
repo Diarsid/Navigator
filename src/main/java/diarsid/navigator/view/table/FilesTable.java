@@ -3,8 +3,6 @@ package diarsid.navigator.view.table;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.Node;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
@@ -19,9 +17,9 @@ import diarsid.navigator.view.ViewComponent;
 import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;
 import diarsid.navigator.view.icons.Icons;
 import diarsid.support.javafx.ClickOrDragDetector;
+import diarsid.support.javafx.FrameSelection;
 import diarsid.support.objects.groups.Running;
 import diarsid.support.objects.references.impl.Possible;
-import diarsid.support.objects.references.impl.PresentListenable;
 
 import static java.util.Objects.nonNull;
 import static java.util.stream.Collectors.toList;
@@ -35,7 +33,7 @@ public class FilesTable implements ViewComponent {
     private final Icons icons;
     private final TableView<FilesTableItem> tableView;
     private final FilesTableItems filesTableItems;
-    private final FilesTableFrameSelection selection;
+    private final FrameSelection selection;
     private final DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles;
     private final Possible<Directory> directory;
     private final Possible<Running> directoryChangeListener;
@@ -43,12 +41,13 @@ public class FilesTable implements ViewComponent {
 
     public FilesTable(
             Icons icons,
+            FrameSelection frameSelection,
             Consumer<FilesTableItem> onItemInvoked,
             DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles) {
         this.icons = icons;
         this.tableView = new TableView<>();
         this.filesTableItems = new FilesTableItems(icons);
-        this.selection = new FilesTableFrameSelection();
+        this.selection = frameSelection;
         this.dragAndDropFiles = dragAndDropFiles;
         this.onItemInvoked = onItemInvoked;
         this.directory = possibleButEmpty();

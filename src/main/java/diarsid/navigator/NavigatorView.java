@@ -32,6 +32,7 @@ import diarsid.navigator.view.dragdrop.DragAndDropNodes;
 import diarsid.navigator.view.tabs.LabelsAtTabs;
 import diarsid.navigator.view.tabs.TabsPanel;
 import diarsid.navigator.view.tree.DirectoriesTreeCell;
+import diarsid.support.javafx.FrameSelection;
 import diarsid.support.objects.references.impl.Possible;
 
 import static javafx.stage.StageStyle.DECORATED;
@@ -67,7 +68,9 @@ class NavigatorView {
                 "drag-and-drop-files",
                 classes);
 
-        this.filesTable = new FilesTable(this.icons, this::onTableItemInvoked, dragAndDropFiles);
+        FrameSelection frameSelection = new FrameSelection();
+
+        this.filesTable = new FilesTable(this.icons, frameSelection, this::onTableItemInvoked, dragAndDropFiles);
 
         Consumer<FSEntry> onFSEntryIgnored = (fsEntry) -> {
             if ( fsEntry.canBeIgnored() ) {
@@ -96,8 +99,9 @@ class NavigatorView {
         FilesView filesView = new FilesView(tabsPanel, directoriesTree, filesTable, pathBreadcrumbsBar);
 
         Region view = (Region) filesView.node();
+
         Group group = new Group();
-        group.getChildren().add(view);
+        group.getChildren().addAll(view, frameSelection.rectangle());
         group.setAutoSizeChildren(true);
         group.autosize();
 
@@ -108,7 +112,7 @@ class NavigatorView {
         view.prefHeightProperty().bind(stage.getScene().heightProperty());
         view.prefWidthProperty().bind(stage.getScene().widthProperty());
 
-        VIEW_GROUP = group;
+//        VIEW_GROUP = group;
 
         stage.show();
     }

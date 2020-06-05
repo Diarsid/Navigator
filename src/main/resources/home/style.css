@@ -136,7 +136,7 @@
     -fx-diarsid-size: 15px;
 }
 
-.files-table-frame-selection {
+.frame-selection {
     -fx-fill: rgba(175, 238, 238, 0.4);
     -fx-stroke: darkgrey;
     -fx-stroke-width: 1;

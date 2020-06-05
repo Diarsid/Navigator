@@ -13,6 +13,7 @@ import javafx.scene.text.Text;
 import diarsid.navigator.filesystem.FSEntry;
 import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;
 import diarsid.support.javafx.ClickOrDragDetector;
+import diarsid.support.javafx.FrameSelection;
 
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
@@ -29,14 +30,14 @@ public class FilesTableFrameSelectionDragListener implements ClickOrDragDetector
     }
 
     private final TableView<FilesTableItem> tableView;
-    private final FilesTableFrameSelection selection;
+    private final FrameSelection selection;
     private final DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles;
     private VirtualFlow<FilesTableRow> tableViewRows;
     private DragMode dragMode;
 
     public FilesTableFrameSelectionDragListener(
             TableView<FilesTableItem> tableView,
-            FilesTableFrameSelection selection,
+            FrameSelection selection,
             DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles) {
         this.tableView = tableView;
         this.selection = selection;
