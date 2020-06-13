@@ -18,15 +18,15 @@ public class F {
 
     private static void iterateParents() {
         FileSystem fileSystem = FileSystem.INSTANCE;
-        Directory whatToIterare = fileSystem.toDirectory(Paths.get("D:/DEV/1__Projects/Diarsid/IntelliJ/BeamNavigator/src/main/home/resources"));
+        Directory whatToIterare = fileSystem.toDirectory(Paths.get("D:/DEV/1__Projects/Diarsid/IntelliJ/BeamNavigator/src/main/home/resources")).get();
         whatToIterare.parents().forEach(parent -> System.out.println(parent.path()));
     }
 
     private static void copy() {
         FileSystem fileSystem = FileSystem.INSTANCE;
 
-        Directory whatToCopy = fileSystem.toDirectory(Paths.get("D:/DEV/1__Projects/Diarsid/IntelliJ/BeamNavigator/src/main/home/resources/src"));
-        Directory whereToCopy = fileSystem.toDirectory(Paths.get("D:/DEV/1__Projects/Diarsid/IntelliJ/BeamNavigator/src/main/home/resources/trg"));
+        Directory whatToCopy = fileSystem.toDirectory(Paths.get("D:/DEV/1__Projects/Diarsid/IntelliJ/BeamNavigator/src/main/home/resources/src")).get();
+        Directory whereToCopy = fileSystem.toDirectory(Paths.get("D:/DEV/1__Projects/Diarsid/IntelliJ/BeamNavigator/src/main/home/resources/trg")).get();
 
         fileSystem.copy(whatToCopy, whereToCopy);
     }
@@ -34,7 +34,7 @@ public class F {
     private static void delete() {
         FileSystem fileSystem = FileSystem.INSTANCE;
 
-        Directory whatToDelete = fileSystem.toDirectory(Paths.get("D:/DEV/1__Projects/Diarsid/IntelliJ/BeamNavigator/src/main/home/resources/trg/src"));
+        Directory whatToDelete = fileSystem.toDirectory(Paths.get("D:/DEV/1__Projects/Diarsid/IntelliJ/BeamNavigator/src/main/home/resources/trg/src")).get();
 
         fileSystem.remove(whatToDelete);
     }
@@ -42,8 +42,8 @@ public class F {
     private static void move() {
         FileSystem fileSystem = FileSystem.INSTANCE;
 
-        Directory whatToMove = fileSystem.toDirectory(Paths.get("D:/DEV/1__Projects/Diarsid/IntelliJ/BeamNavigator/src/main/home/resources/trg/src"));
-        Directory whereToCopy = fileSystem.toDirectory(Paths.get("D:/DEV/1__Projects/Diarsid/IntelliJ/BeamNavigator/src/main/home/resources"));
+        Directory whatToMove = fileSystem.toDirectory(Paths.get("D:/DEV/1__Projects/Diarsid/IntelliJ/BeamNavigator/src/main/home/resources/trg/src")).get();
+        Directory whereToCopy = fileSystem.toDirectory(Paths.get("D:/DEV/1__Projects/Diarsid/IntelliJ/BeamNavigator/src/main/home/resources")).get();
 
         fileSystem.move(whatToMove, whereToCopy);
     }
@@ -51,9 +51,9 @@ public class F {
     private static void sortDirs() {
         FileSystem fileSystem = FileSystem.INSTANCE;
 
-        Directory d1 = fileSystem.toDirectory(Paths.get("D:/DEV/1__Projects/Diarsid"));
-        Directory d2 = fileSystem.toDirectory(Paths.get("D:/DEV/1__Projects"));
-        Directory d3 = fileSystem.toDirectory(Paths.get("D:/DEV/"));
+        Directory d1 = fileSystem.toDirectory(Paths.get("D:/DEV/1__Projects/Diarsid")).get();
+        Directory d2 = fileSystem.toDirectory(Paths.get("D:/DEV/1__Projects")).get();
+        Directory d3 = fileSystem.toDirectory(Paths.get("D:/DEV/")).get();
 
         List<Directory> directories = new ArrayList<>();
         directories.add(d1);

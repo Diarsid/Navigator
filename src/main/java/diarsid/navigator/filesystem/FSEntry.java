@@ -1,12 +1,13 @@
 package diarsid.navigator.filesystem;
 
+import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
 import static java.lang.String.format;
 
-public interface FSEntry extends PathHolder, Comparable<FSEntry> {
+public interface FSEntry extends Comparable<FSEntry> {
 
     Comparator<FSEntry> compareByDepth = (fsEntry1, fsEntry2) -> {
         if ( fsEntry1.depth() > fsEntry2.depth() ) {
@@ -26,7 +27,7 @@ public interface FSEntry extends PathHolder, Comparable<FSEntry> {
 
     boolean isFile();
 
-    String path();
+    Path path();
 
     Optional<Directory> parent();
 
@@ -36,9 +37,9 @@ public interface FSEntry extends PathHolder, Comparable<FSEntry> {
 
     boolean isHidden();
 
-    boolean moveTo(Directory newPlace);
-
     boolean remove();
+
+    boolean moveTo(Directory newPlace);
 
     boolean canBeIgnored();
 

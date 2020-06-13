@@ -1,6 +1,6 @@
 package diarsid.navigator.filesystem;
 
-import java.awt.*;
+import java.awt.Desktop;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -29,14 +28,12 @@ import static diarsid.navigator.filesystem.FileSystemType.LOCAL;
 class LocalFileSystem implements FileSystem {
 
     private final Ignores ignores;
-    private final Function<Path, FSEntry> pathToFSEntry;
-    private final HashMap<String, Directory> directoriesByPath;
-    private final HashMap<String, File> filesByPath;
+    private final HashMap<String, LocalDirectory> directoriesByPath;
+    private final HashMap<String, LocalFile> filesByPath;
     private final LocalMachineDirectory localMachineDirectory;
     private final Extensions extensions;
     private final Desktop desktop;
     private final Predicate<FSEntry> notIgnored;
-
 
     LocalFileSystem(
             Ignores ignores,
@@ -48,15 +45,6 @@ class LocalFileSystem implements FileSystem {
         this.extensions = new Extensions();
         this.desktop = getDesktop();
 
-        this.pathToFSEntry = path -> {
-            if (Files.isDirectory(path)) {
-                return this.toDirectory(path);
-            }
-            else {
-                return this.toFile(path);
-            }
-        };
-
         this.notIgnored = this.ignores::isNotIgnored;
     }
 
@@ -66,21 +54,86 @@ class LocalFileSystem implements FileSystem {
     }
 
     @Override
-    public FSEntry toFSEntry(Path path) {
-        return this.pathToFSEntry.apply(path);
+    public Optional<FSEntry> toFSEntry(Path path) {
+        if ( Files.exists(path) ) {
+            try {
+                Path realPath = path.toRealPath();
+                return Optional.of(this.toLocalFSEntry(realPath));
+            }
+            catch (IOException e) {
+                return Optional.empty();
+            }
+        }
+        else {
+            return Optional.empty();
+        }
+    }
+
+    FSEntry toLocalFSEntry(Path path) {
+        if (Files.isDirectory(path)) {
+            return this.toLocalDirectory(path);
+        }
+        else {
+            return this.toLocalFile(path);
+        }
     }
 
     @Override
-    public Directory toDirectory(Path path) {
+    public Optional<Directory> toDirectory(Path path) {
+        if ( Files.exists(path) ) {
+            if ( Files.isDirectory(path) ) {
+                try {
+                    Path realPath = path.toRealPath();
+                    return Optional.of(this.toLocalDirectory(realPath));
+                }
+                catch (IOException e) {
+                    return Optional.empty();
+                }
+            }
+            else {
+                return Optional.empty();
+            }
+        }
+        else {
+            return Optional.empty();
+        }
+    }
+
+    LocalDirectory toLocalDirectory(Path path) {
         return this.directoriesByPath.computeIfAbsent(
-                path.toAbsolutePath().toString(),
-                fullName -> new LocalDirectory(path, this));
+                path.toAbsolutePath().toString().toLowerCase(),
+                fullName -> this.createNewLocalDirectory(path));
+    }
+
+    private LocalDirectory createNewLocalDirectory(Path path) {
+        LocalDirectory localDirectory = new LocalDirectory(path, this);
+        return localDirectory;
     }
 
     @Override
-    public File toFile(Path path) {
+    public Optional<File> toFile(Path path) {
+        if ( Files.exists(path) ) {
+            if ( ! Files.isDirectory(path) ) {
+                try {
+                    Path realPath = path.toRealPath();
+                    return Optional.of(this.toLocalFile(realPath));
+                }
+                catch (IOException e) {
+                    return Optional.empty();
+                }
+            }
+            else {
+                return Optional.empty();
+            }
+        }
+        else {
+            return Optional.empty();
+        }
+    }
+
+    LocalFile toLocalFile(Path path) {
         return this.filesByPath.computeIfAbsent(
-                path.toAbsolutePath().toString(),
+                path.toAbsolutePath().toString().toLowerCase(),
                 fullName -> new LocalFile(path, this));
     }
 
@@ -98,10 +151,11 @@ class LocalFileSystem implements FileSystem {
     public boolean copy(FSEntry whatToCopy, Directory whereToCopy) {
         boolean success;
 
+        LocalDirectory directoryHost = (LocalDirectory) whereToCopy;
         if ( whatToCopy.isFile() ) {
             LocalFile file = (LocalFile) whatToCopy;
             try {
-                Files.copy(file.nioPath(), whereToCopy.nioPath().resolve(file.name()));
+                Files.copy(file.path(), directoryHost.path().resolve(file.name()));
                 success = true;
             }
             catch (IOException e) {
@@ -111,17 +165,16 @@ class LocalFileSystem implements FileSystem {
         }
         else {
             LocalDirectory directoryToCopy = (LocalDirectory) whatToCopy;
-            LocalDirectory directoryHost = (LocalDirectory) whereToCopy;
 
             if ( directoryToCopy.equals(directoryHost) ) {
                 return false;
             }
 
-            Path directoryToCopyParentPath = directoryToCopy.nioPath().getParent();
+            Path directoryToCopyParentPath = directoryToCopy.path().getParent();
 
             try {
                 List<Path> paths = Files
-                        .walk(directoryToCopy.nioPath())
+                        .walk(directoryToCopy.path())
                         .collect(toList());
 
                 Path subPath;
@@ -130,8 +183,8 @@ class LocalFileSystem implements FileSystem {
                     System.out.println(" copy ");
                     System.out.println(" src : " + path.toString());
                     System.out.println(" sub : " + subPath.toString());
-                    System.out.println(" trg : " + directoryHost.nioPath().resolve(subPath).toString());
-                    Files.copy(path, directoryHost.nioPath().resolve(subPath), COPY_ATTRIBUTES);
+                    System.out.println(" trg : " + directoryHost.path().resolve(subPath).toString());
+                    Files.copy(path, directoryHost.path().resolve(subPath), COPY_ATTRIBUTES);
 
                 }
                 success = true;
@@ -149,16 +202,31 @@ class LocalFileSystem implements FileSystem {
     public boolean move(FSEntry whatToMove, Directory whereToMove) {
         boolean success;
 
+        LocalDirectory directoryHost = (LocalDirectory) whereToMove;
+
         if ( whatToMove.isFile() ) {
             LocalFile fileToMove = (LocalFile) whatToMove;
             try {
+                Path oldPath = fileToMove.path();
+                Path newPath = directoryHost.path().resolve(fileToMove.name());
+
                 Optional<Directory> previousParent = fileToMove.parent();
 
-                Files.move(fileToMove.nioPath(), whereToMove.nioPath().resolve(fileToMove.name()), REPLACE_EXISTING);
+                Files.move(fileToMove.path(), directoryHost.path().resolve(fileToMove.name()), REPLACE_EXISTING);
+
+                this.filesByPath.remove(oldPath.toString());
+                this.filesByPath.put(newPath.toString(), fileToMove);
+
+                fileToMove.movedTo(directoryHost.path());
 
                 if ( previousParent.isPresent() ) {
-                    previousParent.get().contentChanged();
+                    LocalDirectory previousParentDirectory = (LocalDirectory) previousParent.get();
+                    previousParentDirectory.contentChanged();
                 }
+
+                directoryHost.contentChanged();
+
+                fileToMove.changed();
 
                 success = true;
             }
@@ -169,8 +237,6 @@ class LocalFileSystem implements FileSystem {
         }
         else {
             LocalDirectory directoryToMove = (LocalDirectory) whatToMove;
-            LocalDirectory directoryHost = (LocalDirectory) whereToMove;
-
             if ( directoryToMove.equals(directoryHost) ) {
                 return false;
             }
@@ -180,22 +246,25 @@ class LocalFileSystem implements FileSystem {
             }
 
             try {
-                Path oldPath = directoryToMove.nioPath();
-                Path newPath = directoryHost.nioPath().resolve(directoryToMove.name());
+                Path oldPath = directoryToMove.path();
+                Path newPath = directoryHost.path().resolve(directoryToMove.name());
                 System.out.println("[FS] [move] " + oldPath + " -> " + newPath);
                 Files.move(oldPath, newPath);
 
-                this.directoriesByPath.remove(oldPath.toString());
-                this.directoriesByPath.put(newPath.toString(), directoryToMove);
+                this.directoriesByPath.remove(oldPath.toString().toLowerCase());
+                this.directoriesByPath.put(newPath.toString().toLowerCase(), directoryToMove);
 
                 Optional<Directory> previousParent = directoryToMove.parent();
                 directoryToMove.movedTo(newPath);
 
                 if ( previousParent.isPresent() ) {
-                    previousParent.get().contentChanged();
+                    LocalDirectory previousParentDirectory = (LocalDirectory) previousParent.get();
+                    previousParentDirectory.contentChanged();
                 }
 
                 directoryHost.contentChanged();
+
+                directoryToMove.changed();
 
                 success = true;
             }
@@ -215,7 +284,7 @@ class LocalFileSystem implements FileSystem {
         if ( entry.isFile() ) {
             LocalFile file = (LocalFile) entry;
             try {
-                Files.delete(file.nioPath());
+                Files.delete(file.path());
                 success = true;
             }
             catch (IOException e) {
@@ -227,7 +296,7 @@ class LocalFileSystem implements FileSystem {
             LocalDirectory directoryToRemove = (LocalDirectory) entry;
 
             try {
-                List<Path> paths = Files.walk(directoryToRemove.nioPath())
+                List<Path> paths = Files.walk(directoryToRemove.path())
                         .sorted(reverseOrder())
                         .collect(toList());
 
@@ -308,8 +377,9 @@ class LocalFileSystem implements FileSystem {
 
     @Override
     public boolean open(File file) {
+        LocalFile localFile = (LocalFile) file;
         try {
-            this.desktop.open(file.nioPath().toFile());
+            this.desktop.open(localFile.path().toFile());
             return true;
         }
         catch (AccessDeniedException denied) {
@@ -328,11 +398,14 @@ class LocalFileSystem implements FileSystem {
 
     @Override
     public Stream<FSEntry> list(Directory directory) {
+        LocalDirectory localDirectory = (LocalDirectory) directory;
         try {
              return Files
-                    .list(directory.nioPath())
-                    .map(this::toFSEntry)
-                    .filter(this.notIgnored);
+                     .list(localDirectory.path())
+                     .map(this::toFSEntry)
+                     .filter(Optional::isPresent)
+                     .map(Optional::get)
+                     .filter(this.notIgnored);
         }
         catch (AccessDeniedException denied) {
             this.handle(denied);
@@ -345,14 +418,25 @@ class LocalFileSystem implements FileSystem {
     }
 
     @Override
+    public Optional<Directory> parentOf(FSEntry fsEntry) {
+        Path parentPath = fsEntry.path().getParent();
+        if ( nonNull(parentPath) ) {
+            return this.toDirectory(parentPath);
+        }
+        else {
+            return Optional.empty();
+        }
+    }
+
+    @Override
     public List<Directory> parentsOf(FSEntry fsEntry) {
-        Path parentPath = fsEntry.nioPath().getParent();
+        Path parentPath = fsEntry.path().getParent();
         Directory parentDirectory;
 
         List<Directory> parents = new ArrayList<>();
 
         while ( nonNull(parentPath) && exists(parentPath) ) {
-            parentDirectory = this.toDirectory(parentPath);
+            parentDirectory = this.toLocalDirectory(parentPath);
             parents.add(parentDirectory);
             parentPath = parentPath.getParent();
         }
@@ -367,7 +451,7 @@ class LocalFileSystem implements FileSystem {
         long size;
 
         try {
-            size = Files.size(fsEntry.nioPath());
+            size = Files.size(fsEntry.path());
         }
         catch (IOException e) {
             this.handle(e);
@@ -384,7 +468,8 @@ class LocalFileSystem implements FileSystem {
 
     @Override
     public boolean isRoot(Directory directory) {
-        return this.localMachineDirectory.roots().contains(directory.nioPath());
+        LocalDirectory localDirectory = (LocalDirectory) directory;
+        return this.localMachineDirectory.roots().contains(localDirectory.path());
     }
 
     @Override

@@ -4,27 +4,42 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import diarsid.navigator.filesystem.ignoring.Ignores;
+
+import static java.util.Objects.isNull;
 
 public interface FileSystem {
 
     FileSystem INSTANCE = new LocalFileSystem(Ignores.INSTANCE, FileSystems.getDefault());
 
+    static String getNameFrom(Path path) {
+        String name;
+        Path fileName = path.getFileName();
+        if (isNull(fileName)) {
+            name = path.toString();
+        }
+        else {
+            name = fileName.toString();
+        }
+        return name;
+    }
+
     Directory machineDirectory();
 
-    FSEntry toFSEntry(Path path);
+    Optional<FSEntry> toFSEntry(Path path);
 
-    default Directory toDirectory(String path) {
+    default Optional<Directory> toDirectory(String path) {
         return this.toDirectory(Paths.get(path));
     }
 
-    Directory toDirectory(Path path);
+    Optional<Directory> toDirectory(Path path);
 
-    File toFile(Path path);
+    Optional<File> toFile(Path path);
 
-    default File toFile(String path) {
+    default Optional<File> toFile(String path) {
         return this.toFile(Paths.get(path));
     }
 
@@ -56,6 +71,8 @@ public interface FileSystem {
 
     Stream<FSEntry> list(Directory directory); /* do not forget to close the stream! */
 
+    Optional<Directory> parentOf(FSEntry fsEntry);
+
     List<Directory> parentsOf(FSEntry fsEntry);
 
     long sizeOf(FSEntry fsEntry);
@@ -65,6 +82,10 @@ public interface FileSystem {
     boolean isRoot(Directory directory);
 
     boolean isMachine(Directory directory);
+
+    default boolean isNotMachine(Directory directory) {
+        return ! this.isMachine(directory);
+    }
 
     FileSystemType type();
 

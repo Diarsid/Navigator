@@ -40,8 +40,6 @@ import static javafx.stage.StageStyle.DECORATED;
 
 class NavigatorView {
 
-    public static Group VIEW_GROUP;
-
     private Ignores ignores;
     private FileSystem fileSystem;
     private Tabs tabs;
@@ -94,7 +92,13 @@ class NavigatorView {
         this.tabsPanel = new TabsPanel(
                 this.tabs, this.directoriesAtTabs, labelsAtTabs, this.directoriesTree, dragAndDropLabels);
 
-        PathBreadcrumbsBar pathBreadcrumbsBar = new PathBreadcrumbsBar(this.tabs, this.fileSystem, this.icons, this.directoriesAtTabs, this::onBreadcrumbsBarDirectorySelected);
+        PathBreadcrumbsBar pathBreadcrumbsBar = new PathBreadcrumbsBar(
+                this.tabs,
+                this.fileSystem,
+                this.icons,
+                this.directoriesAtTabs,
+                this::onBreadcrumbsBarDirectorySelected,
+                this.directoriesTree::select);
         pathBreadcrumbsBar.iconsSize().bindTo(this.icons.size());
 
         FilesView filesView = new FilesView(this.tabsPanel, this.directoriesTree, this.filesTable, pathBreadcrumbsBar);
@@ -112,8 +116,6 @@ class NavigatorView {
 
         view.prefHeightProperty().bind(stage.getScene().heightProperty());
         view.prefWidthProperty().bind(stage.getScene().widthProperty());
-
-//        VIEW_GROUP = group;
 
         stage.show();
     }
@@ -176,7 +178,6 @@ class NavigatorView {
     }
 
     private void select(DirectoryAtTab selectedDirectoryAtTab) {
-        this.filesTable.show(selectedDirectoryAtTab.directory());
         this.directoriesTree.select(selectedDirectoryAtTab);
     }
 

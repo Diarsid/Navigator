@@ -1,23 +1,25 @@
 package diarsid.navigator.view.tree;
 
 import java.util.List;
-
-import diarsid.navigator.filesystem.Directory;
-import diarsid.navigator.filesystem.FSEntry;
-import diarsid.navigator.view.icons.Icon;
-import diarsid.navigator.view.icons.Icons;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.StackPane;
+
+import diarsid.navigator.filesystem.Directory;
+import diarsid.navigator.filesystem.FSEntry;
+import diarsid.navigator.filesystem.ProgressTracker;
+import diarsid.navigator.view.icons.Icon;
+import diarsid.navigator.view.icons.Icons;
 
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import static javafx.scene.input.TransferMode.MOVE;
 
 import static diarsid.navigator.filesystem.Directory.Edit.MOVED;
-import static javafx.scene.input.TransferMode.MOVE;
 
 public class DirectoriesTreeCell extends TreeCell<String> {
 
@@ -39,10 +41,36 @@ public class DirectoriesTreeCell extends TreeCell<String> {
         this.iconView.setPreserveRatio(true);
         this.iconView.getStyleClass().add("icon");
 
+        super.setOnMousePressed(this::onMousePressed);
         super.setOnDragOver(this::onDragOver);
         super.setOnDragExited(this::onDragExited);
         super.setOnDragDropped(this::onDragDropped);
         super.setOnDragDetected(this::onDragDetected);
+    }
+
+    private void onMousePressed(MouseEvent mouseEvent) {
+        if ( mouseEvent.isSecondaryButtonDown() ) {
+            return;
+        }
+
+        if ( super.isEmpty() ) {
+            return;
+        }
+
+        Object target = mouseEvent.getTarget();
+        boolean arrowClicked = false;
+        if ( target instanceof StackPane ) {
+            StackPane arrowNode = (StackPane) target;
+            List<String> styleClasses = arrowNode.getStyleClass();
+            if ( styleClasses.contains("tree-disclosure-node") || styleClasses.contains("arrow") ) {
+                arrowClicked = true;
+            }
+        }
+
+        if ( ! arrowClicked ) {
+            this.directoriesTree.select(directoryAtTabTreeItem().directoryAtTab());
+        }
+        mouseEvent.consume();
     }
 
     private DirectoryAtTabTreeItem directoryAtTabTreeItem() {
@@ -60,7 +88,7 @@ public class DirectoriesTreeCell extends TreeCell<String> {
     protected void updateItem(String name, boolean empty) {
         super.updateItem(name, empty);
 
-        if (empty || name == null) {
+        if ( empty || name == null ) {
             super.setText(null);
             super.setGraphic(null);
         } else {
@@ -136,7 +164,6 @@ public class DirectoriesTreeCell extends TreeCell<String> {
         }
 
         if ( this.directoriesTree.dragAndDropFiles().isDragAcceptable(dragEvent) ) {
-            System.out.println("dragging files into tree");
             List<FSEntry> fsEntries = this.directoriesTree.dragAndDropFiles().get();
 
             DirectoryAtTabTreeItem acceptingItem = this.directoryAtTabTreeItem();
@@ -203,11 +230,7 @@ public class DirectoriesTreeCell extends TreeCell<String> {
                     if ( nonNull(acceptingItem) ) {
                         Directory droppedDirectory = droppedItem.directory();
                         Directory acceptingDirectory = acceptingItem.directory();
-                        boolean moved = acceptingDirectory.host(droppedDirectory);
-                        if ( moved ) {
-                            acceptingItem.setExpanded(true);
-                            this.directoriesTree.select(acceptingItem);
-                        }
+                        acceptingDirectory.host(droppedDirectory);
                     }
                     else {
                         System.out.println("DROP ACCEPTED - NO ACCEPTING ITEM!");
@@ -237,11 +260,17 @@ public class DirectoriesTreeCell extends TreeCell<String> {
         }
         else if ( this.directoriesTree.dragAndDropFiles().isDropAcceptable(dragEvent) ) {
             List<FSEntry> fsEntries = this.directoriesTree.dragAndDropFiles().get();
-            Directory acceptingDirectory = this.directoryAtTabTreeItem().directory();
-            System.out.println("dropped into " + acceptingDirectory);
-            fsEntries.forEach(fsEntry -> System.out.println("   -> " + fsEntry.path()));
+            DirectoryAtTabTreeItem acceptingItem = this.directoryAtTabTreeItem();
+            Directory acceptingDirectory = acceptingItem.directory();
 
-            fsEntries.forEach(fsEntry -> acceptingDirectory.host(fsEntry));
+            if ( fsEntries.size() == 1 ) {
+                FSEntry fsEntryToMove = fsEntries.get(0);
+                acceptingDirectory.host(fsEntryToMove);
+            }
+            else if ( fsEntries.size() > 1 ) {
+                acceptingDirectory.hostAll(fsEntries, ProgressTracker.DEFAULT);
+            }
+
 
             success = true;
         }

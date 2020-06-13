@@ -3,12 +3,15 @@ package diarsid.navigator.view.table;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+import javafx.application.Platform;
 import javafx.scene.Node;
+import javafx.scene.control.ScrollBar;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.HBox;
 
 import diarsid.navigator.filesystem.Directory;
@@ -57,26 +60,6 @@ public class FilesTable implements ViewComponent {
         TableColumn<FilesTableItem, String> columnNames = new TableColumn<>("Name");
         TableColumn<FilesTableItem, String> columnSizes = new TableColumn<>("Size");
 
-//
-//        Consumer<Insets> paddingListener = (iconPadding) -> {
-//            if ( counter.get() == 0 ) {
-//                double sidePadding = (iconPadding.getLeft() + iconPadding.getRight()) * 2;
-//                if ( sidePadding > 0 ) {
-//                    Double size = iconsSizeX.get();
-//                    Double newSize = size + sidePadding;
-//                    System.out.println("old size " + size + " new size " + newSize);
-//                    iconsSizeX.resetTo(newSize);
-//
-////                    columnIcons.minWidthProperty().set(newSize);
-////                    columnIcons.maxWidthProperty().set(newSize);
-//                    doubleProperty.set(newSize);
-//                    doubleProperty.setValue(newSize);
-//
-//                    counter.incrementAndGet();
-//                }
-//            }
-//        };
-
         columnIcons.setCellFactory(column -> new FilesTableCellForIcon());
         columnNames.setCellFactory(column -> new FilesTableCellForName());
         columnSizes.setCellFactory(column -> new FilesTableCellForSize());
@@ -103,6 +86,25 @@ public class FilesTable implements ViewComponent {
         columnSizes.prefWidthProperty().bind(this.tableView.widthProperty().subtract(columnIcons.widthProperty()).multiply(0.15));
 
         this.tableView.getSelectionModel().setSelectionMode(MULTIPLE);
+
+        this.tableView.setOnScroll(scrollEvent -> {
+            double x = scrollEvent.getDeltaX();
+            double y = scrollEvent.getDeltaY();
+            System.out.println("scroll x: " + x + ", y: " + y);
+            this.selection.scrolled(x, y);
+        });
+
+        Platform.runLater(() -> {
+                    ScrollBar scrollBar = (ScrollBar) this.tableView.lookup(".scroll-bar:vertical");
+
+                    scrollBar.valueProperty().addListener((observable, oldValue, newValue) -> {
+                        if ((Double) newValue == 1.0) {
+                            System.out.println("Bottom!");
+                        } else if ((Double) newValue == 0.0) {
+                            System.out.println("Top!");
+                        }
+                    });
+                });
 
         ClickOrDragDetector.DragListener dragListener = new FilesTableFrameSelectionDragListener(
                 this.tableView, this.selection, this.dragAndDropFiles);
@@ -133,7 +135,7 @@ public class FilesTable implements ViewComponent {
 
     public void show(Directory newDirectory) {
         this.directory.resetTo(newDirectory);
-        Running newListener = newDirectory.listenForChanges(this::onDirectoryChange);
+        Running newListener = newDirectory.listenForContentChanges(this::onDirectoryChange);
         Running previousListener = this.directoryChangeListener.resetTo(newListener);
 
         if ( nonNull(previousListener) ) {
@@ -171,6 +173,10 @@ public class FilesTable implements ViewComponent {
     }
 
     private TableRow<FilesTableItem> newTableRow(TableView<FilesTableItem> tableView) {
-        return new FilesTableRow(this.tableView, this.onItemInvoked, this.dragAndDropFiles);
+        return new FilesTableRow(this.tableView, this.onItemInvoked, this.dragAndDropFiles, this::onScrolled);
+    }
+
+    private void onScrolled(ScrollEvent scrollEvent) {
+        this.selection.scrolled(scrollEvent.getDeltaX(), scrollEvent.getDeltaY());
     }
 }

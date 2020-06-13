@@ -4,8 +4,6 @@ import java.util.Objects;
 
 import diarsid.navigator.filesystem.Directory;
 
-import static java.lang.String.format;
-
 public class DirectoryAtTab {
 
     private final Tab tab;
@@ -14,7 +12,6 @@ public class DirectoryAtTab {
     DirectoryAtTab(Tab tab, Directory directory) {
         this.tab = tab;
         this.directory = directory;
-        System.out.println(format("created - %s  %s", this.getClass().getSimpleName(), directory.path()));
     }
 
     public Tab tab() {

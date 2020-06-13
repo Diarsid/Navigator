@@ -15,15 +15,17 @@ import diarsid.support.objects.groups.Runnables;
 import diarsid.support.objects.groups.Running;
 
 import static java.nio.file.Files.list;
-import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
 
-class LocalDirectory implements Directory {
+import static diarsid.navigator.filesystem.FileSystem.getNameFrom;
+
+class LocalDirectory implements Directory, ChangeableFSEntry {
 
     private final UUID uuid;
     private final FileSystem fileSystem;
+    private final Runnables contentChangeListeners;
     private final Runnables changeListeners;
 
     private Path path;
@@ -33,23 +35,11 @@ class LocalDirectory implements Directory {
     LocalDirectory(Path path, FileSystem fileSystem) {
         this.uuid = randomUUID();
         this.fileSystem = fileSystem;
+        this.contentChangeListeners = new Runnables();
         this.changeListeners = new Runnables();
         this.path = path.toAbsolutePath();
         this.name = getNameFrom(path);
         this.fullName = this.path.toString();
-        System.out.println("created - Directory " + this.fullName);
-    }
-
-    private static String getNameFrom(Path path) {
-        String name;
-        Path fileName = path.getFileName();
-        if (isNull(fileName)) {
-            name = path.toString();
-        }
-        else {
-            name = fileName.toString();
-        }
-        return name;
     }
 
     @Override
@@ -58,19 +48,13 @@ class LocalDirectory implements Directory {
     }
 
     @Override
-    public String path() {
-        return this.fullName;
+    public Path path() {
+        return this.path;
     }
 
     @Override
     public Optional<Directory> parent() {
-        Path parent = this.path.getParent();
-        if ( nonNull(parent) ) {
-            return Optional.of(this.fileSystem.toDirectory(parent));
-        }
-        else {
-            return Optional.empty();
-        }
+        return this.fileSystem.parentOf(this);
     }
 
     @Override
@@ -238,8 +222,18 @@ class LocalDirectory implements Directory {
     }
 
     @Override
+    public Running listenForContentChanges(Runnable listener) {
+        return this.contentChangeListeners.add(listener);
+    }
+
+    @Override
     public Running listenForChanges(Runnable listener) {
         return this.changeListeners.add(listener);
+    }
+
+    @Override
+    public void changed() {
+        this.changeListeners.run();
     }
 
     @Override
@@ -278,21 +272,15 @@ class LocalDirectory implements Directory {
     }
 
     @Override
-    public Path nioPath() {
-        return this.path;
-    }
-
-    @Override
     public void movedTo(Path newPath) {
         this.path = newPath;
         this.name = getNameFrom(this.path);
         this.fullName = this.path.toString();
-        this.changeListeners.run();
     }
 
     @Override
     public void contentChanged() {
-        this.changeListeners.run();
+        this.contentChangeListeners.run();
     }
 
     @Override

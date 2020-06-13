@@ -42,7 +42,7 @@ public class LabelAtTab {
         tab.listenToRename(this::onTabNameChanged);
         tab.active().listen(this::onTabActivityChanged);
 
-        this.label.setOnMouseClicked(event -> this.labelsAtTabs.onTabSelected.accept(this.tab));
+        this.label.setOnMouseClicked(this::onMouseClicked);
         this.label.setOnDragOver(this::onDragOver);
         this.label.setOnDragExited(this::onDragExited);
         this.label.setOnDragDropped(this::onDragDropped);
@@ -125,5 +125,9 @@ public class LabelAtTab {
 
         dragEvent.setDropCompleted(success);
         dragEvent.consume();
+    }
+
+    private void onMouseClicked(MouseEvent event) {
+        this.labelsAtTabs.onTabSelected.accept(this.tab);
     }
 }

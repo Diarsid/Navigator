@@ -23,16 +23,22 @@ public class DirectoryAtTabTreeItems {
     private final BiFunction<Tab, Directory, DirectoryAtTabTreeItem> tabAndDirectoryToTreeItem;
     private final Consumer<DirectoryAtTabTreeItem> onTreeItemExpanded;
     private final Consumer<DirectoryAtTabTreeItem> onTreeItemCollapsed;
+    private final Consumer<DirectoryAtTabTreeItem> onTreeItemCreated;
+    private final Consumer<DirectoryAtTabTreeItem> onTreeItemRemoved;
 
     public DirectoryAtTabTreeItems(
             DirectoriesAtTabs directoriesAtTabs,
             Consumer<DirectoryAtTabTreeItem> onTreeItemExpanded,
-            Consumer<DirectoryAtTabTreeItem> onTreeItemCollapsed) {
+            Consumer<DirectoryAtTabTreeItem> onTreeItemCollapsed,
+            Consumer<DirectoryAtTabTreeItem> onTreeItemCreated,
+            Consumer<DirectoryAtTabTreeItem> onTreeItemRemoved) {
         this.directoriesAtTabs = directoriesAtTabs;
         this.treeItemsByDirectory = new HashMap<>();
         this.tabAndDirectoryToTreeItem = (tab, directory) -> this.wrap(this.directoriesAtTabs.join(tab, directory));
         this.onTreeItemExpanded = onTreeItemExpanded;
         this.onTreeItemCollapsed = onTreeItemCollapsed;
+        this.onTreeItemCreated = onTreeItemCreated;
+        this.onTreeItemRemoved = onTreeItemRemoved;
     }
 
     public DirectoryAtTabTreeItem wrap(DirectoryAtTab directoryAtTab) {
@@ -41,6 +47,7 @@ public class DirectoryAtTabTreeItems {
         if ( isNull(treeItem) ) {
             treeItem = createNewFor(directoryAtTab);
             this.treeItemsByDirectory.put(directoryAtTab, treeItem);
+            this.onTreeItemCreated.accept(treeItem);
         }
 
         return treeItem;
@@ -49,11 +56,15 @@ public class DirectoryAtTabTreeItems {
     public List<DirectoryAtTabTreeItem> remove(Directory directory) {
         List<DirectoryAtTab> directoryAtTabs = this.directoriesAtTabs.getAllBy(directory);
 
-        return directoryAtTabs
+        List<DirectoryAtTabTreeItem> removedItems = directoryAtTabs
                 .stream()
                 .map(this.treeItemsByDirectory::remove)
                 .filter(Objects::nonNull)
                 .collect(toList());
+
+        removedItems.forEach(this.onTreeItemRemoved);
+
+        return removedItems;
     }
 
     private DirectoryAtTabTreeItem createNewFor(DirectoryAtTab directoryAtTab) {

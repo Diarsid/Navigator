@@ -9,7 +9,6 @@ import diarsid.navigator.filesystem.Directory;
 import diarsid.navigator.model.DirectoryAtTab;
 import diarsid.navigator.model.Tab;
 
-import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 
 public class DirectoryAtTabTreeItem extends TreeItem<String> implements Comparable<DirectoryAtTabTreeItem> {
@@ -35,54 +34,55 @@ public class DirectoryAtTabTreeItem extends TreeItem<String> implements Comparab
         this.onTreeItemExpanded = onTreeItemExpanded;
         this.onTreeItemCollapsed = onTreeItemCollapsed;
 
-        this.directory.listenForChanges(this::initializeItemOrSetPlaceholder);
+        this.directory.listenForContentChanges(this::fillItemOrSetPlaceholder);
 
         this.setPlaceholderIfChildrenPresent();
 
         super.addEventHandler(TreeItem.branchExpandedEvent(), (TreeItem.TreeModificationEvent<String> event) -> {
-            initializeItem();
+            this.fillItem();
+            this.onTreeItemExpanded.accept(this);
             event.consume();
-            this.tab.selectedDirectory().ifPresent(directory -> this.onTreeItemExpanded.accept(this));
         });
 
         super.addEventHandler(TreeItem.branchCollapsedEvent(), (TreeItem.TreeModificationEvent<String> event) -> {
             super.getChildren().clear();
             super.getChildren().add(PLACEHOLDER);
-            this.tab.selectedDirectory().ifPresent(directory -> this.onTreeItemCollapsed.accept(this));
+            this.onTreeItemCollapsed.accept(this);
             event.consume();
         });
-
-        System.out.println(format("created - %s %s", this.getClass().getSimpleName(), this.directory.path()));
     }
 
-    private void initializeItemOrSetPlaceholder() {
+    private void fillItemOrSetPlaceholder() {
         if ( super.expandedProperty().get() ) {
-            this.initializeItem();
+            this.fillItem();
         }
         else {
             this.setPlaceholderIfChildrenPresent();
         }
     }
 
-    private void initializeItem() {
-        super.getChildren().clear();
-
+    private void fillItem() {
         this.directory.feedDirectories((directories) -> {
-            List<TreeItem<String>> items = directories
+            List<TreeItem<String>> directoryItems = directories
                     .stream()
                     .filter(Directory::isNotHidden)
                     .map(directory -> this.directoryToTreeItem.apply(this.tab, directory))
+                    .peek(treeItem -> System.out.println("[FILL ITEM] " + this.directory.path() + " : " + treeItem.directory.path()))
                     .sorted()
-                    .peek(DirectoryAtTabTreeItem::initializeItemOrSetPlaceholder)
+                    .peek(DirectoryAtTabTreeItem::fillItemOrSetPlaceholder)
                     .collect(toList());
 
-            super.getChildren().setAll(items);
+            if ( directoryItems.isEmpty() ) {
+                super.getChildren().clear();
+                if ( super.isExpanded() ) {
+                    super.setExpanded(false);
+                }
+            }
+            else {
+                super.getChildren().setAll(directoryItems);
+            }
         });
     }
-
-//    public void setSelectedToTab() {
-//        this.tab.selectedDirectory().resetTo(this.directoryAtTab);
-//    }
 
     public Tab tab() {
         return this.tab;
@@ -117,9 +117,6 @@ public class DirectoryAtTabTreeItem extends TreeItem<String> implements Comparab
         return this.directory.isParentOf(other.directory);
     }
 
-//    public DirectoryAtTab directoryAtTab() {
-//        return this.directoryAtTab;
-//    }
 //
 //    public DirectoryAtTabTreeItem getInChildren(Directory directory) {
 //        return super

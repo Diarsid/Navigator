@@ -15,14 +15,15 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 public class X {
     public static void main(String[] args) throws Exception {
         WatchService watchService = FileSystems.getDefault().newWatchService();
-        Path dirPath = Paths.get("D:/DEV/1__Projects/Diarsid/IntelliJ/BeamNavigator/src/main/resources/test/inner");
-        WatchKey watchKey = dirPath.register(
-                watchService, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
+        Path dirPath = Paths.get("D:/DEV/1__Projects/Diarsid/IntelliJ/BeamNavigator/src/main/resources/test/in");
+        dirPath.register(watchService, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
 
+        WatchKey watchKey;
         while (true) {
             try {
-                watchService.take();
+                watchKey = watchService.take();
             } catch (InterruptedException ex) {
+                ex.printStackTrace();
                 break;
             }
 

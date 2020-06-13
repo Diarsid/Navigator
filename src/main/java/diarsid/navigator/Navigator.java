@@ -49,12 +49,12 @@ public class Navigator {
     }
 
     public void openInNewTab(String path) {
-        Directory directory = this.fileSystem.toDirectory(Paths.get(path));
+        Directory directory = this.fileSystem.toDirectory(Paths.get(path)).get();
         Platform.runLater(() -> this.navigatorView.openInNewTab(directory));
     }
 
     public void openInCurrentTab(String path) {
-        Directory directory = this.fileSystem.toDirectory(Paths.get(path));
+        Directory directory = this.fileSystem.toDirectory(Paths.get(path)).get();
         Platform.runLater(() -> this.navigatorView.openInCurrentTab(directory));
     }
 

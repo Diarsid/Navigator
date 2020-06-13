@@ -58,12 +58,10 @@ public interface Directory extends FSEntry {
         Directory newDirectory = newEntry.asDirectory();
 
         if ( newDirectory.equals(this) ) {
-            System.out.println("MOVE NOT ACCEPTABLE : items are the same");
             can = false;
         }
 
         if ( can && newDirectory.isParentOf(this) ) {
-            System.out.println("MOVE NOT ACCEPTABLE : " + this + " is child of " + newDirectory);
             can = false;
         }
 
@@ -73,6 +71,8 @@ public interface Directory extends FSEntry {
     default boolean canNotHost(FSEntry newEntry) {
         return ! this.canHost(newEntry);
     }
+
+    Running listenForContentChanges(Runnable listener);
 
     Running listenForChanges(Runnable listener);
 

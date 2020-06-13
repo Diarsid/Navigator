@@ -125,7 +125,7 @@ class RealIcons implements Icons {
         Image image;
 
         if ( fsEntry.isDirectory() ) {
-            image = this.predefinedImagesByPaths.get(fsEntry.nioPath());
+            image = this.predefinedImagesByPaths.get(fsEntry.path());
 
             if ( isNull(image) ) {
                 image = this.predefinedImagesByNames.get(fsEntry.name().toLowerCase());
@@ -138,7 +138,7 @@ class RealIcons implements Icons {
         else {
             File file = fsEntry.asFile();
 
-            image = this.predefinedImagesByPaths.get(file.nioPath());
+            image = this.predefinedImagesByPaths.get(file.path());
 
             if ( isNull(image) ) {
                 Optional<Extension> extension = file.extension();

@@ -5,6 +5,7 @@ import java.util.function.Consumer;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.input.DragEvent;
+import javafx.scene.input.ScrollEvent;
 
 import diarsid.navigator.filesystem.Directory;
 import diarsid.navigator.filesystem.FSEntry;
@@ -29,7 +30,8 @@ class FilesTableRow extends TableRow<FilesTableItem> {
     FilesTableRow(
             TableView<FilesTableItem> tableView,
             Consumer<FilesTableItem> onItemInvoked,
-            DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles) {
+            DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles,
+            Consumer<ScrollEvent> onScrolled) {
         super();
         this.tableView = tableView;
         this.dragAndDropFiles = dragAndDropFiles;
@@ -65,6 +67,15 @@ class FilesTableRow extends TableRow<FilesTableItem> {
                     }
                 })
                 .build();
+
+        super.setOnScroll(scrollEvent -> {
+
+            double x = scrollEvent.getDeltaX();
+            double y = scrollEvent.getDeltaY();
+
+            onScrolled.accept(scrollEvent);
+            System.out.println("scroll x: " + x + ", y: " + y + " on row");
+        });
     }
 
     @Override

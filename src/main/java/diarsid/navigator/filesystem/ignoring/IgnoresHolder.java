@@ -55,7 +55,7 @@ class IgnoresHolder implements Ignores {
             return true;
         }
 
-        if ( this.predefinedIgnoredPaths.contains(fsEntry.nioPath()) ) {
+        if ( this.predefinedIgnoredPaths.contains(fsEntry.path()) ) {
             return true;
         }
 

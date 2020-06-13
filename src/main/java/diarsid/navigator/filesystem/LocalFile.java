@@ -6,22 +6,35 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
+
+import diarsid.support.objects.groups.Runnables;
 
 import static java.util.Objects.nonNull;
+import static java.util.UUID.randomUUID;
 
-class LocalFile implements File {
+import static diarsid.navigator.filesystem.FileSystem.getNameFrom;
 
-    private final Path path;
-    private final String name;
-    private final String fullName;
+class LocalFile implements File, ChangeableFSEntry {
+
+    private final UUID uuid;
     private final FileSystem fileSystem;
+    private final Runnables contentChangeListeners;
+    private final Runnables changeListeners;
+
+    private Path path;
+    private String name;
+    private String fullName;
 
     LocalFile(Path path, FileSystem fileSystem) {
+        this.uuid = randomUUID();
         this.path = path;
         this.name = path.getFileName().toString();
         this.fullName = path.toAbsolutePath().toString();
         this.fileSystem = fileSystem;
         fileSystem.isFile(this.path);
+        this.contentChangeListeners = new Runnables();
+        this.changeListeners = new Runnables();
     }
 
     @Override
@@ -30,15 +43,15 @@ class LocalFile implements File {
     }
 
     @Override
-    public String path() {
-        return this.fullName;
+    public Path path() {
+        return this.path;
     }
 
     @Override
     public Optional<Directory> parent() {
         Path parent = this.path.getParent();
         if ( nonNull(parent) ) {
-            return Optional.of(fileSystem.toDirectory(parent));
+            return this.fileSystem.toDirectory(parent);
         }
         else {
             return Optional.empty();
@@ -97,18 +110,20 @@ class LocalFile implements File {
     }
 
     @Override
-    public Path nioPath() {
-        return this.path;
-    }
-
-    @Override
     public void movedTo(Path newPath) {
-        throw new UnsupportedOperationException();
+        this.path = newPath;
+        this.name = getNameFrom(this.path);
+        this.fullName = this.path.toString();
     }
 
     @Override
     public void contentChanged() {
-        throw new UnsupportedOperationException();
+        this.contentChangeListeners.run();
+    }
+
+    @Override
+    public void changed() {
+        this.changeListeners.run();
     }
 
     @Override
@@ -136,11 +151,11 @@ class LocalFile implements File {
         if (this == o) return true;
         if (!(o instanceof LocalFile)) return false;
         LocalFile localFile = (LocalFile) o;
-        return path.equals(localFile.path);
+        return uuid.equals(localFile.uuid);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(path);
+        return Objects.hash(uuid);
     }
 }

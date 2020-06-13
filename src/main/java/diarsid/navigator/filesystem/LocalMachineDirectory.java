@@ -3,6 +3,7 @@ package diarsid.navigator.filesystem;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -17,12 +18,14 @@ import static java.util.stream.Collectors.toList;
 class LocalMachineDirectory implements Directory {
 
     private final String machineName;
+    private final Path machinePath;
     private final LocalFileSystem fileSystem;
     private final List<Path> roots;
     private final Runnables changeListeners;
 
     LocalMachineDirectory(LocalFileSystem fileSystem, Iterable<Path> rootPaths) {
         this.machineName = getMachineName();
+        this.machinePath = Paths.get(this.machineName);
         this.fileSystem = fileSystem;
         this.roots = new ArrayList<>();
         this.changeListeners = new Runnables();
@@ -50,8 +53,8 @@ class LocalMachineDirectory implements Directory {
     }
 
     @Override
-    public String path() {
-        return this.machineName + "/";
+    public Path path() {
+        return this.machinePath;
     }
 
     @Override
@@ -98,7 +101,7 @@ class LocalMachineDirectory implements Directory {
     public void feedChildren(Consumer<List<FSEntry>> consumer) {
         List<FSEntry> entries = this.roots
                 .stream()
-                .map(this.fileSystem::toFSEntry)
+                .map(this.fileSystem::toLocalFSEntry)
                 .collect(toList());
 
         consumer.accept(entries);
@@ -109,7 +112,7 @@ class LocalMachineDirectory implements Directory {
         List<Directory> directories = this.roots
                 .stream()
                 .filter(this.fileSystem::isDirectory)
-                .map(this.fileSystem::toDirectory)
+                .map(this.fileSystem::toLocalDirectory)
                 .collect(toList());
 
         consumer.accept(directories);
@@ -120,7 +123,7 @@ class LocalMachineDirectory implements Directory {
         List<File> files = this.roots
                 .stream()
                 .filter(this.fileSystem::isFile)
-                .map(this.fileSystem::toFile)
+                .map(this.fileSystem::toLocalFile)
                 .collect(toList());
 
         consumer.accept(files);
@@ -147,7 +150,7 @@ class LocalMachineDirectory implements Directory {
     }
 
     @Override
-    public Running listenForChanges(Runnable listener) {
+    public Running listenForContentChanges(Runnable listener) {
         return this.changeListeners.add(listener);
     }
 
@@ -173,12 +176,12 @@ class LocalMachineDirectory implements Directory {
 
     @Override
     public boolean moveTo(Directory newPlace) {
-        throw new UnsupportedOperationException("This directory is root");
+        throw new UnsupportedOperationException("This directory is machine");
     }
 
     @Override
     public boolean remove() {
-        throw new UnsupportedOperationException("This directory is root");
+        throw new UnsupportedOperationException("This directory is machine");
     }
 
     @Override
@@ -187,18 +190,8 @@ class LocalMachineDirectory implements Directory {
     }
 
     @Override
-    public Path nioPath() {
-        return this.roots.get(0);
-    }
-
-    @Override
-    public void movedTo(Path newPath) {
-        throw new UnsupportedOperationException("This directory is root");
-    }
-
-    @Override
-    public void contentChanged() {
-        throw new UnsupportedOperationException("This directory is root");
+    public Running listenForChanges(Runnable listener) {
+        throw new UnsupportedOperationException("This directory is machine");
     }
 
     @Override

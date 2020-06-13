@@ -2,7 +2,6 @@ package diarsid.navigator.view.table;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import javafx.geometry.Bounds;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
@@ -202,11 +201,13 @@ public class FilesTableFrameSelectionDragListener implements ClickOrDragDetector
     }
 
     private void checkForSelection(FilesTableItem tableItem) {
-        FilesTableRow row = tableItem.row().orThrow();
-        if (this.selection.isIntersectedWith(row)) {
-            this.select(row);
-        } else {
-            this.unselect(row);
+        if ( tableItem.row().isPresent() ) {
+            FilesTableRow row = tableItem.row().orThrow();
+            if (this.selection.isIntersectedWith(row)) {
+                this.select(row);
+            } else {
+                this.unselect(row);
+            }
         }
     }
 

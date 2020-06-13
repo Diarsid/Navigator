@@ -5,9 +5,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.function.Predicate;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.Label;
@@ -24,7 +25,7 @@ import diarsid.support.objects.references.impl.Possible;
 import diarsid.support.objects.references.impl.PossibleListenable;
 import diarsid.support.objects.references.impl.PresentListenable;
 
-import static java.util.stream.Collectors.joining;
+import static java.util.Objects.isNull;
 import static javafx.geometry.Pos.CENTER_LEFT;
 import static javafx.scene.input.MouseEvent.MOUSE_EXITED;
 import static javafx.scene.input.MouseEvent.MOUSE_PRESSED;
@@ -98,7 +99,6 @@ public class BreadcrumbsBar<T> {
 
         @Override
         public void clear() {
-            System.out.println("CLEAR ELEMENT " + this.t);
             this.t.nullify();
             this.label.setText(null);
             this.imageView.setImage(null);
@@ -112,12 +112,15 @@ public class BreadcrumbsBar<T> {
     }
 
     private final String separator;
-    private final Function<T, String> elementsToString;
+    private final Function<T, String> elementToString;
+    private final Function<List<T>, String> elementsListToPath;
     private final BiConsumer<T, MouseEvent> onBreadcrumbClicked;
+    private final Predicate<String> inputPathValidatorAndConsumer;
     private final HBox elementsHBox;
     private final List<T> values;
     private final List<Node> childrenSwap;
     private final ObservableList<Node> elementsBox;
+    private final TextField pathField;
     private final SimplePool<Element<T>> elementsPool;
     private final SimplePool<Label> separatorsPool;
     private final PossibleListenable<Double> iconsSize;
@@ -126,11 +129,15 @@ public class BreadcrumbsBar<T> {
 
     public BreadcrumbsBar(
             String separator,
-            Function<T, String> elementsToString,
-            BiConsumer<T, MouseEvent> onBreadcrumbClicked) {
+            Function<T, String> elementToString,
+            Function<List<T>, String> elementsListToPath,
+            BiConsumer<T, MouseEvent> onBreadcrumbClicked,
+            Predicate<String> inputPathValidatorAndConsumer) {
         this.separator = separator;
-        this.elementsToString = elementsToString;
+        this.elementToString = elementToString;
+        this.elementsListToPath = elementsListToPath;
         this.onBreadcrumbClicked = onBreadcrumbClicked;
+        this.inputPathValidatorAndConsumer = inputPathValidatorAndConsumer;
 
         this.elementsHBox = new HBox();
         this.elementsHBox.getStyleClass().add("breadcrumbs-bar");
@@ -141,11 +148,19 @@ public class BreadcrumbsBar<T> {
 
         this.elementsBox = this.elementsHBox.getChildren();
         this.elementsPool = new SimplePool<>(this::createNewElement);
+
         this.separatorsPool = new SimplePool<>(this::createNewSeparatorLabel);
 
         this.iconsSize = listenable(possibleButEmpty());
         this.iconsSizeProperty = new SimpleDoubleProperty();
         this.iconsSize.listen((oldValue, newValue) -> this.iconsSizeProperty.set(newValue));
+
+        this.pathField = new TextField();
+        this.pathField.setEditable(true);
+        this.pathField.getStyleClass().add("path");
+        this.pathField.prefHeightProperty().bind(this.iconsSizeProperty);
+        this.pathField.setOnAction(this::onPathEntered);
+        HBox.setHgrow(this.pathField, ALWAYS);
 
         this.state = listenablePresent(AS_ELEMENTS_BAR, "BreadcrumbsBar.state");
         this.state.listen(this::onStateChanged);
@@ -162,20 +177,37 @@ public class BreadcrumbsBar<T> {
         this.state.resetTo(AS_ELEMENTS_BAR);
     }
 
+    private void onPathEntered(ActionEvent event) {
+        String input = this.pathField.getText();
+
+        if ( isNull(input) || input.isBlank() ) {
+            return;
+        }
+
+        String currentDisplayedPath = this.elementsListToPath.apply(this.values);
+
+        if ( currentDisplayedPath.equalsIgnoreCase(input) ) {
+            return;
+        }
+
+        this.state.resetTo(AS_ELEMENTS_BAR);
+
+        boolean validAndConsumed = inputPathValidatorAndConsumer.test(input);
+    }
+
     private void onStateChanged(State oldState, State newState) {
         if ( newState.equals(AS_STRING_PATH) ) {
             this.childrenSwap.addAll(this.elementsBox);
             this.elementsBox.clear();
-            String path = this.values.stream().map(this.elementsToString).collect(joining("/"));
-            TextField textField = new TextField(path);
-            textField.setEditable(true);
-            textField.getStyleClass().add("path");
-            textField.prefHeightProperty().bind(this.iconsSizeProperty);
-            HBox.setHgrow(textField, ALWAYS);
-            this.elementsBox.add(textField);
-            textField.selectAll();
+            String path = this.elementsListToPath.apply(this.values);
+
+            this.pathField.setText(path);
+            this.elementsBox.add(this.pathField);
+            this.pathField.selectAll();
+            this.pathField.requestFocus();
         }
         else {
+            this.pathField.clear();
             this.elementsBox.clear();
             this.elementsBox.addAll(this.childrenSwap);
             this.childrenSwap.clear();
@@ -183,7 +215,7 @@ public class BreadcrumbsBar<T> {
     }
 
     private BreadcrumbsBar.Element<T> createNewElement() {
-        return new Element<>(this.iconsSizeProperty, this.elementsToString, this.onBreadcrumbClicked);
+        return new Element<>(this.iconsSizeProperty, this.elementToString, this.onBreadcrumbClicked);
     }
 
     private Label createNewSeparatorLabel() {

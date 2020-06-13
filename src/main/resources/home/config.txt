@@ -1,3 +1,7 @@
 names.machine = {string}
 sizes.icons = {int}
 tree.selections.mode = {SINGLE | MULTIPLE({int})}
+tree.selections.selectOnExpanded = {boolean}
+tree.selections.onParentOfSelectedCollapsed = {HIDE_SELECTION | SELECT_PARENT}
+
+
