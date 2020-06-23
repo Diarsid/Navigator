@@ -163,17 +163,17 @@ public class FilesTable implements ViewComponent {
     }
 
     public void remove(FSEntry fsEntry) {
-        Optional<FilesTableItem> fileTableItem = tableView
+        Optional<FilesTableItem> fileTableItem = this.tableView
                 .getItems()
                 .stream()
                 .filter(item -> fsEntry.equals(item.fsEntry()))
                 .findFirst();
 
-        fileTableItem.ifPresent(tableItem -> tableView.getItems().remove(tableItem));
+        fileTableItem.ifPresent(tableItem -> this.tableView.getItems().remove(tableItem));
     }
 
     private TableRow<FilesTableItem> newTableRow(TableView<FilesTableItem> tableView) {
-        return new FilesTableRow(this.tableView, this.onItemInvoked, this.dragAndDropFiles, this::onScrolled);
+        return new FilesTableRow(this.directory, this.onItemInvoked, this.dragAndDropFiles, this::onScrolled);
     }
 
     private void onScrolled(ScrollEvent scrollEvent) {

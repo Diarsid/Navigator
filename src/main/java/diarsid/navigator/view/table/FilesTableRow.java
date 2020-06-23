@@ -2,6 +2,7 @@ package diarsid.navigator.view.table;
 
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.input.DragEvent;
@@ -10,6 +11,7 @@ import javafx.scene.input.ScrollEvent;
 import diarsid.navigator.filesystem.Directory;
 import diarsid.navigator.filesystem.FSEntry;
 import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;
+import diarsid.navigator.view.fsentry.contextmenu.FSEntryContextMenu;
 import diarsid.support.javafx.DoubleClickDetector;
 
 import static java.util.Objects.isNull;
@@ -21,23 +23,28 @@ import static javafx.scene.input.TransferMode.MOVE;
 import static diarsid.navigator.filesystem.Directory.Edit.FILLED;
 import static diarsid.navigator.filesystem.ProgressTracker.DEFAULT;
 
-class FilesTableRow extends TableRow<FilesTableItem> {
+class FilesTableRow extends TableRow<FilesTableItem> implements Supplier<FSEntry> {
 
-    private final TableView<FilesTableItem> tableView;
     private final DoubleClickDetector doubleClickDetector;
+    private final Supplier<Directory> selectedDirectory;
     private final DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles;
 
     FilesTableRow(
-            TableView<FilesTableItem> tableView,
+            Supplier<Directory> selectedDirectory,
             Consumer<FilesTableItem> onItemInvoked,
             DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles,
             Consumer<ScrollEvent> onScrolled) {
         super();
-        this.tableView = tableView;
         this.dragAndDropFiles = dragAndDropFiles;
+        this.selectedDirectory = selectedDirectory;
+
         super.setOnDragOver(this::onDragOver);
         super.setOnDragDropped(this::onDragDrop);
         super.setAlignment(CENTER);
+
+//        super.addEventFilter(ContextMenuEvent.CONTEXT_MENU_REQUESTED, Event::consume);
+
+        super.setContextMenu(new FSEntryContextMenu(this));
 
         super.addEventFilter(MOUSE_PRESSED, mouseEvent -> {
             if ( mouseEvent.isSecondaryButtonDown() ) {
@@ -47,10 +54,10 @@ class FilesTableRow extends TableRow<FilesTableItem> {
 
         super.addEventHandler(MOUSE_PRESSED, mouseEvent -> {
             if ( super.isEmpty() ) {
-                tableView.getSelectionModel().clearSelection();
+                super.getTableView().getSelectionModel().clearSelection();
             }
 
-            tableView.getSelectionModel().select(super.getIndex());
+            super.getTableView().getSelectionModel().select(super.getIndex());
         });
 
         this.doubleClickDetector = DoubleClickDetector.Builder
@@ -76,6 +83,17 @@ class FilesTableRow extends TableRow<FilesTableItem> {
             onScrolled.accept(scrollEvent);
             System.out.println("scroll x: " + x + ", y: " + y + " on row");
         });
+    }
+
+    @Override
+    public FSEntry get() {
+        FilesTableItem item = super.getItem();
+        if ( isNull(item) ) {
+            return this.selectedDirectory.get();
+        }
+        else {
+            return item.fsEntry();
+        }
     }
 
     @Override
