@@ -80,15 +80,15 @@ public class TabNames {
     }
 
     public void add(Tab tab) {
-        tab.selectedDirectory().listen((oldTabDirectory, newTabDirectory) -> {
+        tab.selectedDirectory().listen((oldDirectory, newDirectory) -> {
             String oldName;
-            if ( nonNull(oldTabDirectory) ) {
-                oldName = oldTabDirectory.directory().name().toLowerCase();
+            if ( nonNull(oldDirectory) ) {
+                oldName = oldDirectory.name().toLowerCase();
             }
             else {
                 oldName = null;
             }
-            String newName = newTabDirectory.directory().name().toLowerCase();
+            String newName = newDirectory.name().toLowerCase();
             this.onNameChange(tab, oldName, newName);
         });
     }
@@ -136,7 +136,6 @@ public class TabNames {
             if ( tab.hasSelection() ) {
                 tab.selectedDirectory()
                         .orThrow()
-                        .directory()
                         .parent()
                         .ifPresent(parent -> this.parentNames.add(tab, parent));
             }

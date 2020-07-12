@@ -3,8 +3,10 @@ package diarsid.navigator.filesystem;
 import java.awt.Desktop;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,25 +16,29 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import diarsid.navigator.filesystem.ignoring.Ignores;
+import diarsid.support.concurrency.threads.NamedThreadSource;
 
 import static java.awt.Desktop.getDesktop;
-import static java.nio.file.Files.exists;
 import static java.nio.file.StandardCopyOption.COPY_ATTRIBUTES;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static java.util.Collections.reverse;
 import static java.util.Comparator.reverseOrder;
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.stream.Collectors.toList;
 
+import static diarsid.navigator.Navigator.NAMED_THREAD_SOURCE;
 import static diarsid.navigator.filesystem.FileSystemType.LOCAL;
+import static diarsid.support.concurrency.ThreadUtils.currentThreadTrack;
 
-class LocalFileSystem implements FileSystem {
+public class LocalFileSystem implements FileSystem {
 
     static class PathMove {
 
         private Path oldPath;
         private Path newPath;
-
 
         PathMove() {
         }
@@ -111,25 +117,41 @@ class LocalFileSystem implements FileSystem {
     }
 
     private final Ignores ignores;
-    private final HashMap<Path, LocalDirectory> directoriesByPath;
-    private final HashMap<Path, LocalFile> filesByPath;
+    private final HashMap<Path, LocalDirectoryWatcher> watchersByPath;
     private final LocalMachineDirectory localMachineDirectory;
     private final Extensions extensions;
     private final Desktop desktop;
     private final Predicate<FSEntry> notIgnored;
     private final PathMove pathMove;
+    private final Changes changes;
 
     LocalFileSystem(
             Ignores ignores,
+            NamedThreadSource namedThreadSource,
             java.nio.file.FileSystem fileSystem) {
         this.ignores = ignores;
-        this.directoriesByPath = new HashMap<>();
-        this.filesByPath = new HashMap<>();
+        this.watchersByPath = new HashMap<>();
         this.localMachineDirectory = new LocalMachineDirectory(this, fileSystem.getRootDirectories());
         this.extensions = new Extensions();
         this.desktop = getDesktop();
         this.notIgnored = this.ignores::isNotIgnored;
         this.pathMove = new PathMove();
+        this.changes = new Changes(namedThreadSource);
+
+        this.changes.listenForEntriesRemoved(this::removeWatchers);
+        this.changes.listenForEntriesAdded(this::createWatchersForEntries);
+    }
+
+    private void removeWatchers(List<Path> paths) {
+        synchronized ( this.watchersByPath ) {
+            for ( Path path : paths ) {
+                LocalDirectoryWatcher localDirectoryWatcher = this.watchersByPath.remove(path);
+
+                if ( nonNull(localDirectoryWatcher) ) {
+                    localDirectoryWatcher.destroy();
+                }
+            }
+        }
     }
 
     @Override
@@ -184,12 +206,6 @@ class LocalFileSystem implements FileSystem {
     }
 
     LocalDirectory toLocalDirectory(Path path) {
-        return this.directoriesByPath.computeIfAbsent(
-                path.toAbsolutePath(),
-                fullName -> this.createNewLocalDirectory(path));
-    }
-
-    private LocalDirectory createNewLocalDirectory(Path path) {
         LocalDirectory localDirectory = new LocalDirectory(path, this);
         return localDirectory;
     }
@@ -216,9 +232,8 @@ class LocalFileSystem implements FileSystem {
     }
 
     LocalFile toLocalFile(Path path) {
-        return this.filesByPath.computeIfAbsent(
-                path.toAbsolutePath(),
-                fullName -> new LocalFile(path, this));
+        LocalFile localFile = new LocalFile(path, this);
+        return localFile;
     }
 
     @Override
@@ -229,6 +244,11 @@ class LocalFileSystem implements FileSystem {
     @Override
     public boolean isFile(Path path) {
         return Files.isRegularFile(path);
+    }
+
+    @Override
+    public boolean exists(FSEntry fsEntry) {
+        return Files.exists(fsEntry.path());
     }
 
     @Override
@@ -290,34 +310,29 @@ class LocalFileSystem implements FileSystem {
 
         if ( whatToMove.isFile() ) {
             LocalFile fileToMove = (LocalFile) whatToMove;
+            Path oldPath = fileToMove.path();
+            Path newPath = directoryHost.path().resolve(fileToMove.name());
+
+            boolean moved;
             try {
-                Path oldPath = fileToMove.path();
-                Path newPath = directoryHost.path().resolve(fileToMove.name());
-
-                Optional<Directory> previousParent = fileToMove.parent();
-
-                Files.move(fileToMove.path(), directoryHost.path().resolve(fileToMove.name()), REPLACE_EXISTING);
-
-                this.filesByPath.remove(oldPath);
-                this.filesByPath.put(newPath, fileToMove);
-
-                fileToMove.movedTo(directoryHost.path());
-
-                if ( previousParent.isPresent() ) {
-                    LocalDirectory previousParentDirectory = (LocalDirectory) previousParent.get();
-                    previousParentDirectory.contentChanged();
-                }
-
-                directoryHost.contentChanged();
-
-                fileToMove.changed();
-
-                success = true;
+                Files.move(oldPath, newPath, REPLACE_EXISTING);
+                moved = true;
+            }
+            catch (AccessDeniedException e) {
+                handle(e);
+                moved = false;
             }
             catch (IOException e) {
                 handle(e);
-                success = false;
+                moved = false;
             }
+
+            if ( moved ) {
+                this.changes.removed(oldPath);
+                this.changes.added(this.toLocalFSEntry(newPath));
+            }
+
+            success = moved;
         }
         else {
             LocalDirectory directoryToMove = (LocalDirectory) whatToMove;
@@ -325,41 +340,53 @@ class LocalFileSystem implements FileSystem {
                 return false;
             }
 
-            if ( directoryToMove.isParentOf(directoryHost) ) {
+            if ( directoryToMove.isIndirectParentOf(directoryHost) ) {
                 return false;
             }
 
             try {
                 Path oldPath = directoryToMove.path();
                 Path newPath = directoryHost.path().resolve(directoryToMove.name());
-                this.pathMove.setFromTo(oldPath, newPath);
                 System.out.println("[FS] [move] " + oldPath + " -> " + newPath);
 
-                List<Path> removedPaths = Files.walk(oldPath).collect(toList());
-
-                Files.move(oldPath, newPath);
-
-                List<PathChange> pathChanges = this.pathMove.findChangesTo(removedPaths);
-                this.pathMove.clear();
-
-                Optional<Directory> previousParent = directoryToMove.parent();
-
-                List<ChangeableFSEntry> movedEntries = pathChanges
-                        .stream()
-                        .map(this::makeChangeToCachedPaths)
-                        .filter(Objects::nonNull)
+                List<Path> pathsToRemove = Files
+                        .walk(oldPath)
+                        .sorted(reverseOrder())
                         .collect(toList());
 
-                if ( previousParent.isPresent() ) {
-                    LocalDirectory previousParentDirectory = (LocalDirectory) previousParent.get();
-                    previousParentDirectory.contentChanged();
+                this.removeWatchers(pathsToRemove);
+
+                boolean moved;
+                try {
+                    Files.move(oldPath, newPath);
+                    moved = true;
+                }
+                catch (AccessDeniedException e) {
+                    handle(e);
+                    moved = false;
+                }
+                catch (IOException e) {
+                    handle(e);
+                    moved = false;
                 }
 
-                directoryHost.contentChanged();
+                if ( moved ) {
+                    List<FSEntry> newFSEntries = Files
+                            .walk(newPath)
+                            .map(this::toLocalFSEntry)
+                            .sorted(reverseOrder())
+                            .collect(toList());
 
-                movedEntries.forEach(ChangeableFSEntry::changed);
+                    this.changes.removed(pathsToRemove);
+                    this.changes.added(newFSEntries);
 
-                success = true;
+                    success = true;
+                }
+                else {
+                    this.createWatchers(pathsToRemove);
+                    success = false;
+                }
+
             }
             catch (IOException e) {
                 handle(e);
@@ -370,42 +397,171 @@ class LocalFileSystem implements FileSystem {
         return success;
     }
 
-    private ChangeableFSEntry makeChangeToCachedPaths(PathChange pathChange) {
-        if ( pathChange.isDirectory() ) {
-            LocalDirectory directory = this.directoriesByPath.remove(pathChange.oldPath);
+    @Override
+    public boolean rename(FSEntry whatToRename, String newName) {
+        boolean success;
 
-            if ( nonNull(directory) ) {
-                directory.movedTo(pathChange.newPath);
-                this.directoriesByPath.put(pathChange.newPath, directory);
-                return directory;
+        if ( whatToRename.isFile() ) {
+            LocalFile fileToRename = (LocalFile) whatToRename;
+            Path oldPath = fileToRename.path();
+            Path parent = oldPath.getParent();
+
+            Path newPath;
+            if ( isNull(parent) ) {
+                newPath = Paths.get(newName);
             }
             else {
-                return null;
+                newPath = parent.resolve(newName);
             }
+
+            boolean renamed;
+            try {
+                System.out.println("[FS] [rename] " + oldPath + " -> " + newPath);
+                Files.move(oldPath, newPath, REPLACE_EXISTING);
+                renamed = true;
+            }
+            catch (AccessDeniedException e) {
+                handle(e);
+                renamed = false;
+            }
+            catch (IOException e) {
+                handle(e);
+                renamed = false;
+            }
+
+            if ( renamed ) {
+                this.changes.removed(oldPath);
+                this.changes.added(this.toLocalFSEntry(newPath));
+            }
+
+            success = renamed;
         }
         else {
-            LocalFile file = this.filesByPath.remove(pathChange.oldPath);
+            LocalDirectory directoryToRename = (LocalDirectory) whatToRename;
 
-            if ( nonNull(file) ) {
-                file.movedTo(pathChange.newPath);
-                this.filesByPath.put(pathChange.newPath, file);
-                return file;
+            try {
+                Path oldPath = directoryToRename.path();Path parent = oldPath.getParent();
+
+                Path newPath;
+                if ( isNull(parent) ) {
+                    newPath = Paths.get(newName);
+                }
+                else {
+                    newPath = parent.resolve(newName);
+                }
+
+                List<Path> pathsToRemove = Files
+                        .walk(oldPath)
+                        .sorted(reverseOrder())
+                        .collect(toList());
+
+                this.removeWatchers(pathsToRemove);
+
+                boolean renamed;
+                try {
+                    System.out.println("[FS] [rename] " + oldPath + " -> " + newPath);
+                    Files.move(oldPath, newPath);
+                    renamed = true;
+                }
+                catch (AccessDeniedException e) {
+                    handle(e);
+                    renamed = false;
+                }
+                catch (IOException e) {
+                    e.printStackTrace();
+                    renamed = false;
+                }
+
+                if ( renamed ) {
+                    List<FSEntry> newFSEntries = Files
+                            .walk(newPath)
+                            .map(this::toLocalFSEntry)
+                            .sorted(reverseOrder())
+                            .collect(toList());
+
+                    this.changes.removed(pathsToRemove);
+                    this.changes.added(newFSEntries);
+
+                    success = true;
+                }
+                else {
+                    this.createWatchers(pathsToRemove);
+                    success = false;
+                }
+
             }
-            else {
-                return null;
+            catch (IOException e) {
+                handle(e);
+                success = false;
             }
         }
+
+        return success;
     }
 
+//    private ChangeableFSEntry makeChangeToCachedPaths(PathChange pathChange) {
+//        if ( pathChange.isDirectory() ) {
+//            ChangeableFSEntry entry = this.entriesByPath.remove(pathChange.oldPath);
+//
+//            if ( nonNull(entry) ) {
+//                LocalDirectory directory = entry.asDirectory();
+//                directory.movedTo(pathChange.newPath);
+//                this.entriesByPath.put(pathChange.newPath, directory);
+//                createAndAddNewPathWatcher(directory);
+//                return directory;
+//            }
+//            else {
+//                return null;
+//            }
+//        }
+//        else {
+//            ChangeableFSEntry entry = this.entriesByPath.remove(pathChange.oldPath);
+//
+//            if ( nonNull(entry) ) {
+////                removePathWatcher(pathChange.oldPath);
+//                LocalFile file = entry.asFile();
+//                file.movedTo(pathChange.newPath);
+//                this.entriesByPath.put(pathChange.newPath, file);
+////                createAndAddNewPathWatcher(pathChange.newPath);
+//                return file;
+//            }
+//            else {
+//                return null;
+//            }
+//        }
+//    }
+
+//    private void remove(Path path) {
+//        System.out.println("[REMOVING PATH] " + path);
+//        ChangeableFSEntry entry = this.entriesByPath.remove(path);
+//        this.entriesByPath.remove(path);
+////        if ( nonNull(path) ) {
+////            try {
+////                Files.walk(path).forEach(visitedPath -> {
+////                    System.out.println("[REMOVING PATH] subpath " + path);
+////                    this.entriesByPath.remove(visitedPath);
+////                    removePathWatcher(visitedPath);
+////                });
+////            }
+////            catch (IOException e) {
+////                e.printStackTrace();
+////            }
+////        }
+//
+//    }
 
     @Override
     public boolean remove(FSEntry entry) {
         boolean success;
 
+        System.out.println("removing... " + entry.path());
+        currentThreadTrack("diarsid", (element) -> System.out.println("    " + element));
         if ( entry.isFile() ) {
             LocalFile file = (LocalFile) entry;
+            Path oldPath = file.path();
             try {
-                Files.delete(file.path());
+                Files.delete(oldPath);
+                this.changes.removed(oldPath);
                 success = true;
             }
             catch (IOException e) {
@@ -415,19 +571,42 @@ class LocalFileSystem implements FileSystem {
         }
         else {
             LocalDirectory directoryToRemove = (LocalDirectory) entry;
+            Path pathToRemove = directoryToRemove.path();
 
             try {
-                List<Path> paths = Files.walk(directoryToRemove.path())
+                List<Path> pathsToRemove = Files
+                        .walk(pathToRemove)
                         .sorted(reverseOrder())
                         .collect(toList());
 
-                // TODO !!!!
+                this.removeWatchers(pathsToRemove);
 
-                for (Path path : paths) {
-                    System.out.println(" del : " + path.toString());
-                    Files.delete(path);
+                List<Path> removedPaths = new ArrayList<>();
+                for ( Path path : pathsToRemove ) {
+                    try {
+                        Files.delete(path);
+                        removedPaths.add(path);
+                    }
+                    catch (IOException e) {
+                        handle(e);
+                        break;
+                    }
                 }
-                success = true;
+
+                boolean removed = removedPaths.size() == pathsToRemove.size();
+
+                if ( removedPaths.size() > 0 ) {
+                    this.changes.removed(removedPaths);
+                }
+
+                if ( removed ) {
+                    success = true;
+                }
+                else {
+                    pathsToRemove.removeAll(removedPaths);
+                    this.createWatchers(pathsToRemove);
+                    success = false;
+                }
             }
             catch (IOException e) {
                 handle(e);
@@ -520,6 +699,43 @@ class LocalFileSystem implements FileSystem {
     }
 
     @Override
+    public void showInDefaultFileManager(FSEntry fsEntry) {
+        if ( fsEntry.isFile() ) {
+            Optional<Directory> parent = fsEntry.parent();
+            try {
+                if ( parent.isPresent() ) {
+                    this.desktop.open(parent.get().path().toFile());
+                }
+                else {
+                    this.desktop.open(this.localMachineDirectory.roots().get(0).toFile());
+                }
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        else {
+            try {
+                if ( fsEntry instanceof LocalMachineDirectory ) {
+                    this.desktop.open(this.localMachineDirectory.roots().get(0).toFile());
+                }
+                else {
+                    this.desktop.open(fsEntry.path().toFile());
+                }
+            }
+            catch (AccessDeniedException denied) {
+                handle(denied);
+            }
+            catch (IOException e) {
+                handle(e);
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
     public Stream<FSEntry> list(Directory directory) {
         LocalDirectory localDirectory = (LocalDirectory) directory;
         try {
@@ -552,13 +768,44 @@ class LocalFileSystem implements FileSystem {
     }
 
     @Override
+    public Optional<Directory> existedParentOf(Path path) {
+        Path parent = path.getParent();
+
+        while ( nonNull(parent) ) {
+            if ( Files.exists(parent) ) {
+                break;
+            }
+            else {
+                parent = parent.getParent();
+            }
+        }
+
+        if ( isNull(parent) ) {
+            return Optional.empty();
+        }
+        else {
+            return this.toDirectory(parent);
+        }
+    }
+
+    @Override
     public List<Directory> parentsOf(FSEntry fsEntry) {
         Path parentPath = fsEntry.path().getParent();
+        return this.splitToDirectories(parentPath);
+    }
+
+    @Override
+    public List<Directory> parentsOf(Path path) {
+        Path parentPath = path.getParent();
+        return this.splitToDirectories(parentPath);
+    }
+
+    private List<Directory> splitToDirectories(Path parentPath) {
         Directory parentDirectory;
 
         List<Directory> parents = new ArrayList<>();
 
-        while ( nonNull(parentPath) && exists(parentPath) ) {
+        while (nonNull(parentPath)) {
             parentDirectory = this.toLocalDirectory(parentPath);
             parents.add(parentDirectory);
             parentPath = parentPath.getParent();
@@ -605,6 +852,66 @@ class LocalFileSystem implements FileSystem {
         return LOCAL;
     }
 
+    @Override
+    public Changes changes() {
+        return this.changes;
+    }
+
+    @Override
+    public void watch(Directory directory) {
+        synchronized ( this.watchersByPath ) {
+            this.createAndPutNewWatcherIfAbsent(directory.path());
+        }
+    }
+
+    private void createWatchers(List<Path> paths) {
+        synchronized ( this.watchersByPath ) {
+            paths.stream()
+                    .filter(Files::isDirectory)
+                    .forEach(this::createAndPutNewWatcherIfAbsent);
+        }
+    }
+
+    private void createWatchersForEntries(List<FSEntry> entries) {
+        synchronized ( this.watchersByPath ) {
+            entries.stream()
+                    .filter(FSEntry::isDirectory)
+                    .map(FSEntry::path)
+                    .forEach(this::createAndPutNewWatcherIfAbsent);
+        }
+    }
+
+    private void createAndPutNewWatcherIfAbsent(Path path) {
+        if ( ! Files.exists(path) ) {
+            return;
+        }
+
+        if ( ! Files.isDirectory(path) ) {
+            return;
+        }
+
+        this.watchersByPath.computeIfAbsent(path, this::createNewWatcher);
+    }
+
+    private LocalDirectoryWatcher createNewWatcher(Path path) {
+        LocalDirectoryWatcher watcher = new LocalDirectoryWatcher(
+                path,
+                (eventKind, pathOnChange) -> {
+                    if ( eventKind.equals(ENTRY_DELETE) ) {
+                        System.out.println("[WATCH]" + pathOnChange.toString() + " " + eventKind);
+                        this.changes.removed(pathOnChange);
+                    }
+                    else if ( eventKind.equals(ENTRY_CREATE) ) {
+                        System.out.println("[WATCH]" + pathOnChange.toString() + " " + eventKind);
+                        this.toFSEntry(pathOnChange).ifPresent(this.changes::added);
+                    }
+                });
+
+        watcher.startWork();
+
+        return watcher;
+    }
+
     private static void handle(IOException e) {
         printStackTraceFor(e);
     }
@@ -620,5 +927,12 @@ class LocalFileSystem implements FileSystem {
                 System.out.println("    " + element);
             }
         }
+    }
+
+    public static void main(String[] args) {
+        LocalFileSystem localFileSystem = new LocalFileSystem(Ignores.INSTANCE, NAMED_THREAD_SOURCE, FileSystems.getDefault());
+        Directory directory = localFileSystem.toLocalDirectory(Paths.get("D:/CONTENT/Books/one/two/three"));
+        Optional<Directory> parent = directory.existedParent();
+        int a = 5;
     }
 }

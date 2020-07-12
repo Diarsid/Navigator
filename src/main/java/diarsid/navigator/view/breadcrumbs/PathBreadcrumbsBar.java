@@ -11,18 +11,16 @@ import javafx.scene.input.MouseEvent;
 
 import diarsid.navigator.filesystem.Directory;
 import diarsid.navigator.filesystem.FileSystem;
-import diarsid.navigator.model.DirectoriesAtTabs;
-import diarsid.navigator.model.DirectoryAtTab;
 import diarsid.navigator.model.Tab;
 import diarsid.navigator.model.Tabs;
 import diarsid.navigator.view.icons.Icon;
 import diarsid.navigator.view.icons.Icons;
-import diarsid.support.objects.groups.Running;
+import diarsid.support.objects.references.Listening;
 import diarsid.support.objects.references.Reference;
 import diarsid.support.objects.references.impl.Possible;
 
-import static diarsid.navigator.filesystem.Directory.Edit.MOVED;
-import static diarsid.navigator.filesystem.Directory.Edit.RENAMED;
+import static java.util.Objects.nonNull;
+
 import static diarsid.support.objects.references.impl.References.possibleButEmpty;
 
 public class PathBreadcrumbsBar {
@@ -30,31 +28,28 @@ public class PathBreadcrumbsBar {
     private final Tabs tabs;
     private final FileSystem fileSystem;
     private final Icons icons;
-    private final DirectoriesAtTabs directoriesAtTabs;
-    private final BreadcrumbsBar<DirectoryAtTab> bar;
-    private final Possible<DirectoryAtTab> directory;
-    private final Possible<Running> directoryListening;
-    private final Consumer<DirectoryAtTab> onNewDirectoryInput;
+    private final BreadcrumbsBar<Directory> bar;
+    private final Possible<Directory> directory;
+    private final Possible<Listening<Directory>> directoryListening;
+    private final Consumer<Directory> onNewDirectoryInput;
 
     public PathBreadcrumbsBar(
             Tabs tabs,
             FileSystem fileSystem,
             Icons icons,
-            DirectoriesAtTabs directoriesAtTabs,
-            BiConsumer<DirectoryAtTab, MouseEvent> onDirectoryClicked,
-            Consumer<DirectoryAtTab> onNewDirectoryInput) {
+            BiConsumer<Directory, MouseEvent> onDirectoryClicked,
+            Consumer<Directory> onNewDirectoryInput) {
         this.tabs = tabs;
         this.fileSystem = fileSystem;
         this.icons = icons;
-        this.directoriesAtTabs = directoriesAtTabs;
 
         this.directory = possibleButEmpty();
         this.directoryListening = possibleButEmpty();
 
         this.onNewDirectoryInput = onNewDirectoryInput;
 
-        Function<List<DirectoryAtTab>, String> directoriesListToPath = (directories) -> {
-            return directories.get(directories.size() - 1).directory().path().toString();
+        Function<List<Directory>, String> directoriesListToPath = (directories) -> {
+            return directories.get(directories.size() - 1).path().toString();
         };
 
         Predicate<String> validatorAndConsumer = (path) -> {
@@ -62,49 +57,50 @@ public class PathBreadcrumbsBar {
             if ( directory.isEmpty() ) {
                 return false;
             }
-            Tab tab = this.tabs.selected().orThrow();
-            DirectoryAtTab directoryAtTab = this.directoriesAtTabs.join(tab, directory.get());
-            this.onNewDirectoryInput.accept(directoryAtTab);
+            this.onNewDirectoryInput.accept(directory.get());
             return true;
         };
-        this.bar = new BreadcrumbsBar<>(">", DirectoryAtTab::directoryName, directoriesListToPath, onDirectoryClicked, validatorAndConsumer);
+        this.bar = new BreadcrumbsBar<>(">", Directory::name, directoriesListToPath, onDirectoryClicked, validatorAndConsumer);
 
-        this.tabs.selectedDirectory().listen(this::accept);
-        this.tabs.selectedDirectory().ifPresent(this::setPathToBar);
+        this.tabs.selected().listen(this::onTabsChange);
+        this.tabs.selected().ifPresent(this::acceptNewTab);
     }
 
-    private void accept(DirectoryAtTab oldDirectoryAtTab, DirectoryAtTab newDirectoryAtTab) {
-        this.directory.resetTo(newDirectoryAtTab);
-        this.directoryListening.ifPresent(Running::cancel);
-        Directory directory = newDirectoryAtTab.directory();
-        if ( directory.canBe(MOVED) || directory.canBe(RENAMED) ) {
-            this.directoryListening.resetTo(directory.listenForChanges(this::onDirectoryChanged));
+    private void onTabsChange(Tab oldTab, Tab newTab) {
+        acceptNewTab(newTab);
+    }
+
+    private void acceptNewTab(Tab newTab) {
+        Listening<Directory> newDirectoryListening = newTab.selectedDirectory().listen(this::onDirectoryChange);
+        Listening<Directory> oldDirectoryListening = this.directoryListening.resetTo(newDirectoryListening);
+        if ( nonNull(oldDirectoryListening) ) {
+            oldDirectoryListening.cancel();
         }
-        this.setPathToBar(newDirectoryAtTab);
+        this.directory.resetTo(newTab.selectedDirectory());
+        this.directory.ifPresent(this::setPathToBar);
     }
 
-    private void setPathToBar(DirectoryAtTab directoryAtTab) {
+    private void onDirectoryChange(Directory oldDirectory, Directory newDirectory) {
+        if ( nonNull(newDirectory) ) {
+            this.setPathToBar(newDirectory);
+        }
+    }
+
+    private void setPathToBar(Directory directory) {
         this.bar.clear();
-        Tab tab = directoryAtTab.tab();
-        Directory directory = directoryAtTab.directory();
 
         Directory machineDirectory = this.fileSystem.machineDirectory();
-        DirectoryAtTab machineDirectoryAtTab = this.directoriesAtTabs.join(tab, machineDirectory);
         if ( ! directory.equals(machineDirectory) ) {
-            this.addToBar(machineDirectoryAtTab);
+            this.addToBar(machineDirectory);
         }
 
-        directory
-                .parents()
-                .stream()
-                .map(parent -> this.directoriesAtTabs.join(tab, parent))
-                .forEach(this::addToBar);
-        this.addToBar(directoryAtTab);
+        directory.parents().forEach(this::addToBar);
+        this.addToBar(directory);
     }
 
-    private void addToBar(DirectoryAtTab directoryAtTab) {
-        Icon icon = this.icons.getFor(directoryAtTab.directory());
-        this.bar.add(icon.image(), directoryAtTab);
+    private void addToBar(Directory directory) {
+        Icon icon = this.icons.getFor(directory);
+        this.bar.add(icon.image(), directory);
     }
 
     public Reference<Double> iconsSize() {
@@ -113,9 +109,5 @@ public class PathBreadcrumbsBar {
 
     public Node node() {
         return this.bar.node();
-    }
-
-    private void onDirectoryChanged() {
-        this.directory.ifPresent(this::setPathToBar);
     }
 }

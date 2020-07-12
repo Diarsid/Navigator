@@ -1,12 +1,14 @@
 package diarsid.navigator.filesystem;
 
-import java.nio.file.Path;
+interface ChangeableFSEntry extends FSEntry {
 
-interface ChangeableFSEntry {
+    @Override
+    default LocalDirectory asDirectory() {
+        return (LocalDirectory) FSEntry.super.asDirectory();
+    }
 
-    void movedTo(Path newPath);
-
-    void contentChanged();
-
-    void changed();
+    @Override
+    default LocalFile asFile() {
+        return (LocalFile) FSEntry.super.asFile();
+    }
 }

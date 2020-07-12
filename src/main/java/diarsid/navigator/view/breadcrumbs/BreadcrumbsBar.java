@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -34,7 +35,7 @@ import static javafx.scene.layout.Priority.ALWAYS;
 import static diarsid.navigator.view.breadcrumbs.BreadcrumbsBar.State.AS_ELEMENTS_BAR;
 import static diarsid.navigator.view.breadcrumbs.BreadcrumbsBar.State.AS_STRING_PATH;
 import static diarsid.support.objects.references.impl.References.listenable;
-import static diarsid.support.objects.references.impl.References.listenablePresent;
+import static diarsid.support.objects.references.impl.References.listenablePresentOf;
 import static diarsid.support.objects.references.impl.References.possibleButEmpty;
 
 public class BreadcrumbsBar<T> {
@@ -162,7 +163,7 @@ public class BreadcrumbsBar<T> {
         this.pathField.setOnAction(this::onPathEntered);
         HBox.setHgrow(this.pathField, ALWAYS);
 
-        this.state = listenablePresent(AS_ELEMENTS_BAR, "BreadcrumbsBar.state");
+        this.state = listenablePresentOf(AS_ELEMENTS_BAR, "BreadcrumbsBar.state");
         this.state.listen(this::onStateChanged);
 
         this.elementsHBox.addEventHandler(MOUSE_PRESSED, this::onMousePressedOnFreeSpace);
@@ -230,6 +231,16 @@ public class BreadcrumbsBar<T> {
 
     public void clear() {
         this.values.clear();
+
+        if ( Platform.isFxApplicationThread() ) {
+            this.clearInFXThread();
+        }
+        else {
+            Platform.runLater(this::clearInFXThread);
+        }
+    }
+
+    private void clearInFXThread() {
         Iterator<Node> elementsIterator = this.elementsBox.iterator();
         while ( elementsIterator.hasNext() ) {
             Node node = elementsIterator.next();
@@ -269,6 +280,15 @@ public class BreadcrumbsBar<T> {
     }
 
     private void appendToBar(Element<T> element) {
+        if ( Platform.isFxApplicationThread() ) {
+            this.appendToBarInFXThread(element);
+        }
+        else {
+            Platform.runLater(() -> this.appendToBarInFXThread(element));
+        }
+    }
+
+    private void appendToBarInFXThread(Element<T> element) {
         if (this.elementsBox.isEmpty()) {
             this.elementsBox.add(element);
         } else {

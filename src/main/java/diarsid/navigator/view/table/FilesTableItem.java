@@ -34,6 +34,10 @@ public class FilesTableItem implements Comparable<FilesTableItem> {
         return this.entry;
     }
 
+    public boolean is(FSEntry fsEntry) {
+        return this.entry.equals(fsEntry);
+    }
+
     public Possible<FilesTableRow> row() {
         return this.row;
     }
@@ -57,7 +61,6 @@ public class FilesTableItem implements Comparable<FilesTableItem> {
 
     @Override
     public int compareTo(FilesTableItem other) {
-        System.out.println("sort");
         return this.entry.compareTo(other.entry);
     }
 }

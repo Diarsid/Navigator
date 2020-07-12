@@ -3,8 +3,9 @@ package diarsid.navigator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import javafx.application.Platform;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -13,25 +14,24 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 
-import diarsid.navigator.view.breadcrumbs.PathBreadcrumbsBar;
 import diarsid.navigator.filesystem.Directory;
-import diarsid.navigator.filesystem.FileSystem;
 import diarsid.navigator.filesystem.FSEntry;
 import diarsid.navigator.filesystem.File;
+import diarsid.navigator.filesystem.FileSystem;
 import diarsid.navigator.filesystem.ignoring.Ignores;
-import diarsid.navigator.model.DirectoriesAtTabs;
-import diarsid.navigator.model.DirectoryAtTab;
+import diarsid.navigator.model.Identity;
 import diarsid.navigator.model.Tab;
 import diarsid.navigator.model.Tabs;
 import diarsid.navigator.view.FilesView;
-import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;
-import diarsid.navigator.view.tree.DirectoriesTree;
-import diarsid.navigator.view.icons.Icons;
-import diarsid.navigator.view.table.FilesTableItem;
-import diarsid.navigator.view.table.FilesTable;
+import diarsid.navigator.view.breadcrumbs.PathBreadcrumbsBar;
 import diarsid.navigator.view.dragdrop.DragAndDropNodes;
-import diarsid.navigator.view.tabs.LabelsAtTabs;
+import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;
+import diarsid.navigator.view.fsentry.contextmenu.FSEntryContextMenuFactory;
+import diarsid.navigator.view.icons.Icons;
+import diarsid.navigator.view.table.FilesTable;
+import diarsid.navigator.view.table.FilesTableItem;
 import diarsid.navigator.view.tabs.TabsPanel;
+import diarsid.navigator.view.tree.DirectoriesTree;
 import diarsid.navigator.view.tree.DirectoriesTreeCell;
 import diarsid.support.javafx.FrameSelection;
 import diarsid.support.objects.references.impl.Possible;
@@ -43,7 +43,6 @@ class NavigatorView {
     private Ignores ignores;
     private FileSystem fileSystem;
     private Tabs tabs;
-    private DirectoriesAtTabs directoriesAtTabs;
     private Icons icons;
     private DirectoriesTree directoriesTree;
     private FilesTable filesTable;
@@ -58,7 +57,6 @@ class NavigatorView {
         this.fileSystem = FileSystem.INSTANCE;
         this.icons = Icons.INSTANCE;
         this.tabs = new Tabs();
-        this.directoriesAtTabs = new DirectoriesAtTabs();
 
         Map<Class<? extends Node>, String> classes = new HashMap<>();
         classes.put(Label.class, "label-at-tab");
@@ -69,8 +67,6 @@ class NavigatorView {
 
         FrameSelection frameSelection = new FrameSelection();
 
-        this.filesTable = new FilesTable(this.icons, frameSelection, this::onTableItemInvoked, dragAndDropFiles);
-
         Consumer<FSEntry> onFSEntryIgnored = (fsEntry) -> {
             if ( fsEntry.canBeIgnored() ) {
                 this.ignores.ignore(fsEntry);
@@ -79,24 +75,35 @@ class NavigatorView {
             }
         };
 
+        FSEntryContextMenuFactory contextMenuFactory = new FSEntryContextMenuFactory(fileSystem, onFSEntryIgnored);
+
+        BiConsumer<FSEntry, String> onRename = (entry, newName) -> {
+            this.fileSystem.rename(entry, newName);
+        };
+
+        this.filesTable = new FilesTable(this.fileSystem, contextMenuFactory, this.icons, frameSelection, this::onTableItemInvoked, onRename, dragAndDropFiles);
+
         this.directoriesTree = new DirectoriesTree(
                 this.fileSystem,
                 this.icons,
-                this.directoriesAtTabs,
-                this::onDirectoryAtTabSelected,
+                this.tabs,
+                contextMenuFactory,
+                this::onDirectorySelectedInTreeView,
                 onFSEntryIgnored,
                 dragAndDropFiles);
 
-        LabelsAtTabs labelsAtTabs = new LabelsAtTabs(this::onTabSelected, dragAndDropLabels, dragAndDropFiles);
-
         this.tabsPanel = new TabsPanel(
-                this.tabs, this.directoriesAtTabs, labelsAtTabs, this.directoriesTree, dragAndDropLabels);
+                this.tabs,
+                this.directoriesTree,
+                dragAndDropLabels,
+                dragAndDropFiles,
+                this::onTabCreated,
+                this::onTabSelected);
 
         PathBreadcrumbsBar pathBreadcrumbsBar = new PathBreadcrumbsBar(
                 this.tabs,
                 this.fileSystem,
                 this.icons,
-                this.directoriesAtTabs,
                 this::onBreadcrumbsBarDirectorySelected,
                 this.directoriesTree::select);
         pathBreadcrumbsBar.iconsSize().bindTo(this.icons.size());
@@ -121,34 +128,23 @@ class NavigatorView {
     }
 
     public void openInNewTab(Directory directory) {
-        this.tabsPanel.newTab(true, directory);
+        Tab tab = this.tabsPanel.newTab();
+        tab.selectedDirectory().resetTo(directory);
+        this.tabs.select(tab);
+        this.directoriesTree.add(tab, true);
     }
 
     public void openInCurrentTab(Directory directory) {
-        this.tabsPanel.currentTabTo(directory);
+        Tab tab = this.tabs.selected().orThrow();
+        tab.selectedDirectory().resetTo(directory);
+        this.directoriesTree.select(directory);
     }
 
     private void onTableItemInvoked(FilesTableItem tableItem) {
         FSEntry itemFsEntry = tableItem.fsEntry();
         if ( itemFsEntry.isDirectory() ) {
-            Optional<Directory> parentDirectory = itemFsEntry.parent();
-            if ( parentDirectory.isPresent() ) {
-                Possible<Tab> selectedTab = this.tabs.selected();
-                if ( selectedTab.isPresent() ) {
-                    Tab tab = selectedTab.orThrow();
-                    Directory directory = itemFsEntry.asDirectory();
-                    this.directoriesTree.selectAndExpandParent(tab, parentDirectory.get(), directory);
-                }
-            }
-            else {
-                Directory directory = itemFsEntry.asDirectory();
-                Possible<Tab> selectedTab = this.tabs.selected();
-                if ( selectedTab.isPresent() ) {
-                    Tab tab = selectedTab.orThrow();
-                    Directory machineDirectory = this.fileSystem.machineDirectory();
-                    this.directoriesTree.selectAndExpandParent(tab, machineDirectory, directory);
-                }
-            }
+            Directory directory = itemFsEntry.asDirectory();
+            this.directoriesTree.select(directory);
         }
         else {
             File file = itemFsEntry.asFile();
@@ -156,38 +152,55 @@ class NavigatorView {
         }
     }
 
+    private void onTabCreated(Tab tab) {
+        tab.selectedDirectory().resetTo(fileSystem.machineDirectory());
+        this.tabs.select(tab);
+        this.directoriesTree.add(tab, true);
+    }
+
     private void onTabSelected(Tab tab) {
-        this.selectIfNotSelected(tab);
+        if ( this.tabs.selected().isNotPresent() || this.tabs.selected().notEqualsTo(tab) ) {
+            this.tabs.select(tab);
+            this.directoriesTree.setActive(tab);
+        }
+
         this.directoriesTree.setActive(tab);
-        Possible<DirectoryAtTab> directorySelection = tab.selectedDirectory();
+        Possible<Directory> directorySelection = tab.selectedDirectory();
 
         if ( directorySelection.isPresent() ) {
-            DirectoryAtTab selectedDirectoryAtTab = directorySelection.orThrow();
-            this.select(selectedDirectoryAtTab);
+            Directory selectedDirectory = directorySelection.orThrow();
+            this.directoriesTree.select(selectedDirectory);
         }
         else {
             this.filesTable.clear();
         }
     }
 
-    private void selectIfNotSelected(Tab tab) {
-        if ( this.tabs.selected().isNotPresent() || this.tabs.selected().notEqualsTo(tab) ) {
-            this.tabs.select(tab);
-            this.directoriesTree.setActive(tab);
+    private void onBreadcrumbsBarDirectorySelected(Directory directory, MouseEvent mouseEvent) {
+        if (Platform.isFxApplicationThread() ) {
+            this.onBreadcrumbsBarDirectorySelectedInFXThread(directory);
+        }
+        else {
+            Platform.runLater(() -> this.onBreadcrumbsBarDirectorySelectedInFXThread(directory));
         }
     }
 
-    private void select(DirectoryAtTab selectedDirectoryAtTab) {
-        this.directoriesTree.select(selectedDirectoryAtTab);
+    private void onBreadcrumbsBarDirectorySelectedInFXThread(Directory directory) {
+        this.tabs.selected().orThrow().selectedDirectory().resetTo(directory);
+        this.directoriesTree.select(directory);
     }
 
-    private void onBreadcrumbsBarDirectorySelected(DirectoryAtTab directoryAtTab, MouseEvent mouseEvent) {
-        this.selectIfNotSelected(directoryAtTab.tab());
-        this.select(directoryAtTab);
+    private void onDirectorySelectedInTreeView(Directory directory) {
+        if (Platform.isFxApplicationThread() ) {
+            this.onDirectorySelectedInTreeViewInFXThread(directory);
+        }
+        else {
+            Platform.runLater(() -> this.onDirectorySelectedInTreeViewInFXThread(directory));
+        }
     }
 
-    private void onDirectoryAtTabSelected(DirectoryAtTab directoryAtTab) {
-        this.filesTable.show(directoryAtTab.directory());
-        directoryAtTab.tab().selectedDirectory().resetTo(directoryAtTab);
+    private void onDirectorySelectedInTreeViewInFXThread(Directory directory) {
+        this.tabs.selected().orThrow().selectedDirectory().resetTo(directory);
+        this.filesTable.show(directory);
     }
 }

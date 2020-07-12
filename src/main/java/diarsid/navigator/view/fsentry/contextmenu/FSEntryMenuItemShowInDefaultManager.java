@@ -1,6 +1,5 @@
 package diarsid.navigator.view.fsentry.contextmenu;
 
-import java.util.function.Consumer;
 import javafx.scene.Node;
 
 import diarsid.navigator.filesystem.FSEntry;
@@ -8,28 +7,25 @@ import diarsid.support.objects.references.impl.PossibleListenable;
 
 import static java.lang.String.format;
 
-class FSEntryMenuItemIgnore extends FSEntryMenuItem {
+class FSEntryMenuItemShowInDefaultManager extends FSEntryMenuItem {
 
-    private final Consumer<FSEntry> onIgnore;
-
-    FSEntryMenuItemIgnore(PossibleListenable<FSEntry> fsEntryReference, Consumer<FSEntry> onIgnore) {
+    public FSEntryMenuItemShowInDefaultManager(PossibleListenable<FSEntry> fsEntryReference) {
         super(fsEntryReference);
-        this.onIgnore = onIgnore;
     }
 
     @Override
-    void onAction(FSEntry fsEntry) {
-        this.onIgnore.accept(fsEntry);
+    void onAction(FSEntry entry) {
+        entry.showInDefaultFileManager();
     }
 
     @Override
     boolean applicableTo(FSEntry fsEntry) {
-        return fsEntry.canBeIgnored();
+        return true;
     }
 
     @Override
     String toText(FSEntry fsEntry) {
-        return format("ignore '%s' %s", fsEntry.name(), fsEntry.isDirectory() ? "directory" : "file");
+        return format("show '%s' %s in default manager", fsEntry.name(), fsEntry.isDirectory() ? "directory" : "file");
     }
 
     @Override

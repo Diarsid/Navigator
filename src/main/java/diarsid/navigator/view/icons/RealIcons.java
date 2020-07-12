@@ -22,7 +22,7 @@ import diarsid.support.objects.references.impl.PresentListenable;
 import static java.util.Objects.isNull;
 
 import static diarsid.navigator.model.ImageType.findTypeIn;
-import static diarsid.support.objects.references.impl.References.listenablePresent;
+import static diarsid.support.objects.references.impl.References.listenablePresentOf;
 
 class RealIcons implements Icons {
 
@@ -36,7 +36,7 @@ class RealIcons implements Icons {
     private final DoubleProperty sizeProperty;
 
     RealIcons(FileSystem fileSystem) {
-        this.size = listenablePresent(18d, "Icons.size");
+        this.size = listenablePresentOf(18d, "Icons.size");
         this.sizeProperty = new SimpleDoubleProperty(this.size.get());
         this.size.listen((oldSize, newSize) -> this.sizeProperty.set(newSize));
 

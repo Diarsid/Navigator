@@ -7,10 +7,12 @@ import javafx.application.Platform;
 
 import diarsid.navigator.filesystem.Directory;
 import diarsid.navigator.filesystem.FileSystem;
+import diarsid.support.concurrency.threads.NamedThreadSource;
 
 public class Navigator {
 
     private final static CountDownLatch PLATFORM_STARTUP_LOCK = new CountDownLatch(1);
+    public final static NamedThreadSource NAMED_THREAD_SOURCE = new NamedThreadSource("diarsid.navigator");
 
     static {
         Platform.startup(PLATFORM_STARTUP_LOCK::countDown);

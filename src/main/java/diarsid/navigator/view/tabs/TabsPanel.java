@@ -1,17 +1,19 @@
 package diarsid.navigator.view.tabs;
 
 import java.util.HashMap;
+import java.util.List;
+import java.util.function.Consumer;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 
 import diarsid.navigator.filesystem.Directory;
-import diarsid.navigator.model.DirectoriesAtTabs;
-import diarsid.navigator.model.DirectoryAtTab;
+import diarsid.navigator.filesystem.FSEntry;
 import diarsid.navigator.model.Tab;
 import diarsid.navigator.model.Tabs;
 import diarsid.navigator.view.ViewComponent;
 import diarsid.navigator.view.dragdrop.DragAndDropNodes;
+import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;
 import diarsid.navigator.view.tree.DirectoriesTree;
 
 import static java.lang.Double.POSITIVE_INFINITY;
@@ -21,24 +23,21 @@ import static javafx.scene.input.TransferMode.MOVE;
 public class TabsPanel implements ViewComponent {
 
     private final Tabs tabs;
-    private final DirectoriesAtTabs directoriesAtTabs;
     private final VBox tabsPanel;
     private final Label addLabel;
     private final LabelsAtTabs labelsAtTabs;
-    private final DirectoriesTree directoriesTree;
     private final DragAndDropNodes<Label> dragAndDropLabels;
     private final TabNames tabNames;
 
     public TabsPanel(
             Tabs tabs,
-            DirectoriesAtTabs directoriesAtTabs,
-            LabelsAtTabs labelsAtTabs,
             DirectoriesTree directoriesTree,
-            DragAndDropNodes<Label> dragAndDropLabels) {
+            DragAndDropNodes<Label> dragAndDropLabels,
+            DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles,
+            Consumer<Tab> onTabCreated,
+            Consumer<Tab> onTabSelected) {
         this.tabs = tabs;
-        this.directoriesAtTabs = directoriesAtTabs;
-        this.labelsAtTabs = labelsAtTabs;
-        this.directoriesTree = directoriesTree;
+        this.labelsAtTabs = new LabelsAtTabs(onTabSelected, dragAndDropLabels, dragAndDropFiles);
         this.labelsAtTabs.onTabsReordered(this::refresh);
         this.dragAndDropLabels = dragAndDropLabels;
         this.tabNames = new TabNames(new HashMap<>());
@@ -88,10 +87,10 @@ public class TabsPanel implements ViewComponent {
         this.addLabel.setPrefWidth(POSITIVE_INFINITY);
         this.addLabel.setAlignment(TOP_CENTER);
         this.addLabel.setOnMouseClicked(event -> {
-            this.newTab(true);
+            onTabCreated.accept(this.newTab());
         });
 
-        this.newTab(true);
+        onTabCreated.accept(this.newTab());
     }
 
     @Override
@@ -99,43 +98,16 @@ public class TabsPanel implements ViewComponent {
         return this.tabsPanel;
     }
 
-    public void newTab(boolean selectCreated, Directory directory) {
+    public Tab newTab() {
         Tab tab = this.tabs.createTab();
-
-        this.directoriesTree.add(tab, directory, selectCreated);
-
-        if ( selectCreated ) {
-            this.labelsAtTabs.addAndSelect(tab);
-        }
-        else {
-            this.labelsAtTabs.add(tab);
-        }
-
+        this.labelsAtTabs.add(tab);
         this.tabNames.add(tab);
-
         this.refresh();
+        return tab;
     }
 
-    public void currentTabTo(Directory directory) {
-        DirectoryAtTab directoryAtTab = this.directoriesAtTabs.join(this.tabs.selected().orThrow(), directory);
-        this.directoriesTree.select(directoryAtTab);
-    }
-
-    public void newTab(boolean selectCreated) {
-        Tab tab = this.tabs.createTab();
-
-        this.directoriesTree.add(tab, selectCreated);
-
-        if ( selectCreated ) {
-            this.labelsAtTabs.addAndSelect(tab);
-        }
-        else {
-            this.labelsAtTabs.add(tab);
-        }
-
-        this.tabNames.add(tab);
-
-        this.refresh();
+    public void select(Tab tab) {
+        this.tabs.select(tab);
     }
 
     private void refresh() {

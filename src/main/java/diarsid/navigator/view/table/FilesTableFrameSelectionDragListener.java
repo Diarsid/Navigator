@@ -2,7 +2,10 @@ package diarsid.navigator.view.table;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 import javafx.geometry.Bounds;
+import javafx.scene.Node;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.skin.VirtualFlow;
@@ -28,6 +31,7 @@ public class FilesTableFrameSelectionDragListener implements ClickOrDragDetector
         MOVE
     }
 
+    private final Supplier<Boolean> isDraggingBehaviorAllowed;
     private final TableView<FilesTableItem> tableView;
     private final FrameSelection selection;
     private final DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles;
@@ -35,9 +39,11 @@ public class FilesTableFrameSelectionDragListener implements ClickOrDragDetector
     private DragMode dragMode;
 
     public FilesTableFrameSelectionDragListener(
+            Supplier<Boolean> isDraggingBehaviorAllowed,
             TableView<FilesTableItem> tableView,
             FrameSelection selection,
             DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles) {
+        this.isDraggingBehaviorAllowed = isDraggingBehaviorAllowed;
         this.tableView = tableView;
         this.selection = selection;
         this.dragAndDropFiles = dragAndDropFiles;
@@ -46,6 +52,11 @@ public class FilesTableFrameSelectionDragListener implements ClickOrDragDetector
 
     @Override
     public void onPreClicked(MouseEvent mouseEvent) {
+        if ( ! this.isDraggingBehaviorAllowed.get() ) {
+            this.dragMode = DragMode.NONE;
+            return;
+        }
+
         TableRow<FilesTableItem> row = this.getClickedRowFrom(mouseEvent);
 
         if ( isNull(row) ) {
@@ -59,8 +70,6 @@ public class FilesTableFrameSelectionDragListener implements ClickOrDragDetector
         else {
             this.dragMode = DragMode.SELECT;
         }
-
-        System.out.println("DRAG MODE : " + this.dragMode);
     }
 
     @Override
@@ -138,7 +147,6 @@ public class FilesTableFrameSelectionDragListener implements ClickOrDragDetector
                 break;
             case MOVE:
                 List<FilesTableItem> selected = this.tableView.getSelectionModel().getSelectedItems();
-                System.out.println("STOPPED");
                 break;
             default:
                 throwBehaviorNotSpecifiedException(this.dragMode);
@@ -162,8 +170,14 @@ public class FilesTableFrameSelectionDragListener implements ClickOrDragDetector
         }
         else if ( target instanceof Text) {
             Text text = (Text) target;
-            FilesTableCell<Object> draggedCell = (FilesTableCell<Object>) text.getParent();
-            row = draggedCell.getTableRow();
+            Node possibleCell = text.getParent();
+            if ( possibleCell instanceof FilesTableCell ) {
+                FilesTableCell<Object> draggedCell = (FilesTableCell<Object>) possibleCell;
+                row = draggedCell.getTableRow();
+            }
+            else {
+                row = null;
+            }
         }
         else {
             row = null;

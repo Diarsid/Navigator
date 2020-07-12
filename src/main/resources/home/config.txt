@@ -3,5 +3,6 @@ sizes.icons = {int}
 tree.selections.mode = {SINGLE | MULTIPLE({int})}
 tree.selections.selectOnExpanded = {boolean}
 tree.selections.onParentOfSelectedCollapsed = {HIDE_SELECTION | SELECT_PARENT}
+contextmenu.items = [create, show in default manager, copy, rename, cut, remove, ignore]
 
 

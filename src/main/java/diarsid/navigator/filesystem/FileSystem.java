@@ -11,9 +11,11 @@ import diarsid.navigator.filesystem.ignoring.Ignores;
 
 import static java.util.Objects.isNull;
 
+import static diarsid.navigator.Navigator.NAMED_THREAD_SOURCE;
+
 public interface FileSystem {
 
-    FileSystem INSTANCE = new LocalFileSystem(Ignores.INSTANCE, FileSystems.getDefault());
+    FileSystem INSTANCE = new LocalFileSystem(Ignores.INSTANCE, NAMED_THREAD_SOURCE, FileSystems.getDefault());
 
     static String getNameFrom(Path path) {
         String name;
@@ -47,9 +49,17 @@ public interface FileSystem {
 
     boolean isFile(Path path);
 
+    boolean exists(FSEntry fsEntry);
+
+    default boolean isAbsent(FSEntry fsEntry) {
+        return ! this.exists(fsEntry);
+    }
+
     boolean copy(FSEntry whatToCopy, Directory parentDirectoryWhereToMove);
 
     boolean move(FSEntry whatToMove, Directory parentDirectoryWhereToMove);
+
+    boolean rename(FSEntry whatToRename, String newName);
 
     boolean remove(FSEntry entry);
 
@@ -69,11 +79,17 @@ public interface FileSystem {
 
     boolean open(File file);
 
+    void showInDefaultFileManager(FSEntry fsEntry);
+
     Stream<FSEntry> list(Directory directory); /* do not forget to close the stream! */
 
     Optional<Directory> parentOf(FSEntry fsEntry);
 
+    Optional<Directory> existedParentOf(Path path);
+
     List<Directory> parentsOf(FSEntry fsEntry);
+
+    List<Directory> parentsOf(Path path);
 
     long sizeOf(FSEntry fsEntry);
 
@@ -88,5 +104,9 @@ public interface FileSystem {
     }
 
     FileSystemType type();
+
+    Changes changes();
+
+    void watch(Directory directory);
 
 }

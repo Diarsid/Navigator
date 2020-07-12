@@ -29,8 +29,8 @@ public class ContextMenuElementIgnore extends MenuItem {
             return;
         }
 
-        if ( item instanceof DirectoryAtTabTreeItem ) {
-            DirectoryAtTabTreeItem directoryAtTabItem = (DirectoryAtTabTreeItem) item;
+        if ( item instanceof DirectoriesTreeItem) {
+            DirectoriesTreeItem directoryAtTabItem = (DirectoriesTreeItem) item;
             this.doIgnore.accept(directoryAtTabItem.directory());
         }
     }

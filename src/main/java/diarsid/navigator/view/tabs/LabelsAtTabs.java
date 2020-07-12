@@ -20,18 +20,17 @@ public class LabelsAtTabs {
     protected final DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles;
     protected final DragAndDropNodes<Label> dragAndDropLabels;
     protected final Possible<Runnable> onTabsReorderedAction;
-
-    protected final Consumer<Tab> onTabSelected;
+    protected final Consumer<Tab> onTabTabLabelClicked;
 
     public LabelsAtTabs(
-            Consumer<Tab> onTabSelected,
+            Consumer<Tab> onTabTabLabelClicked,
             DragAndDropNodes<Label> dragAndDropLabels,
             DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles) {
-        this.onTabSelected = onTabSelected;
         this.draggableTabLabels = new ArrayList<>();
         this.dragAndDropLabels = dragAndDropLabels;
         this.dragAndDropFiles = dragAndDropFiles;
         this.onTabsReorderedAction = possibleButEmpty();
+        this.onTabTabLabelClicked = onTabTabLabelClicked;
     }
 
     void onTabsReordered(Runnable action) {
@@ -40,11 +39,6 @@ public class LabelsAtTabs {
 
     void add(Tab tab) {
         this.addInternally(tab);
-    }
-
-    void addAndSelect(Tab tab) {
-        LabelAtTab labelAtTab = this.addInternally(tab);
-        this.onTabSelected.accept(labelAtTab.tab());
     }
 
     private LabelAtTab addInternally(Tab tab) {

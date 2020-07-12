@@ -29,9 +29,29 @@ public interface FSEntry extends Comparable<FSEntry> {
 
     Path path();
 
+    void showInDefaultFileManager();
+
+    default boolean has(Path path) {
+        return this.path().equals(path);
+    }
+
+    default boolean hasNot(Path path) {
+        return ! this.path().equals(path);
+    }
+
     Optional<Directory> parent();
 
+    Optional<Directory> existedParent();
+
     List<Directory> parents();
+
+    default boolean isDescendantOf(Path path) {
+        return this.path().startsWith(path) && this.hasNot(path);
+    }
+
+    default boolean isDescendantOf(Directory directory) {
+        return directory.isParentOf(this);
+    }
 
     int depth();
 
@@ -42,6 +62,12 @@ public interface FSEntry extends Comparable<FSEntry> {
     boolean moveTo(Directory newPlace);
 
     boolean canBeIgnored();
+
+    boolean exists();
+
+    boolean isAbsent();
+
+    FileSystem fileSystem();
 
     default String getName() {
         return this.name();

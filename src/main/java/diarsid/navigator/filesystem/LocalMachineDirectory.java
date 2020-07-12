@@ -9,9 +9,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import diarsid.support.objects.groups.Runnables;
-import diarsid.support.objects.groups.Running;
-
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 
@@ -21,14 +18,12 @@ class LocalMachineDirectory implements Directory {
     private final Path machinePath;
     private final LocalFileSystem fileSystem;
     private final List<Path> roots;
-    private final Runnables changeListeners;
 
     LocalMachineDirectory(LocalFileSystem fileSystem, Iterable<Path> rootPaths) {
         this.machineName = getMachineName();
         this.machinePath = Paths.get(this.machineName);
         this.fileSystem = fileSystem;
         this.roots = new ArrayList<>();
-        this.changeListeners = new Runnables();
         rootPaths.forEach(this.roots::add);
     }
 
@@ -58,13 +53,42 @@ class LocalMachineDirectory implements Directory {
     }
 
     @Override
+    public void showInDefaultFileManager() {
+        this.fileSystem.showInDefaultFileManager(this);
+    }
+
+    @Override
     public Optional<Directory> parent() {
         return Optional.empty();
     }
 
     @Override
-    public boolean isParentOf(FSEntry fsEntry) {
+    public Optional<Directory> existedParent() {
+        return Optional.empty();
+    }
+
+    @Override
+    public boolean isIndirectParentOf(FSEntry fsEntry) {
         return true;
+    }
+
+    @Override
+    public boolean isIndirectParentOf(Path path) {
+        return true;
+    }
+
+    @Override
+    public boolean isDirectParentOf(FSEntry fsEntry) {
+        if ( fsEntry.isFile() ) {
+            return false;
+        }
+
+        return fsEntry.asDirectory().isRoot();
+    }
+
+    @Override
+    public boolean isDirectParentOf(Path path) {
+        return this.roots.contains(path);
     }
 
     @Override
@@ -150,11 +174,6 @@ class LocalMachineDirectory implements Directory {
     }
 
     @Override
-    public Running listenForContentChanges(Runnable listener) {
-        return this.changeListeners.add(listener);
-    }
-
-    @Override
     public boolean canBe(Directory.Edit edit) {
         return false;
     }
@@ -190,13 +209,28 @@ class LocalMachineDirectory implements Directory {
     }
 
     @Override
-    public Running listenForChanges(Runnable listener) {
-        throw new UnsupportedOperationException("This directory is machine");
+    public boolean exists() {
+        return true;
+    }
+
+    @Override
+    public boolean isAbsent() {
+        return false;
+    }
+
+    @Override
+    public FileSystem fileSystem() {
+        return this.fileSystem;
     }
 
     @Override
     public int compareTo(FSEntry otherFSEntry) {
         return 1;
+    }
+
+    @Override
+    public void watch() {
+        // do nothing
     }
 
     List<Path> roots() {

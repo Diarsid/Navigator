@@ -12,11 +12,15 @@ import javafx.scene.layout.StackPane;
 import diarsid.navigator.filesystem.Directory;
 import diarsid.navigator.filesystem.FSEntry;
 import diarsid.navigator.filesystem.ProgressTracker;
+import diarsid.navigator.view.fsentry.contextmenu.FSEntryContextMenu;
+import diarsid.navigator.view.fsentry.contextmenu.FSEntryContextMenuFactory;
 import diarsid.navigator.view.icons.Icon;
 import diarsid.navigator.view.icons.Icons;
 
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import static javafx.scene.input.ContextMenuEvent.CONTEXT_MENU_REQUESTED;
+import static javafx.scene.input.MouseEvent.MOUSE_PRESSED;
 import static javafx.scene.input.TransferMode.MOVE;
 
 import static diarsid.navigator.filesystem.Directory.Edit.MOVED;
@@ -27,7 +31,7 @@ public class DirectoriesTreeCell extends TreeCell<String> {
     private final ImageView iconView;
     private final DirectoriesTree directoriesTree;
 
-    DirectoriesTreeCell(Icons icons, DirectoriesTree directoriesTree) {
+    DirectoriesTreeCell(Icons icons, FSEntryContextMenuFactory contextMenuFactory, DirectoriesTree directoriesTree) {
         super();
 
         this.icons = icons;
@@ -46,6 +50,24 @@ public class DirectoriesTreeCell extends TreeCell<String> {
         super.setOnDragExited(this::onDragExited);
         super.setOnDragDropped(this::onDragDropped);
         super.setOnDragDetected(this::onDragDetected);
+
+        FSEntryContextMenu contextMenu = contextMenuFactory.createNewFor(this::fsEntry);
+        super.setContextMenu(contextMenu);
+        super.addEventFilter(CONTEXT_MENU_REQUESTED, event -> {
+            if ( isNull(this.fsEntry()) ) {
+                event.consume();
+            }
+        });
+    }
+
+    private FSEntry fsEntry() {
+        DirectoriesTreeItem item = this.directoriesTreeItem();
+
+        if ( isNull(item) ) {
+            return null;
+        }
+
+        return item.directory();
     }
 
     private void onMousePressed(MouseEvent mouseEvent) {
@@ -68,16 +90,19 @@ public class DirectoriesTreeCell extends TreeCell<String> {
         }
 
         if ( ! arrowClicked ) {
-            this.directoriesTree.select(directoryAtTabTreeItem().directoryAtTab());
+            Directory directory = this.directoriesTreeItem().directory();
+            if ( nonNull(directory) ) {
+                this.directoriesTree.select(directory);
+            }
         }
         mouseEvent.consume();
     }
 
-    private DirectoryAtTabTreeItem directoryAtTabTreeItem() {
+    private DirectoriesTreeItem directoriesTreeItem() {
         TreeItem<String> item = super.getTreeItem();
 
-        if ( nonNull(item) && item instanceof DirectoryAtTabTreeItem ) {
-            return (DirectoryAtTabTreeItem) item;
+        if ( nonNull(item) && item instanceof DirectoriesTreeItem) {
+            return (DirectoriesTreeItem) item;
         }
         else {
             return null;
@@ -95,8 +120,8 @@ public class DirectoriesTreeCell extends TreeCell<String> {
             TreeItem<String> item = super.getTreeItem();
 
             if ( nonNull(item) ) {
-                if ( item instanceof DirectoryAtTabTreeItem ) {
-                    DirectoryAtTabTreeItem directoryTreeItem = (DirectoryAtTabTreeItem) item;
+                if ( item instanceof DirectoriesTreeItem) {
+                    DirectoriesTreeItem directoryTreeItem = (DirectoriesTreeItem) item;
                     Icon icon = this.icons.getFor(directoryTreeItem.directory());
                     this.iconView.setImage(icon.image());
 
@@ -117,17 +142,18 @@ public class DirectoriesTreeCell extends TreeCell<String> {
 
 
     private void onDragDetected(MouseEvent event) {
+        System.out.println("DRAG!");
         if ( super.isEmpty() ) {
             return;
         }
 
         TreeItem<String> item = super.getTreeItem();
 
-        if ( ! (item instanceof DirectoryAtTabTreeItem) ) {
+        if ( ! (item instanceof DirectoriesTreeItem) ) {
             return;
         }
 
-        DirectoryAtTabTreeItem directoryItem = (DirectoryAtTabTreeItem) item;
+        DirectoriesTreeItem directoryItem = (DirectoriesTreeItem) item;
 
         if ( directoryItem.directory().canNotBe(MOVED) ) {
             return;
@@ -145,8 +171,8 @@ public class DirectoriesTreeCell extends TreeCell<String> {
 
         if ( this.directoriesTree.cellDragAndDrop().isDragOverAcceptable(dragEvent) ) {
             DirectoriesTreeCell droppedCell = (DirectoriesTreeCell) dragEvent.getGestureSource();
-            DirectoryAtTabTreeItem droppedItem = droppedCell.directoryAtTabTreeItem();
-            DirectoryAtTabTreeItem acceptingItem = this.directoryAtTabTreeItem();
+            DirectoriesTreeItem droppedItem = droppedCell.directoriesTreeItem();
+            DirectoriesTreeItem acceptingItem = this.directoriesTreeItem();
 
             if ( nonNull(droppedItem) && nonNull(acceptingItem) ) {
                 if ( droppedItem.equals(acceptingItem) ) {
@@ -166,7 +192,7 @@ public class DirectoriesTreeCell extends TreeCell<String> {
         if ( this.directoriesTree.dragAndDropFiles().isDragAcceptable(dragEvent) ) {
             List<FSEntry> fsEntries = this.directoriesTree.dragAndDropFiles().get();
 
-            DirectoryAtTabTreeItem acceptingItem = this.directoryAtTabTreeItem();
+            DirectoriesTreeItem acceptingItem = this.directoriesTreeItem();
             if ( isNull(acceptingItem) ) {
                 return;
             }
@@ -223,8 +249,8 @@ public class DirectoriesTreeCell extends TreeCell<String> {
         if ( isTreeCellDropAcceptable ) {
             try {
                 DirectoriesTreeCell droppedCell = (DirectoriesTreeCell) dragEvent.getGestureSource();
-                DirectoryAtTabTreeItem droppedItem = droppedCell.directoryAtTabTreeItem();
-                DirectoryAtTabTreeItem acceptingItem = this.directoryAtTabTreeItem();
+                DirectoriesTreeItem droppedItem = droppedCell.directoriesTreeItem();
+                DirectoriesTreeItem acceptingItem = this.directoriesTreeItem();
 
                 if ( nonNull(droppedItem) ) {
                     if ( nonNull(acceptingItem) ) {
@@ -260,7 +286,7 @@ public class DirectoriesTreeCell extends TreeCell<String> {
         }
         else if ( this.directoriesTree.dragAndDropFiles().isDropAcceptable(dragEvent) ) {
             List<FSEntry> fsEntries = this.directoriesTree.dragAndDropFiles().get();
-            DirectoryAtTabTreeItem acceptingItem = this.directoryAtTabTreeItem();
+            DirectoriesTreeItem acceptingItem = this.directoriesTreeItem();
             Directory acceptingDirectory = acceptingItem.directory();
 
             if ( fsEntries.size() == 1 ) {

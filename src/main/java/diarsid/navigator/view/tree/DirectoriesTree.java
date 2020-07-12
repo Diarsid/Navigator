@@ -1,12 +1,11 @@
 package diarsid.navigator.view.tree;
 
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Consumer;
 import javafx.scene.Node;
-import javafx.scene.control.ContextMenu;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
@@ -14,14 +13,13 @@ import javafx.scene.control.TreeView;
 import diarsid.navigator.filesystem.Directory;
 import diarsid.navigator.filesystem.FSEntry;
 import diarsid.navigator.filesystem.FileSystem;
-import diarsid.navigator.model.DirectoriesAtTabs;
-import diarsid.navigator.model.DirectoryAtTab;
 import diarsid.navigator.model.Tab;
+import diarsid.navigator.model.Tabs;
 import diarsid.navigator.view.ViewComponent;
 import diarsid.navigator.view.dragdrop.DragAndDropNodes;
 import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;
+import diarsid.navigator.view.fsentry.contextmenu.FSEntryContextMenuFactory;
 import diarsid.navigator.view.icons.Icons;
-import diarsid.support.objects.groups.Running;
 import diarsid.support.objects.references.impl.Possible;
 
 import static java.lang.Double.POSITIVE_INFINITY;
@@ -29,54 +27,49 @@ import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static javafx.scene.input.MouseEvent.MOUSE_PRESSED;
 
-import static diarsid.navigator.filesystem.Directory.Edit.MOVED;
-import static diarsid.navigator.filesystem.Directory.Edit.RENAMED;
+import static diarsid.support.concurrency.ThreadUtils.currentThreadTrack;
 import static diarsid.support.objects.references.impl.References.possibleButEmpty;
 
 public class DirectoriesTree implements ViewComponent {
 
     private final FileSystem fileSystem;
     private final Icons icons;
-    private final DirectoriesAtTabs directoriesAtTabs;
-    private final DirectoryAtTabTreeItems directoryAtTabTreeItems;
-    private final Possible<DirectoryAtTab> selected;
-    private final Consumer<DirectoryAtTab> onDirectorySelected;
+    private final Tabs tabs;
+    private final Possible<Tab> selectedTab;
+    private final Possible<Directory> selectedDirectory;
+    private final Consumer<Directory> onDirectorySelected;
     private final TreeView<String> treeView;
     private final Map<Tab, TreeItem<String>> tabsTreeRoots;
-    private final Map<Directory, Running> onDirectoryChangedListeners;
     private final DragAndDropNodes<DirectoriesTreeCell> dragAndDropTreeCell;
     private final DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles;
+    private final Object treeLock;
 
     public DirectoriesTree(
             FileSystem fileSystem,
             Icons icons,
-            DirectoriesAtTabs directoriesAtTabs,
-            Consumer<DirectoryAtTab> onDirectoryAtTabSelected,
+            Tabs tabs,
+            FSEntryContextMenuFactory fsEntryContextMenuFactory,
+            Consumer<Directory> onDirectorySelected,
             Consumer<FSEntry> onIgnore,
             DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles) {
         this.fileSystem = fileSystem;
         this.icons = icons;
-        this.directoriesAtTabs = directoriesAtTabs;
-        this.onDirectorySelected = onDirectoryAtTabSelected;
+        this.tabs = tabs;
+        this.selectedTab = possibleButEmpty();
+        this.selectedDirectory = possibleButEmpty();
+        this.onDirectorySelected = onDirectorySelected;
         this.tabsTreeRoots = new HashMap<>();
-        this.onDirectoryChangedListeners = new HashMap<>();
         this.dragAndDropTreeCell = new DragAndDropNodes<>("tree-cell");
         this.dragAndDropFiles = dragAndDropFiles;
-
-        this.directoryAtTabTreeItems = new DirectoryAtTabTreeItems(
-                this.directoriesAtTabs,
-                this::onTreeItemExpanded,
-                this::onTreeItemCollapsed,
-                this::onTreeItemCreated,
-                this::onTreeItemRemoved);
-
-        this.selected = possibleButEmpty();
 
         this.treeView = new TreeView<>();
         this.treeView.setPrefHeight(POSITIVE_INFINITY);
         this.treeView.setMinSize(100, 100);
         this.treeView.setPrefSize(100, 100);
         this.treeView.setShowRoot(false);
+
+        this.fileSystem.changes().listenForEntriesAdded(this::addAll);
+        this.fileSystem.changes().listenForEntriesRemoved(this::removeAll);
 
         this.treeView.addEventFilter(MOUSE_PRESSED, event -> {
             if ( event.isSecondaryButtonDown() ) {
@@ -96,177 +89,326 @@ public class DirectoriesTree implements ViewComponent {
         });
 
         this.treeView.setCellFactory((tree) -> {
-            TreeCell<String> treeCell = new DirectoriesTreeCell(icons, this);
+            TreeCell<String> treeCell = new DirectoriesTreeCell(this.icons, fsEntryContextMenuFactory, this);
 
-            ContextMenu contextMenu = new ContextMenu();
-            contextMenu.getItems().add(new ContextMenuElementIgnore(treeCell, onIgnore));
-            treeCell.setContextMenu(contextMenu);
-
-            treeCell.setOnMouseClicked((event) -> {
-                TreeItem<String> item = treeCell.getTreeItem();
-
-                if ( nonNull(item) ) {
-                    if ( item instanceof DirectoryAtTabTreeItem ) {
-                        DirectoryAtTabTreeItem treeItem = (DirectoryAtTabTreeItem) item;
-                    }
-                }
-                else {
-
-                }
-
-                event.consume();
-            });
+//            treeCell.setOnMouseClicked((event) -> {
+//                TreeItem<String> item = treeCell.getTreeItem();
+//
+//                if ( nonNull(item) ) {
+//                    if ( item instanceof DirectoriesTreeItem) {
+//                        DirectoriesTreeItem treeItem = (DirectoriesTreeItem) item;
+//                    }
+//                }
+//                else {
+//
+//                }
+//
+////                event.consume();
+//            });
 
             return treeCell;
         });
+
+        this.treeLock = new Object();
     }
 
-    private void onTreeItemExpanded(DirectoryAtTabTreeItem expandedItem) {
-        if ( this.selected.isPresent() ) {
-            DirectoryAtTab selectedDirectoryAtTab = this.selected.orThrow();
-            if ( expandedItem.directory().isParentOf(selectedDirectoryAtTab.directory()) ) {
-                this.select(selectedDirectoryAtTab);
-            }
+    private void addAll(List<FSEntry> fsEntries) {
+        synchronized ( this.treeLock ) {
+            this.treeView.getSelectionModel().clearSelection();
+
+            fsEntries.stream()
+                    .filter(FSEntry::isDirectory)
+                    .map(FSEntry::asDirectory)
+                    .forEach(this::addInternally);
+
+            this.selectedDirectory.ifPresent(this::selectInternally);
         }
     }
 
-    private void onTreeItemCollapsed(DirectoryAtTabTreeItem collapsedItem) {
-        if ( this.selected.isPresent() ) {
+    private void removeAll(List<Path> paths) {
+        synchronized ( this.treeLock ) {
+            this.treeView.getSelectionModel().clearSelection();
+
+            paths.forEach(this::removeInternally);
+
+            this.selectedDirectory.ifPresent(this::selectInternally);
+        }
+    }
+
+    private void onTreeItemExpanded(DirectoriesTreeItem expandedItem) {
+        if ( this.selectedDirectory.isPresent() ) {
+            Directory selectedDirectory = this.selectedDirectory.orThrow();
+            System.out.println("EXPANDED " + expandedItem.directory().path());
+//            if ( expandedItem.directory().isIndirectParentOf(selectedDirectory) ) {
+//                this.selectInternally(selectedDirectory);
+//            }
+            this.selectInternally(selectedDirectory);
+        }
+    }
+
+    private void onTreeItemCollapsed(DirectoriesTreeItem collapsedItem) {
+        System.out.println("COLLAPSED " + collapsedItem.directory().path());
+        if ( this.selectedTab.isPresent() ) {
             Directory collapsedDir = collapsedItem.directory();
-            Directory selectedDir = this.selected.orThrow().directory();
-            if ( collapsedDir.isParentOf(selectedDir) ) {
-                this.clearTreeViewSelection();
+            Directory selectedDir = this.selectedDirectory.orThrow();
+            if ( collapsedDir.isIndirectParentOf(selectedDir) ) {
+                this.treeView.getSelectionModel().clearSelection();
             }
             else if ( collapsedDir.equals(selectedDir) ) {
 
             } else {
-                this.select(this.selected.orThrow());
-            }
-        }
-    }
-
-    private void onTreeItemCreated(DirectoryAtTabTreeItem newItem) {
-        Directory directory = newItem.directory();
-
-        if ( directory.canNotBe(MOVED) || directory.canNotBe(RENAMED) ) {
-            return;
-        }
-
-        if ( this.onDirectoryChangedListeners.containsKey(directory) ) {
-            return;
-        }
-
-        Running listener = directory.listenForChanges(this::onDirectoriesTreeChanged);
-        this.onDirectoryChangedListeners.put(directory, listener);
-    }
-
-    private void onTreeItemRemoved(DirectoryAtTabTreeItem removedItem) {
-        Directory directory = removedItem.directory();
-        Running listener = this.onDirectoryChangedListeners.remove(directory);
-        if ( nonNull(listener) ) {
-            listener.cancel();
-        }
-    }
-
-    private void onDirectoriesTreeChanged() {
-        System.out.println("LISTENING");
-        this.select(this.selected.orThrow());
-    }
-
-    DirectoryAtTabTreeItem getTreeItemFor(Directory directory) {
-        Tab tab = this.selected.orThrow().tab();
-        DirectoryAtTab directoryAtTab = this.directoriesAtTabs.join(tab, directory);
-        return this.directoryAtTabTreeItems.wrap(directoryAtTab);
-    }
-
-    public void add(Tab tab, Directory directory, boolean select) {
-        TreeItem<String> tabTreeRoot = this.assignRootTreeItemToTab(tab, select);
-        this.tabsTreeRoots.put(tab, tabTreeRoot);
-
-        directory.parents().forEach(parent -> {
-            DirectoryAtTab parentAtTab = this.directoriesAtTabs.join(tab, parent);
-            DirectoryAtTabTreeItem parentTreeItem = this.directoryAtTabTreeItems.wrap(parentAtTab);
-            expandIfNotExpanded(parentTreeItem);
-        });
-
-        DirectoryAtTab directoryAtTab = this.directoriesAtTabs.join(tab, directory);
-        DirectoryAtTabTreeItem directoryTreeItem = this.directoryAtTabTreeItems.wrap(directoryAtTab);
-        expandIfNotExpanded(directoryTreeItem);
-
-        if ( select ) {
-            this.treeView.setRoot(tabTreeRoot);
-            this.select(directoryAtTab);
-        }
-    }
-
-    public void add(Tab tab, boolean select) {
-        TreeItem<String> tabTreeRoot = this.assignRootTreeItemToTab(tab, select);
-        this.tabsTreeRoots.put(tab, tabTreeRoot);
-
-        if ( select ) {
-            this.treeView.setRoot(tabTreeRoot);
-        }
-    }
-
-    public void setActive(Tab tab) {
-        TreeItem<String> tabTreeRoot = this.tabsTreeRoots.get(tab);
-
-        if ( isNull(tabTreeRoot) ) {
-            throw new IllegalArgumentException("Unkown tab");
-        }
-
-        this.treeView.setRoot(tabTreeRoot);
-    }
-
-    public void selectAndExpandParent(Tab tab, Directory parentDirectory, Directory directory) {
-        Optional<DirectoryAtTab> parentDirectoryAtTab = this.directoriesAtTabs.getBy(tab, parentDirectory);
-        if ( parentDirectoryAtTab.isPresent() ) {
-            Optional<DirectoryAtTabTreeItem> possibleParentTreeItem = this.directoryAtTabTreeItems
-                    .getExistedBy(parentDirectoryAtTab.get());
-            if ( possibleParentTreeItem.isPresent() ) {
-                DirectoryAtTabTreeItem parentTreeItem = possibleParentTreeItem.get();
-                parentTreeItem.setExpanded(true);
-
-                Optional<DirectoryAtTab> targetAtTab = this.directoriesAtTabs.getBy(tab, directory);
-                if ( targetAtTab.isPresent() ) {
-                    Optional<DirectoryAtTabTreeItem> newSelection = this.directoryAtTabTreeItems.getExistedBy(targetAtTab.get());
-                    if ( newSelection.isPresent() ) {
-                        DirectoryAtTabTreeItem newSelectionItem = newSelection.get();
-                        newSelectionItem.setExpanded(true);
-                        this.selectInTreeView(newSelectionItem);
-                    }
+                TreeItem<String> item = this.treeView.getSelectionModel().getSelectedItem();
+                if ( item.isExpanded() ) {
+                    this.selectInternally(this.selectedDirectory.orThrow());
                 }
             }
         }
     }
 
-    public void select(DirectoryAtTab directoryAtTab) {
-        Tab tab = directoryAtTab.tab();
-        Directory directory = directoryAtTab.directory();
+//    private void onTreeItemCreated(DirectoryAtTabTreeItem newItem) {
+//        Directory directory = newItem.directory();
+//
+//        if ( directory.canNotBe(MOVED) || directory.canNotBe(RENAMED) ) {
+//            return;
+//        }
+//
+//        if ( this.onDirectoryChangedListeners.containsKey(directory) ) {
+//            return;
+//        }
+//
+//        Running listener = directory.listenForChanges(this::onDirectoriesTreeChanged);
+//        this.onDirectoryChangedListeners.put(directory, listener);
+//    }
 
-        Directory machineDirectory = this.fileSystem.machineDirectory();
-        DirectoryAtTab machineDirectoryAtTab = this.directoriesAtTabs.join(tab, machineDirectory);
-        DirectoryAtTabTreeItem machineDirectoryTreeItem = this.directoryAtTabTreeItems.wrap(machineDirectoryAtTab);
-        expandIfNotExpanded(machineDirectoryTreeItem);
+//    private void onTreeItemRemoved(DirectoryAtTabTreeItem removedItem) {
+//        Directory directory = removedItem.directory();
+//        Running listener = this.onDirectoryChangedListeners.remove(directory);
+//        if ( nonNull(listener) ) {
+//            listener.cancel();
+//        }
+//    }
 
-        directory.parents().forEach(parent -> {
-            DirectoryAtTab parentAtTab = this.directoriesAtTabs.join(tab, parent);
-            DirectoryAtTabTreeItem parentTreeItem = this.directoryAtTabTreeItems.wrap(parentAtTab);
-            expandIfNotExpanded(parentTreeItem);
-        });
+//    private void onDirectoriesTreeChanged() {
+//        System.out.println("LISTENING");
+//        this.selectInternally(this.tabs.selected().orThrow().selectedDirectory().orThrow());
+//    }
 
-        DirectoryAtTabTreeItem selectedTreeItem = this.directoryAtTabTreeItems.wrap(directoryAtTab);
-        expandIfNotExpanded(selectedTreeItem);
+//    DirectoriesTreeItem getTreeItemFor(Directory directory) {
+//        Tab tab = this.selected.orThrow().tab();
+//        DirectoryAtTab directoryAtTab = this.directoriesAtTabs.join(tab, directory);
+//        return this.directoryAtTabTreeItems.wrap(directoryAtTab);
+//    }
 
-        this.selectInTreeView(selectedTreeItem);
+    public void add(Tab tab, boolean select) {
+        this.assignRootTreeItemToTab(tab);
+
+        if ( select ) {
+            this.setActive(tab);
+        }
     }
+
+    public void setActive(Tab tab) {
+        if ( this.selectedTab.equalsTo(tab) ) {
+            return;
+        }
+
+        TreeItem<String> tabTreeRoot = this.tabsTreeRoots.get(tab);
+
+        if ( isNull(tabTreeRoot) ) {
+            throw new IllegalArgumentException("Unknown tab");
+        }
+
+        this.selectedTab.resetTo(tab);
+        Directory tabDirectory = tab.selectedDirectory().orThrow();
+        this.selectedDirectory.resetTo(tabDirectory);
+
+        this.treeView.setRoot(tabTreeRoot);
+        this.select(tabDirectory);
+    }
+
+//    public void selectAndExpandParent(Tab tab, Directory parentDirectory, Directory directory) {
+//        Optional<DirectoryAtTab> parentDirectoryAtTab = this.directoriesAtTabs.getBy(tab, parentDirectory);
+//        if ( parentDirectoryAtTab.isPresent() ) {
+//            Optional<DirectoriesTreeItem> possibleParentTreeItem = this.directoryAtTabTreeItems
+//                    .getExistedBy(parentDirectoryAtTab.get());
+//            if ( possibleParentTreeItem.isPresent() ) {
+//                DirectoriesTreeItem parentTreeItem = possibleParentTreeItem.get();
+//                parentTreeItem.setExpanded(true);
+//
+//                Optional<DirectoryAtTab> targetAtTab = this.directoriesAtTabs.getBy(tab, directory);
+//                if ( targetAtTab.isPresent() ) {
+//                    Optional<DirectoriesTreeItem> newSelection = this.directoryAtTabTreeItems.getExistedBy(targetAtTab.get());
+//                    if ( newSelection.isPresent() ) {
+//                        DirectoriesTreeItem newSelectionItem = newSelection.get();
+//                        newSelectionItem.setExpanded(true);
+//                        this.selectInTreeView(newSelectionItem);
+//                    }
+//                }
+//            }
+//        }
+//    }
+
+    public void select(Directory directory) {
+//        if ( this.selectedDirectory.equalsTo(directory) ) {
+//            return;
+//        }
+
+        this.selectInternally(directory);
+    }
+
+    private void selectInternally(Directory directory) {
+        if ( directory.isAbsent() ) {
+            directory = directory.existedParent().orElse(this.fileSystem.machineDirectory());
+        }
+        Directory oldDirectory = this.selectedDirectory.resetTo(directory);
+        boolean same = nonNull(oldDirectory) && oldDirectory.equals(directory);
+        DirectoriesTreeItem machineItem = this.getMachineItemFromSelectedRoot();
+
+        DirectoriesTreeItem prevParentItem = machineItem;
+        DirectoriesTreeItem parentItem = null;
+        for ( Directory parent : directory.parents() ) {
+            expandIfNotExpanded(prevParentItem);
+            parentItem = prevParentItem.getInChildrenOrCreate(parent);
+            prevParentItem = parentItem;
+        }
+
+        DirectoriesTreeItem directoryItem;
+        if ( nonNull(parentItem) ) {
+            directoryItem = parentItem.getInChildrenOrCreate(directory);
+        }
+        else {
+            if ( directory.equals(this.fileSystem.machineDirectory()) ) {
+                directoryItem = machineItem;
+            }
+            else if ( prevParentItem.directory().equals(machineItem.directory()) ) {
+                directoryItem = machineItem.getInChildrenOrCreate(directory);
+            }
+            else {
+                throw new IllegalStateException();
+            }
+        }
+
+        expandIfNotExpanded(directoryItem);
+
+        System.out.println("[TREE] [SELECT] " + directoryItem.getValue());
+//        currentThreadTrack("diarsid", (element) -> System.out.println("    " + element));
+        if ( ! same ) {
+            this.onDirectorySelected.accept(directory);
+        }
+        this.treeView.getSelectionModel().select(directoryItem);
+    }
+
+    private DirectoriesTreeItem getMachineItemFromSelectedRoot() {
+        TreeItem<String> root = this.treeView.getRoot();
+        return this.getMachineItemAssignedTo(root);
+    }
+
+    private DirectoriesTreeItem getMachineItemAssignedTo(TreeItem<String> root) {
+        Directory machineDirectory = this.fileSystem.machineDirectory();
+
+        DirectoriesTreeItem machineDirectoryItem = null;
+
+        for ( TreeItem<String> rootChild : root.getChildren() ) {
+            if ( rootChild.getValue().equalsIgnoreCase(machineDirectory.name()) ) {
+                machineDirectoryItem = (DirectoriesTreeItem) rootChild;
+            }
+        }
+        if ( isNull(machineDirectoryItem) ) {
+            throw new IllegalStateException();
+        }
+
+        return machineDirectoryItem;
+    }
+
+//    private DirectoriesTreeItem getMachineItem() {
+//        Directory machineDirectory = this.fileSystem.machineDirectory();
+//        TreeItem<String> root = this.treeView.getRoot();
+//
+//        DirectoriesTreeItem machineDirectoryItem = null;
+//
+//        for ( TreeItem<String> rootChild : root.getChildren() ) {
+//            if ( rootChild.getValue().equalsIgnoreCase(machineDirectory.name()) ) {
+//                machineDirectoryItem = (DirectoriesTreeItem) rootChild;
+//            }
+//        }
+//        if ( isNull(machineDirectoryItem) ) {
+//            throw new IllegalStateException();
+//        }
+//
+//        return machineDirectoryItem;
+//    }
 
     private static void expandIfNotExpanded(TreeItem<?> treeItem) {
         if ( treeItem.isExpanded() ) {
             return;
         }
 
+        if ( treeItem.isLeaf() ) {
+            return;
+        }
+
         treeItem.setExpanded(true);
+    }
+
+    private void addInternally(Directory directory) {
+        System.out.println("[TREE] add " + directory.path());
+        for ( TreeItem<String> root : this.tabsTreeRoots.values() ) {
+            DirectoriesTreeItem machineItem = this.getMachineItemAssignedTo(root);
+
+            DirectoriesTreeItem prevParentItem = machineItem;
+            DirectoriesTreeItem parentItem = null;
+            for ( Directory parent : directory.parents() ) {
+                expandIfNotExpanded(prevParentItem);
+                parentItem = prevParentItem.getInChildrenOrCreate(parent);
+                prevParentItem = parentItem;
+            }
+
+            if ( isNull(parentItem) ) {
+                throw new IllegalStateException();
+            }
+
+            parentItem.getInChildrenOrCreate(directory);
+            expandIfNotExpanded(parentItem);
+        }
+    }
+
+    private void removeInternally(Path path) {
+        System.out.println("[TREE] remove " + path);
+        currentThreadTrack("diarsid", (element) -> System.out.println("    " + element));
+        for ( TreeItem<String> root : this.tabsTreeRoots.values() ) {
+            DirectoriesTreeItem machineItem = this.getMachineItemAssignedTo(root);
+
+            DirectoriesTreeItem prevParentItem = machineItem;
+            DirectoriesTreeItem parentItem = null;
+            for ( Directory parent : this.fileSystem.parentsOf(path) ) {
+                parentItem = prevParentItem.getInChildrenOrNull(parent);
+                if ( isNull(parentItem) ) {
+                    continue;
+                }
+                prevParentItem = parentItem;
+            }
+
+            if ( isNull(parentItem) ) {
+                continue;
+            }
+
+            boolean foundAndRemoved = parentItem.removeInChildren(path.getFileName().normalize().toString());
+
+            if ( ! foundAndRemoved ) {
+                continue;
+            }
+
+//            if ( this.selectedDirectory.isPresent() ) {
+//                Directory selectedDirectory = this.selectedDirectory.orThrow();
+//                Directory newSelection = selectedDirectory;
+//
+//                if ( selectedDirectory.has(path) || selectedDirectory.isDescendantOf(path) ) {
+//                    newSelection = this.fileSystem.existedParentOf(path).orElseGet(this.fileSystem::machineDirectory);
+//                }
+//
+//                this.selectInternally(newSelection);
+//            }
+        }
     }
 
     public void remove(FSEntry fsEntry) {
@@ -276,39 +418,40 @@ public class DirectoriesTree implements ViewComponent {
 
         Directory directory = fsEntry.asDirectory();
 
-        List<DirectoryAtTabTreeItem> directoryAtTabTreeItemsToRemove = this.directoryAtTabTreeItems.remove(directory);
+        for ( TreeItem<String> root : this.tabsTreeRoots.values() ) {
+            DirectoriesTreeItem machineItem = this.getMachineItemAssignedTo(root);
 
-        directoryAtTabTreeItemsToRemove.forEach(treeItem -> {
-            TreeItem<String> parent = treeItem.getParent();
-            if ( nonNull(parent) ) {
-                parent.getChildren().remove(treeItem);
-            }
-        });
-
-        if ( this.selected.isPresent() ) {
-            DirectoryAtTab selectedDirectoryAtTab = this.selected.orThrow();
-            Directory selectedDirectory = this.selected.orThrow().directory();
-            if ( directory.isParentOf(selectedDirectory) ) {
-                Optional<Directory> parentOfRemoved = directory.parent();
-                if ( parentOfRemoved.isPresent() ) {
-                    Directory newSelection = parentOfRemoved.get();
-                    Tab selectedTab = selectedDirectoryAtTab.tab();
-                    DirectoryAtTab newSelectionAtTab = this.directoriesAtTabs.join(selectedTab, newSelection);
-                    this.select(newSelectionAtTab);
+            DirectoriesTreeItem prevParentItem = machineItem;
+            DirectoriesTreeItem parentItem = null;
+            for ( Directory parent : directory.parents() ) {
+                parentItem = prevParentItem.getInChildrenOrNull(parent);
+                if ( isNull(parentItem) ) {
+                    continue;
                 }
+                prevParentItem = parentItem;
+            }
+
+            if ( isNull(parentItem) ) {
+                continue;
+            }
+
+            boolean foundAndRemoved = parentItem.removeInChildren(directory);
+
+            if ( ! foundAndRemoved ) {
+                continue;
+            }
+
+            if ( this.selectedDirectory.isPresent() ) {
+                Directory selectedDirectory = this.selectedDirectory.orThrow();
+                Directory newSelection = selectedDirectory;
+
+                if ( selectedDirectory.equals(directory) || directory.isParentOf(selectedDirectory) ) {
+                    newSelection = directory.existedParent().orElse(this.fileSystem.machineDirectory());
+                }
+
+                this.selectInternally(newSelection);
             }
         }
-    }
-
-    private void selectInTreeView(DirectoryAtTabTreeItem treeItem) {
-        DirectoryAtTab directoryAtTab = treeItem.directoryAtTab();
-        this.onDirectorySelected.accept(directoryAtTab);
-        this.treeView.getSelectionModel().select(treeItem);
-        this.selected.resetTo(treeItem.directoryAtTab());
-    }
-
-    private void clearTreeViewSelection() {
-        this.treeView.getSelectionModel().clearSelection();
     }
 
     @Override
@@ -316,20 +459,14 @@ public class DirectoriesTree implements ViewComponent {
         return this.treeView;
     }
 
-    private TreeItem<String> assignRootTreeItemToTab(Tab tab, boolean selectTab) {
-
-        DirectoryAtTab machineDirectoryAtTab = this.directoriesAtTabs.join(tab, this.fileSystem.machineDirectory());
-        DirectoryAtTabTreeItem machineDirectoryTreeItem = this.directoryAtTabTreeItems.wrap(machineDirectoryAtTab);
-
-        expandIfNotExpanded(machineDirectoryTreeItem);
+    private TreeItem<String> assignRootTreeItemToTab(Tab tab) {
+        Directory machineDirectory = this.fileSystem.machineDirectory();
+        DirectoriesTreeItem machineDirectoryTreeItem = new DirectoriesTreeItem(tab, machineDirectory, this::onTreeItemExpanded, this::onTreeItemCollapsed);
 
         TreeItem<String> network = new TreeItem<>("Network");
 
         DirectoriesTreeTabRoot rootTreeItem = new DirectoriesTreeTabRoot(machineDirectoryTreeItem, network);
-
-        if ( selectTab ) {
-            this.selectInTreeView(machineDirectoryTreeItem);
-        }
+        this.tabsTreeRoots.put(tab, rootTreeItem);
 
         return rootTreeItem;
     }

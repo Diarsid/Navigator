@@ -1,5 +1,6 @@
 package diarsid.navigator.filesystem;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -17,7 +18,17 @@ public interface Directory extends FSEntry {
 
     Optional<Directory> parent();
 
-    boolean isParentOf(FSEntry fsEntry);
+    default boolean isParentOf(FSEntry fsEntry) {
+        return this.isIndirectParentOf(fsEntry) || this.isDirectParentOf(fsEntry);
+    }
+
+    boolean isIndirectParentOf(FSEntry fsEntry);
+
+    boolean isIndirectParentOf(Path path);
+
+    boolean isDirectParentOf(FSEntry fsEntry);
+
+    boolean isDirectParentOf(Path path);
 
     boolean isRoot();
 
@@ -61,7 +72,7 @@ public interface Directory extends FSEntry {
             can = false;
         }
 
-        if ( can && newDirectory.isParentOf(this) ) {
+        if ( can && newDirectory.isIndirectParentOf(this) ) {
             can = false;
         }
 
@@ -72,14 +83,12 @@ public interface Directory extends FSEntry {
         return ! this.canHost(newEntry);
     }
 
-    Running listenForContentChanges(Runnable listener);
-
-    Running listenForChanges(Runnable listener);
-
     boolean canBe(Directory.Edit edit);
 
     default boolean canNotBe(Directory.Edit edit) {
         return ! this.canBe(edit);
     }
+
+    void watch();
 
 }

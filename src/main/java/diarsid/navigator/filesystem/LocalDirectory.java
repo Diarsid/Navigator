@@ -7,36 +7,26 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import diarsid.support.objects.groups.Runnables;
-import diarsid.support.objects.groups.Running;
-
 import static java.nio.file.Files.list;
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
-import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
 
 import static diarsid.navigator.filesystem.FileSystem.getNameFrom;
 
 class LocalDirectory implements Directory, ChangeableFSEntry {
 
-    private final UUID uuid;
     private final FileSystem fileSystem;
-    private final Runnables contentChangeListeners;
-    private final Runnables changeListeners;
 
-    private Path path;
-    private String name;
-    private String fullName;
+    private final Path path;
+    private final String name;
+    private final String fullName;
 
     LocalDirectory(Path path, FileSystem fileSystem) {
-        this.uuid = randomUUID();
         this.fileSystem = fileSystem;
-        this.contentChangeListeners = new Runnables();
-        this.changeListeners = new Runnables();
         this.path = path.toAbsolutePath();
         this.name = getNameFrom(path);
         this.fullName = this.path.toString();
@@ -53,14 +43,50 @@ class LocalDirectory implements Directory, ChangeableFSEntry {
     }
 
     @Override
+    public void showInDefaultFileManager() {
+        this.fileSystem.showInDefaultFileManager(this);
+    }
+
+    @Override
     public Optional<Directory> parent() {
         return this.fileSystem.parentOf(this);
     }
 
     @Override
-    public boolean isParentOf(FSEntry fsEntry) {
-        List<Directory> parents = fsEntry.parents();
-        return parents.contains(this);
+    public Optional<Directory> existedParent() {
+        return this.fileSystem.existedParentOf(this.path);
+    }
+
+    @Override
+    public boolean isIndirectParentOf(FSEntry fsEntry) {
+        return fsEntry.path().startsWith(this.path) && ( ! this.equals(fsEntry) );
+    }
+
+    @Override
+    public boolean isIndirectParentOf(Path path) {
+        return path.startsWith(this.path) && ( ! this.path.equals(path) );
+    }
+
+    @Override
+    public boolean isDirectParentOf(FSEntry fsEntry) {
+        Path entryParent = fsEntry.path().getParent();
+
+        if ( isNull(entryParent) ) {
+            return false;
+        }
+
+        return entryParent.equals(this.path);
+    }
+
+    @Override
+    public boolean isDirectParentOf(Path path) {
+        Path entryParent = path.getParent();
+
+        if ( isNull(entryParent) ) {
+            return false;
+        }
+
+        return entryParent.equals(this.path);
     }
 
     @Override
@@ -222,18 +248,18 @@ class LocalDirectory implements Directory, ChangeableFSEntry {
     }
 
     @Override
-    public Running listenForContentChanges(Runnable listener) {
-        return this.contentChangeListeners.add(listener);
+    public boolean exists() {
+        return this.fileSystem.exists(this);
     }
 
     @Override
-    public Running listenForChanges(Runnable listener) {
-        return this.changeListeners.add(listener);
+    public boolean isAbsent() {
+        return this.fileSystem.isAbsent(this);
     }
 
     @Override
-    public void changed() {
-        this.changeListeners.run();
+    public FileSystem fileSystem() {
+        return this.fileSystem;
     }
 
     @Override
@@ -246,6 +272,11 @@ class LocalDirectory implements Directory, ChangeableFSEntry {
             case FILLED: return true;
             default: return false;
         }
+    }
+
+    @Override
+    public void watch() {
+        this.fileSystem.watch(this);
     }
 
     @Override
@@ -262,25 +293,13 @@ class LocalDirectory implements Directory, ChangeableFSEntry {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof LocalDirectory)) return false;
-        LocalDirectory directory = (LocalDirectory) o;
-        return uuid.equals(directory.uuid);
+        LocalDirectory that = (LocalDirectory) o;
+        return path.equals(that.path);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(uuid);
-    }
-
-    @Override
-    public void movedTo(Path newPath) {
-        this.path = newPath;
-        this.name = getNameFrom(this.path);
-        this.fullName = this.path.toString();
-    }
-
-    @Override
-    public void contentChanged() {
-        this.contentChangeListeners.run();
+        return Objects.hash(path);
     }
 
     @Override

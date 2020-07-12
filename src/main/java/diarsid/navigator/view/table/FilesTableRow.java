@@ -3,16 +3,17 @@ package diarsid.navigator.view.table;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import javafx.scene.Node;
 import javafx.scene.control.TableRow;
-import javafx.scene.control.TableView;
 import javafx.scene.input.DragEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 
 import diarsid.navigator.filesystem.Directory;
 import diarsid.navigator.filesystem.FSEntry;
 import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;
-import diarsid.navigator.view.fsentry.contextmenu.FSEntryContextMenu;
-import diarsid.support.javafx.DoubleClickDetector;
+import diarsid.navigator.view.fsentry.contextmenu.FSEntryContextMenuFactory;
+import diarsid.support.javafx.ClickTypeDetector;
 
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
@@ -22,29 +23,38 @@ import static javafx.scene.input.TransferMode.MOVE;
 
 import static diarsid.navigator.filesystem.Directory.Edit.FILLED;
 import static diarsid.navigator.filesystem.ProgressTracker.DEFAULT;
+import static diarsid.support.javafx.ClickType.DOUBLE_CLICK;
+import static diarsid.support.javafx.ClickType.SEQUENTIAL_CLICK;
+import static diarsid.support.javafx.ClickType.USUAL_CLICK;
 
 class FilesTableRow extends TableRow<FilesTableItem> implements Supplier<FSEntry> {
 
-    private final DoubleClickDetector doubleClickDetector;
+    private final ClickTypeDetector clickTypeDetector;
     private final Supplier<Directory> selectedDirectory;
+    private final Consumer<FilesTableItem> onItemInvoked;
     private final DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles;
+    private final SingleEditingPerTable nameCellEditing;
 
     FilesTableRow(
+            FSEntryContextMenuFactory contextMenuFactory,
             Supplier<Directory> selectedDirectory,
             Consumer<FilesTableItem> onItemInvoked,
             DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles,
+            SingleEditingPerTable singleEditingPerTable,
             Consumer<ScrollEvent> onScrolled) {
         super();
         this.dragAndDropFiles = dragAndDropFiles;
+        this.nameCellEditing = singleEditingPerTable;
         this.selectedDirectory = selectedDirectory;
+        this.onItemInvoked = onItemInvoked;
 
         super.setOnDragOver(this::onDragOver);
         super.setOnDragDropped(this::onDragDrop);
         super.setAlignment(CENTER);
 
-//        super.addEventFilter(ContextMenuEvent.CONTEXT_MENU_REQUESTED, Event::consume);
+        super.setEditable(true);
 
-        super.setContextMenu(new FSEntryContextMenu(this));
+        super.setContextMenu(contextMenuFactory.createNewFor(this));
 
         super.addEventFilter(MOUSE_PRESSED, mouseEvent -> {
             if ( mouseEvent.isSecondaryButtonDown() ) {
@@ -60,19 +70,14 @@ class FilesTableRow extends TableRow<FilesTableItem> implements Supplier<FSEntry
             super.getTableView().getSelectionModel().select(super.getIndex());
         });
 
-        this.doubleClickDetector = DoubleClickDetector.Builder
+        this.clickTypeDetector = ClickTypeDetector.Builder
                 .createFor(this)
-                .withMillisBetweenClicks(200)
-                .withDoOnDoubleClick(mouseEvent -> {
-                    if ( super.isEmpty() ) {
-                        return;
-                    }
-
-                    FilesTableItem tableItem = super.getItem();
-                    if ( nonNull(tableItem) ) {
-                        onItemInvoked.accept(tableItem);
-                    }
-                })
+                .withMillisAfterLastClickForType(DOUBLE_CLICK, 0)
+                .withMillisAfterLastClickForType(SEQUENTIAL_CLICK, 200)
+                .withMillisAfterLastClickForType(USUAL_CLICK, 1000)
+                .withDoOnClick(DOUBLE_CLICK, this::doOnDoubleClick)
+                .withDoOnClick(SEQUENTIAL_CLICK, this::doOnSequentialClick)
+                .withDoOnClick(USUAL_CLICK, this::doOnUsualClick)
                 .build();
 
         super.setOnScroll(scrollEvent -> {
@@ -83,6 +88,11 @@ class FilesTableRow extends TableRow<FilesTableItem> implements Supplier<FSEntry
             onScrolled.accept(scrollEvent);
             System.out.println("scroll x: " + x + ", y: " + y + " on row");
         });
+    }
+
+    private FilesTableCellForName nameCell() {
+        Node cell = super.getChildren().get(1);
+        return (FilesTableCellForName) cell;
     }
 
     @Override
@@ -188,5 +198,51 @@ class FilesTableRow extends TableRow<FilesTableItem> implements Supplier<FSEntry
         }
 
         return format.replace("_", item.fsEntry().name());
+    }
+
+    private void doOnDoubleClick(MouseEvent mouseEvent) {
+        FilesTableCellForName nameCell = this.nameCell();
+        if ( this.nameCellEditing.isEditing(nameCell) ) {
+            return;
+        }
+
+        if ( this.nameCellEditing.isInProcess() ) {
+            this.nameCellEditing.cancel();
+        }
+
+        if ( super.isEmpty() ) {
+            return;
+        }
+
+        FilesTableItem tableItem = super.getItem();
+        if ( nonNull(tableItem) ) {
+            this.onItemInvoked.accept(tableItem);
+        }
+    }
+
+    private void doOnSequentialClick(MouseEvent mouseEvent) {
+        FilesTableCellForName nameCell = this.nameCell();
+        if ( this.nameCellEditing.isEditing(nameCell) ) {
+            return;
+        }
+
+        if ( super.isSelected() ) {
+            nameCell.startEdit();
+            this.nameCellEditing.startWith(nameCell);
+        }
+        else if ( this.nameCellEditing.isInProcess() ) {
+            this.nameCellEditing.cancel();
+        }
+    }
+
+    private void doOnUsualClick(MouseEvent mouseEvent) {
+        FilesTableCellForName nameCell = this.nameCell();
+        if ( this.nameCellEditing.isEditing(nameCell) ) {
+            return;
+        }
+
+        if ( this.nameCellEditing.isInProcess() ) {
+            this.nameCellEditing.cancel();
+        }
     }
 }

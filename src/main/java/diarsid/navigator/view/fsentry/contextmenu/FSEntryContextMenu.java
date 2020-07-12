@@ -2,11 +2,13 @@ package diarsid.navigator.view.fsentry.contextmenu;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import javafx.scene.control.ContextMenu;
 import javafx.stage.WindowEvent;
 
 import diarsid.navigator.filesystem.FSEntry;
+import diarsid.navigator.filesystem.FileSystem;
 import diarsid.support.objects.references.impl.Possible;
 import diarsid.support.objects.references.impl.PossibleListenable;
 
@@ -19,7 +21,7 @@ public class FSEntryContextMenu extends ContextMenu {
     private final PossibleListenable<FSEntry> fsEntry;
     private final List<FSEntryMenuItem> items;
 
-    public FSEntryContextMenu(Supplier<FSEntry> fsEntrySource) {
+    FSEntryContextMenu(Supplier<FSEntry> fsEntrySource, FileSystem fileSystem, Consumer<FSEntry> onIgnore) {
         this.fsEntry = listenable(possibleButEmpty());
         this.fsEntrySource = fsEntrySource;
         this.items = new ArrayList<>();
@@ -27,16 +29,23 @@ public class FSEntryContextMenu extends ContextMenu {
         super.setOnHiding(this::doOnHiding);
         super.setOnShowing(this::doOnShowing);
 
-        FSEntryMenuItem ignore = new FSEntryMenuItemIgnore();
-        fsEntry.listen(ignore);
-        items.add(ignore);
+        FSEntryMenuItem show = new FSEntryMenuItemShowInDefaultManager(this.fsEntry);
+        FSEntryMenuItem remove = new FSEntryMenuItemRemove(this.fsEntry, fileSystem);
+        FSEntryMenuItem ignore = new FSEntryMenuItemIgnore(this.fsEntry, onIgnore);
+
+        this.items.add(show);
+        this.items.add(remove);
+        this.items.add(ignore);
 
         super.getItems().setAll(this.items);
     }
 
     private void doOnShowing(WindowEvent windowEvent) {
         this.fsEntry.resetTo(this.fsEntrySource);
-//        super.getItems().setAll(this.items);
+
+        if ( this.fsEntry.isNotPresent() ) {
+            windowEvent.consume();
+        }
     }
 
     public Possible<FSEntry> fsEntry() {
@@ -45,7 +54,6 @@ public class FSEntryContextMenu extends ContextMenu {
 
     private void doOnHiding(WindowEvent windowEvent) {
 
-//        super.getItems().clear();
     }
 
 }

@@ -6,6 +6,10 @@ import static java.util.Objects.isNull;
 
 public abstract class FilesTableCell<T> extends TableCell<FilesTableItem, T> {
 
+    public final FilesTableRow getFilesTableRow() {
+        return (FilesTableRow) super.getTableRow();
+    }
+
     @Override
     public String toString() {
         String format = this.getClass().getSimpleName() + "{_}";

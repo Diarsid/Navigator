@@ -1,24 +1,50 @@
 package diarsid.navigator.view.fsentry.contextmenu;
 
-import java.util.function.BiConsumer;
+import javafx.event.ActionEvent;
 import javafx.scene.Node;
 import javafx.scene.control.MenuItem;
 
 import diarsid.navigator.filesystem.FSEntry;
+import diarsid.support.objects.references.impl.PossibleListenable;
 
 import static java.util.Objects.isNull;
 
-public abstract class FSEntryMenuItem extends MenuItem implements BiConsumer<FSEntry, FSEntry> {
+abstract class FSEntryMenuItem extends MenuItem {
 
-    public FSEntryMenuItem() {
+    private final PossibleListenable<FSEntry> fsEntry;
+
+    FSEntryMenuItem(PossibleListenable<FSEntry> fsEntryReference) {
         super();
+        this.setOnAction(this::doOnActionInternally);
+        this.fsEntry = fsEntryReference;
+        this.fsEntry.listen(this::onChange);
     }
 
-    @Override
-    public final void accept(FSEntry oldFsEntry, FSEntry newFsEntry) {
-        super.setText(this.toText(newFsEntry));
-        super.setGraphic(this.toGraphic(newFsEntry));
+    private void onChange(FSEntry oldFsEntry, FSEntry newFsEntry) {
+        if ( isNull(newFsEntry) ) {
+            super.setText(null);
+            super.setGraphic(null);
+        }
+        else {
+            super.setText(this.toText(newFsEntry));
+            super.setGraphic(this.toGraphic(newFsEntry));
+
+            if ( this.applicableTo(newFsEntry) ) {
+                super.setDisable(false);
+            }
+            else {
+                super.setDisable(true);
+            }
+        }
     }
+
+    private void doOnActionInternally(ActionEvent actionEvent) {
+        this.fsEntry.ifPresent(this::onAction);
+    }
+
+    abstract void onAction(FSEntry fsEntry);
+
+    abstract boolean applicableTo(FSEntry fsEntry);
 
     abstract String toText(FSEntry fsEntry);
 

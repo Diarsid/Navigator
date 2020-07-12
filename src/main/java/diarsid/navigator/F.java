@@ -1,5 +1,6 @@
 package diarsid.navigator;
 
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +14,7 @@ import static java.util.Collections.sort;
 public class F {
 
     public static void main(String[] args) {
-        sortDirs();
+        rename();
     }
 
     private static void iterateParents() {
@@ -46,6 +47,14 @@ public class F {
         Directory whereToCopy = fileSystem.toDirectory(Paths.get("D:/DEV/1__Projects/Diarsid/IntelliJ/BeamNavigator/src/main/home/resources")).get();
 
         fileSystem.move(whatToMove, whereToCopy);
+    }
+
+    private static void rename() {
+        FileSystem fileSystem = FileSystem.INSTANCE;
+
+        Directory whatToRename = fileSystem.toDirectory(Paths.get("D:/DEV/1__Projects/Diarsid/IntelliJ/BeamNavigator/src/main/resources/test")).get();
+
+        fileSystem.rename(whatToRename, "test_2");
     }
 
     private static void sortDirs() {
