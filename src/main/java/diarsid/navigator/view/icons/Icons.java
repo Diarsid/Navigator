@@ -2,9 +2,9 @@ package diarsid.navigator.view.icons;
 
 import javafx.beans.property.ReadOnlyDoubleProperty;
 
-import diarsid.navigator.filesystem.FileSystem;
 import diarsid.navigator.filesystem.FSEntry;
-import diarsid.support.objects.references.impl.PresentListenable;
+import diarsid.navigator.filesystem.FileSystem;
+import diarsid.support.objects.references.PresentProperty;
 
 public interface Icons {
 
@@ -14,6 +14,6 @@ public interface Icons {
 
     ReadOnlyDoubleProperty sizeProperty();
 
-    PresentListenable<Double> size();
+    PresentProperty<Double> size();
 
 }

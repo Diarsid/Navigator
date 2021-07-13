@@ -3,16 +3,16 @@ package diarsid.navigator.view.tabs;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-
-import diarsid.navigator.filesystem.FSEntry;
-import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;
 import javafx.scene.control.Label;
 
+import diarsid.navigator.filesystem.FSEntry;
 import diarsid.navigator.model.Tab;
 import diarsid.navigator.view.dragdrop.DragAndDropNodes;
-import diarsid.support.objects.references.impl.Possible;
+import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;
+import diarsid.support.objects.references.Possible;
 
-import static diarsid.support.objects.references.impl.References.possibleButEmpty;
+import static diarsid.support.objects.references.References.simplePossibleButEmpty;
+
 
 public class LabelsAtTabs {
 
@@ -29,7 +29,7 @@ public class LabelsAtTabs {
         this.draggableTabLabels = new ArrayList<>();
         this.dragAndDropLabels = dragAndDropLabels;
         this.dragAndDropFiles = dragAndDropFiles;
-        this.onTabsReorderedAction = possibleButEmpty();
+        this.onTabsReorderedAction = simplePossibleButEmpty();
         this.onTabTabLabelClicked = onTabTabLabelClicked;
     }
 

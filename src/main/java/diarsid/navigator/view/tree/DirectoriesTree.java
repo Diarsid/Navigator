@@ -20,7 +20,7 @@ import diarsid.navigator.view.dragdrop.DragAndDropNodes;
 import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;
 import diarsid.navigator.view.fsentry.contextmenu.FSEntryContextMenuFactory;
 import diarsid.navigator.view.icons.Icons;
-import diarsid.support.objects.references.impl.Possible;
+import diarsid.support.objects.references.Possible;
 
 import static java.lang.Double.POSITIVE_INFINITY;
 import static java.util.Objects.isNull;
@@ -28,7 +28,7 @@ import static java.util.Objects.nonNull;
 import static javafx.scene.input.MouseEvent.MOUSE_PRESSED;
 
 import static diarsid.support.concurrency.ThreadUtils.currentThreadTrack;
-import static diarsid.support.objects.references.impl.References.possibleButEmpty;
+import static diarsid.support.objects.references.References.simplePossibleButEmpty;
 
 public class DirectoriesTree implements ViewComponent {
 
@@ -55,8 +55,8 @@ public class DirectoriesTree implements ViewComponent {
         this.fileSystem = fileSystem;
         this.icons = icons;
         this.tabs = tabs;
-        this.selectedTab = possibleButEmpty();
-        this.selectedDirectory = possibleButEmpty();
+        this.selectedTab = simplePossibleButEmpty();
+        this.selectedDirectory = simplePossibleButEmpty();
         this.onDirectorySelected = onDirectorySelected;
         this.tabsTreeRoots = new HashMap<>();
         this.dragAndDropTreeCell = new DragAndDropNodes<>("tree-cell");
@@ -139,10 +139,11 @@ public class DirectoriesTree implements ViewComponent {
         if ( this.selectedDirectory.isPresent() ) {
             Directory selectedDirectory = this.selectedDirectory.orThrow();
             System.out.println("EXPANDED " + expandedItem.directory().path());
-//            if ( expandedItem.directory().isIndirectParentOf(selectedDirectory) ) {
-//                this.selectInternally(selectedDirectory);
-//            }
-            this.selectInternally(selectedDirectory);
+            // 28.05.2021 uncomment
+            if ( expandedItem.directory().isIndirectParentOf(selectedDirectory) ) {
+                this.selectInternally(selectedDirectory);
+            }
+//            this.selectInternally(selectedDirectory);
         }
     }
 
@@ -288,7 +289,7 @@ public class DirectoriesTree implements ViewComponent {
             }
         }
 
-        expandIfNotExpanded(directoryItem);
+//        expandIfNotExpanded(directoryItem); // 28.05.2021 commented
 
         System.out.println("[TREE] [SELECT] " + directoryItem.getValue());
 //        currentThreadTrack("diarsid", (element) -> System.out.println("    " + element));
@@ -368,7 +369,7 @@ public class DirectoriesTree implements ViewComponent {
             }
 
             parentItem.getInChildrenOrCreate(directory);
-            expandIfNotExpanded(parentItem);
+//            expandIfNotExpanded(parentItem); // 28.05.2021 commented
         }
     }
 

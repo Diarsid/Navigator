@@ -5,9 +5,10 @@ import javafx.scene.image.ImageView;
 
 import diarsid.navigator.filesystem.FSEntry;
 import diarsid.navigator.view.icons.Icons;
-import diarsid.support.objects.references.impl.Possible;
+import diarsid.support.objects.references.Possible;
 
-import static diarsid.support.objects.references.impl.References.possibleButEmpty;
+import static diarsid.support.objects.references.References.simplePossibleButEmpty;
+
 
 public class FilesTableItem implements Comparable<FilesTableItem> {
 
@@ -19,7 +20,7 @@ public class FilesTableItem implements Comparable<FilesTableItem> {
     public FilesTableItem(Icons icons, FSEntry entry) {
         this.entry = entry;
         this.icons = icons;
-        this.row = possibleButEmpty();
+        this.row = simplePossibleButEmpty();
         this.iconView = new ImageView();
 
         ReadOnlyDoubleProperty size = this.icons.sizeProperty();

@@ -5,7 +5,7 @@ import javafx.scene.Node;
 import diarsid.navigator.filesystem.Directory;
 import diarsid.navigator.filesystem.FSEntry;
 import diarsid.navigator.filesystem.FileSystem;
-import diarsid.support.objects.references.impl.PossibleListenable;
+import diarsid.support.objects.references.PossibleProperty;
 
 import static java.lang.String.format;
 
@@ -16,7 +16,7 @@ public class FSEntryMenuItemRemove extends FSEntryMenuItem {
 
     private final FileSystem fileSystem;
 
-    FSEntryMenuItemRemove(PossibleListenable<FSEntry> fsEntryReference, FileSystem fileSystem) {
+    FSEntryMenuItemRemove(PossibleProperty<FSEntry> fsEntryReference, FileSystem fileSystem) {
         super(fsEntryReference);
         this.fileSystem = fileSystem;
     }

@@ -50,8 +50,9 @@ public class FilesTableCellForName extends FilesTableCell<String> {
     @Override
     public void startEdit() {
         FSEntry entry = super.getTableRow().getItem().fsEntry();
-        super.setText(entry.name());
+        super.setText(null);
         this.requestFocus();
+        this.editField.setText(entry.name());
         this.editField.selectAll();
         this.editField.requestFocus();
         super.setGraphic(this.editField);

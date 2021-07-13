@@ -21,10 +21,10 @@ import javafx.scene.layout.HBox;
 
 import diarsid.support.objects.SimplePool;
 import diarsid.support.objects.StatefulClearable;
+import diarsid.support.objects.references.Possible;
+import diarsid.support.objects.references.PossibleProperty;
+import diarsid.support.objects.references.PresentProperty;
 import diarsid.support.objects.references.Reference;
-import diarsid.support.objects.references.impl.Possible;
-import diarsid.support.objects.references.impl.PossibleListenable;
-import diarsid.support.objects.references.impl.PresentListenable;
 
 import static java.util.Objects.isNull;
 import static javafx.geometry.Pos.CENTER_LEFT;
@@ -34,9 +34,9 @@ import static javafx.scene.layout.Priority.ALWAYS;
 
 import static diarsid.navigator.view.breadcrumbs.BreadcrumbsBar.State.AS_ELEMENTS_BAR;
 import static diarsid.navigator.view.breadcrumbs.BreadcrumbsBar.State.AS_STRING_PATH;
-import static diarsid.support.objects.references.impl.References.listenable;
-import static diarsid.support.objects.references.impl.References.listenablePresentOf;
-import static diarsid.support.objects.references.impl.References.possibleButEmpty;
+import static diarsid.support.objects.references.References.possiblePropertyButEmpty;
+import static diarsid.support.objects.references.References.presentPropertyOf;
+import static diarsid.support.objects.references.References.simplePossibleButEmpty;
 
 public class BreadcrumbsBar<T> {
 
@@ -58,7 +58,7 @@ public class BreadcrumbsBar<T> {
                 SimpleDoubleProperty iconsSizeProperty,
                 Function<T, String> valueToString,
                 BiConsumer<T, MouseEvent> onElementClicked) {
-            this.t = possibleButEmpty();
+            this.t = simplePossibleButEmpty();
             this.valueToString = valueToString;
             this.onElementClicked = onElementClicked;
 
@@ -124,9 +124,9 @@ public class BreadcrumbsBar<T> {
     private final TextField pathField;
     private final SimplePool<Element<T>> elementsPool;
     private final SimplePool<Label> separatorsPool;
-    private final PossibleListenable<Double> iconsSize;
+    private final PossibleProperty<Double> iconsSize;
     private final SimpleDoubleProperty iconsSizeProperty;
-    private final PresentListenable<State> state;
+    private final PresentProperty<State> state;
 
     public BreadcrumbsBar(
             String separator,
@@ -152,7 +152,7 @@ public class BreadcrumbsBar<T> {
 
         this.separatorsPool = new SimplePool<>(this::createNewSeparatorLabel);
 
-        this.iconsSize = listenable(possibleButEmpty());
+        this.iconsSize = possiblePropertyButEmpty();
         this.iconsSizeProperty = new SimpleDoubleProperty();
         this.iconsSize.listen((oldValue, newValue) -> this.iconsSizeProperty.set(newValue));
 
@@ -163,7 +163,7 @@ public class BreadcrumbsBar<T> {
         this.pathField.setOnAction(this::onPathEntered);
         HBox.setHgrow(this.pathField, ALWAYS);
 
-        this.state = listenablePresentOf(AS_ELEMENTS_BAR, "BreadcrumbsBar.state");
+        this.state = presentPropertyOf(AS_ELEMENTS_BAR, "BreadcrumbsBar.state");
         this.state.listen(this::onStateChanged);
 
         this.elementsHBox.addEventHandler(MOUSE_PRESSED, this::onMousePressedOnFreeSpace);
@@ -225,7 +225,7 @@ public class BreadcrumbsBar<T> {
         return separatorLabel;
     }
 
-    public Reference<Double> size() {
+    public PossibleProperty<Double> size() {
         return this.iconsSize;
     }
 

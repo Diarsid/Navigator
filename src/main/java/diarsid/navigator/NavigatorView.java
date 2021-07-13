@@ -34,7 +34,7 @@ import diarsid.navigator.view.tabs.TabsPanel;
 import diarsid.navigator.view.tree.DirectoriesTree;
 import diarsid.navigator.view.tree.DirectoriesTreeCell;
 import diarsid.support.javafx.FrameSelection;
-import diarsid.support.objects.references.impl.Possible;
+import diarsid.support.objects.references.Possible;
 
 import static javafx.stage.StageStyle.DECORATED;
 
@@ -156,6 +156,7 @@ class NavigatorView {
         tab.selectedDirectory().resetTo(fileSystem.machineDirectory());
         this.tabs.select(tab);
         this.directoriesTree.add(tab, true);
+        this.onTabSelected(tab);
     }
 
     private void onTabSelected(Tab tab) {
@@ -164,12 +165,13 @@ class NavigatorView {
             this.directoriesTree.setActive(tab);
         }
 
-        this.directoriesTree.setActive(tab);
+//        this.directoriesTree.setActive(tab);
         Possible<Directory> directorySelection = tab.selectedDirectory();
 
         if ( directorySelection.isPresent() ) {
             Directory selectedDirectory = directorySelection.orThrow();
             this.directoriesTree.select(selectedDirectory);
+            this.filesTable.show(selectedDirectory);
         }
         else {
             this.filesTable.clear();

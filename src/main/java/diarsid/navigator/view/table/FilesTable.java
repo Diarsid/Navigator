@@ -30,13 +30,14 @@ import diarsid.navigator.view.fsentry.contextmenu.FSEntryContextMenuFactory;
 import diarsid.navigator.view.icons.Icons;
 import diarsid.support.javafx.ClickOrDragDetector;
 import diarsid.support.javafx.FrameSelection;
-import diarsid.support.objects.references.impl.Possible;
+import diarsid.support.objects.references.Possible;
 
 import static java.util.stream.Collectors.toList;
 import static javafx.scene.control.SelectionMode.MULTIPLE;
 import static javafx.scene.layout.Priority.ALWAYS;
 
-import static diarsid.support.objects.references.impl.References.possibleButEmpty;
+import static diarsid.support.objects.references.References.simplePossibleButEmpty;
+
 
 public class FilesTable implements ViewComponent {
 
@@ -66,7 +67,7 @@ public class FilesTable implements ViewComponent {
         this.selection = frameSelection;
         this.dragAndDropFiles = dragAndDropFiles;
         this.onItemInvoked = onItemInvoked;
-        this.directory = possibleButEmpty();
+        this.directory = simplePossibleButEmpty();
 
         this.contextMenuFactory = contextMenuFactory;
 

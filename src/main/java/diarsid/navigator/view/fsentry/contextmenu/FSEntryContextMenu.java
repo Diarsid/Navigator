@@ -9,20 +9,20 @@ import javafx.stage.WindowEvent;
 
 import diarsid.navigator.filesystem.FSEntry;
 import diarsid.navigator.filesystem.FileSystem;
-import diarsid.support.objects.references.impl.Possible;
-import diarsid.support.objects.references.impl.PossibleListenable;
+import diarsid.support.objects.references.Possible;
+import diarsid.support.objects.references.PossibleProperty;
 
-import static diarsid.support.objects.references.impl.References.listenable;
-import static diarsid.support.objects.references.impl.References.possibleButEmpty;
+import static diarsid.support.objects.references.References.possiblePropertyButEmpty;
+
 
 public class FSEntryContextMenu extends ContextMenu {
 
     private final Supplier<FSEntry> fsEntrySource;
-    private final PossibleListenable<FSEntry> fsEntry;
+    private final PossibleProperty<FSEntry> fsEntry;
     private final List<FSEntryMenuItem> items;
 
     FSEntryContextMenu(Supplier<FSEntry> fsEntrySource, FileSystem fileSystem, Consumer<FSEntry> onIgnore) {
-        this.fsEntry = listenable(possibleButEmpty());
+        this.fsEntry = possiblePropertyButEmpty();
         this.fsEntrySource = fsEntrySource;
         this.items = new ArrayList<>();
 

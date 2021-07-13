@@ -5,16 +5,13 @@ import java.util.function.BiConsumer;
 
 import diarsid.navigator.filesystem.Directory;
 import diarsid.support.objects.references.Listening;
-import diarsid.support.objects.references.impl.PossibleListenable;
-import diarsid.support.objects.references.impl.Present;
-import diarsid.support.objects.references.impl.PresentListenable;
+import diarsid.support.objects.references.PossibleProperty;
+import diarsid.support.objects.references.PresentProperty;
 
 import static java.lang.String.format;
 
-import static diarsid.support.objects.references.impl.References.listenablePresentOf;
-import static diarsid.support.objects.references.impl.References.listenable;
-import static diarsid.support.objects.references.impl.References.possibleButEmpty;
-import static diarsid.support.objects.references.impl.References.presentOf;
+import static diarsid.support.objects.references.References.possiblePropertyButEmpty;
+import static diarsid.support.objects.references.References.presentPropertyOf;
 
 
 public class Tab {
@@ -22,18 +19,18 @@ public class Tab {
     public static final String DEFAULT_NAME = "/";
 
     private final Identity<Tab> identity;
-    private final PresentListenable<Boolean> isActive;
-    private final PossibleListenable<Directory> selectedDirectory;
-    private final PresentListenable<String> visibleName;
-    private final Present<Boolean> isPinned;
+    private final PresentProperty<Boolean> isActive;
+    private final PossibleProperty<Directory> selectedDirectory;
+    private final PresentProperty<String> visibleName;
+    private final PresentProperty<Boolean> isPinned;
     private final Listening<Directory> listenSelectedDirectoryToChangeVisibleName;
 
     Tab(Identity<Tab> identity) {
         this.identity = identity;
-        this.isActive = listenablePresentOf(false, format("Tab[%s].isActive", this.identity.serial()));
-        this.selectedDirectory = listenable(possibleButEmpty());
-        this.visibleName = listenablePresentOf(DEFAULT_NAME, format("Tab[%s].visibleName", this.identity.serial()));
-        this.isPinned = presentOf(false, format("Tab[%s].isPinned", this.identity.serial()));
+        this.isActive = presentPropertyOf(false, format("Tab[%s].isActive", this.identity.serial()));
+        this.selectedDirectory = possiblePropertyButEmpty();
+        this.visibleName = presentPropertyOf(DEFAULT_NAME, format("Tab[%s].visibleName", this.identity.serial()));
+        this.isPinned = presentPropertyOf(false, format("Tab[%s].isPinned", this.identity.serial()));
 
         this.listenSelectedDirectoryToChangeVisibleName = this.selectedDirectory.listen((oldSelected, newSelected) -> {
             this.visibleName.resetTo(newSelected.name());
@@ -48,11 +45,11 @@ public class Tab {
         return this.visibleName.listen(listener);
     }
 
-    public PresentListenable<Boolean> active() {
+    public PresentProperty<Boolean> active() {
         return this.isActive;
     }
 
-    public PossibleListenable<Directory> selectedDirectory() {
+    public PossibleProperty<Directory> selectedDirectory() {
         return this.selectedDirectory;
     }
 

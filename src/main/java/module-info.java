@@ -2,6 +2,8 @@ module diarsid.navigator {
 
     requires java.desktop;
     requires javafx.controls;
+    requires javafx.swing;
+    requires org.slf4j;
     requires diarsid.support;
     requires diarsid.support.javafx;
 

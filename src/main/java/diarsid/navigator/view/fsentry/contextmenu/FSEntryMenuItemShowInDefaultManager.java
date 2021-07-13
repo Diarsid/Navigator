@@ -3,13 +3,13 @@ package diarsid.navigator.view.fsentry.contextmenu;
 import javafx.scene.Node;
 
 import diarsid.navigator.filesystem.FSEntry;
-import diarsid.support.objects.references.impl.PossibleListenable;
+import diarsid.support.objects.references.PossibleProperty;
 
 import static java.lang.String.format;
 
 class FSEntryMenuItemShowInDefaultManager extends FSEntryMenuItem {
 
-    public FSEntryMenuItemShowInDefaultManager(PossibleListenable<FSEntry> fsEntryReference) {
+    public FSEntryMenuItemShowInDefaultManager(PossibleProperty<FSEntry> fsEntryReference) {
         super(fsEntryReference);
     }
 

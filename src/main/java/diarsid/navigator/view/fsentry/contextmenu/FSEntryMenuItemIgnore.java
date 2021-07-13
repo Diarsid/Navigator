@@ -4,7 +4,7 @@ import java.util.function.Consumer;
 import javafx.scene.Node;
 
 import diarsid.navigator.filesystem.FSEntry;
-import diarsid.support.objects.references.impl.PossibleListenable;
+import diarsid.support.objects.references.PossibleProperty;
 
 import static java.lang.String.format;
 
@@ -12,7 +12,7 @@ class FSEntryMenuItemIgnore extends FSEntryMenuItem {
 
     private final Consumer<FSEntry> onIgnore;
 
-    FSEntryMenuItemIgnore(PossibleListenable<FSEntry> fsEntryReference, Consumer<FSEntry> onIgnore) {
+    FSEntryMenuItemIgnore(PossibleProperty<FSEntry> fsEntryReference, Consumer<FSEntry> onIgnore) {
         super(fsEntryReference);
         this.onIgnore = onIgnore;
     }

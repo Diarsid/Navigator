@@ -13,30 +13,34 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.image.Image;
 
 import diarsid.navigator.filesystem.Extension;
-import diarsid.navigator.filesystem.FileSystem;
 import diarsid.navigator.filesystem.FSEntry;
 import diarsid.navigator.filesystem.File;
+import diarsid.navigator.filesystem.FileSystem;
 import diarsid.navigator.model.ImageType;
-import diarsid.support.objects.references.impl.PresentListenable;
+import diarsid.support.javafx.FilesNativeIconImageExtractor;
+import diarsid.support.objects.references.PresentProperty;
 
 import static java.util.Objects.isNull;
 
 import static diarsid.navigator.model.ImageType.findTypeIn;
-import static diarsid.support.objects.references.impl.References.listenablePresentOf;
+import static diarsid.support.objects.references.References.presentPropertyOf;
 
 class RealIcons implements Icons {
 
     private final Image file;
     private final Image folder;
 
+    private final FilesNativeIconImageExtractor imageExtractor;
     private final Map<Extension, Image> imagesByExtensions;
     private final Map<Path, Image> predefinedImagesByPaths;
     private final Map<String, Image> predefinedImagesByNames;
-    private final PresentListenable<Double> size;
+    private final PresentProperty<Double> size;
     private final DoubleProperty sizeProperty;
+    private final boolean extractNativeIcon = true;
 
     RealIcons(FileSystem fileSystem) {
-        this.size = listenablePresentOf(18d, "Icons.size");
+        this.imageExtractor = new FilesNativeIconImageExtractor();
+        this.size = presentPropertyOf(18d, "Icons.size");
         this.sizeProperty = new SimpleDoubleProperty(this.size.get());
         this.size.listen((oldSize, newSize) -> this.sizeProperty.set(newSize));
 
@@ -152,7 +156,12 @@ class RealIcons implements Icons {
             }
 
             if ( isNull(image) ) {
-                image = this.file;
+                if ( extractNativeIcon ) {
+                    image = this.imageExtractor.getFrom(file.path().toFile());
+                }
+                else {
+                    image = this.file;
+                }
             }
         }
 
@@ -160,7 +169,7 @@ class RealIcons implements Icons {
     }
 
     @Override
-    public PresentListenable<Double> size() {
+    public PresentProperty<Double> size() {
         return this.size;
     }
 }

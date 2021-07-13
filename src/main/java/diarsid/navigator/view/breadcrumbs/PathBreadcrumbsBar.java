@@ -16,12 +16,14 @@ import diarsid.navigator.model.Tabs;
 import diarsid.navigator.view.icons.Icon;
 import diarsid.navigator.view.icons.Icons;
 import diarsid.support.objects.references.Listening;
+import diarsid.support.objects.references.Possible;
+import diarsid.support.objects.references.PossibleProperty;
 import diarsid.support.objects.references.Reference;
-import diarsid.support.objects.references.impl.Possible;
 
 import static java.util.Objects.nonNull;
 
-import static diarsid.support.objects.references.impl.References.possibleButEmpty;
+import static diarsid.support.objects.references.References.simplePossibleButEmpty;
+
 
 public class PathBreadcrumbsBar {
 
@@ -43,8 +45,8 @@ public class PathBreadcrumbsBar {
         this.fileSystem = fileSystem;
         this.icons = icons;
 
-        this.directory = possibleButEmpty();
-        this.directoryListening = possibleButEmpty();
+        this.directory = simplePossibleButEmpty();
+        this.directoryListening = simplePossibleButEmpty();
 
         this.onNewDirectoryInput = onNewDirectoryInput;
 
@@ -103,7 +105,7 @@ public class PathBreadcrumbsBar {
         this.bar.add(icon.image(), directory);
     }
 
-    public Reference<Double> iconsSize() {
+    public PossibleProperty<Double> iconsSize() {
         return this.bar.size();
     }
 

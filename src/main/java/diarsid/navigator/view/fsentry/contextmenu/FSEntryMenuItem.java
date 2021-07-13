@@ -5,15 +5,15 @@ import javafx.scene.Node;
 import javafx.scene.control.MenuItem;
 
 import diarsid.navigator.filesystem.FSEntry;
-import diarsid.support.objects.references.impl.PossibleListenable;
+import diarsid.support.objects.references.PossibleProperty;
 
 import static java.util.Objects.isNull;
 
 abstract class FSEntryMenuItem extends MenuItem {
 
-    private final PossibleListenable<FSEntry> fsEntry;
+    private final PossibleProperty<FSEntry> fsEntry;
 
-    FSEntryMenuItem(PossibleListenable<FSEntry> fsEntryReference) {
+    FSEntryMenuItem(PossibleProperty<FSEntry> fsEntryReference) {
         super();
         this.setOnAction(this::doOnActionInternally);
         this.fsEntry = fsEntryReference;

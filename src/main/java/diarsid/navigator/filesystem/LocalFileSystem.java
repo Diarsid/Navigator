@@ -693,7 +693,7 @@ public class LocalFileSystem implements FileSystem {
             return false;
         }
         catch (Exception e) {
-            e.printStackTrace();;
+            e.printStackTrace();
             return false;
         }
     }

@@ -2,18 +2,17 @@ package diarsid.navigator.view.dragdrop;
 
 import java.util.Map;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
-
-import diarsid.support.objects.references.impl.Possible;
 import javafx.scene.text.Text;
+
+import diarsid.support.objects.references.Possible;
 
 import static java.util.Objects.isNull;
 import static javafx.scene.input.TransferMode.MOVE;
 
-import static diarsid.support.objects.references.impl.References.possibleButEmpty;
+import static diarsid.support.objects.references.References.simplePossibleButEmpty;
 
 public class DragAndDropObjectTransfer<T> {
 
@@ -26,7 +25,7 @@ public class DragAndDropObjectTransfer<T> {
             Map<Class<? extends Node>, String> javaClassesAndStyleClasses) {
         this.dragboardKey = dragboardKey;
         this.javaClassesAndStyleClasses = javaClassesAndStyleClasses;
-        this.whatToDrag = possibleButEmpty();
+        this.whatToDrag = simplePossibleButEmpty();
     }
 
     public void startDragAndDrop(Node node, T whatToDrag) {

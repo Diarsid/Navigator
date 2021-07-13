@@ -75,9 +75,9 @@ class FilesTableRow extends TableRow<FilesTableItem> implements Supplier<FSEntry
                 .withMillisAfterLastClickForType(DOUBLE_CLICK, 0)
                 .withMillisAfterLastClickForType(SEQUENTIAL_CLICK, 200)
                 .withMillisAfterLastClickForType(USUAL_CLICK, 1000)
-                .withDoOnClick(DOUBLE_CLICK, this::doOnDoubleClick)
-                .withDoOnClick(SEQUENTIAL_CLICK, this::doOnSequentialClick)
-                .withDoOnClick(USUAL_CLICK, this::doOnUsualClick)
+                .withDoOn(DOUBLE_CLICK, this::doOnDoubleClick)
+                .withDoOn(SEQUENTIAL_CLICK, this::doOnSequentialClick)
+                .withDoOn(USUAL_CLICK, this::doOnUsualClick)
                 .build();
 
         super.setOnScroll(scrollEvent -> {

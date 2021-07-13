@@ -1,17 +1,18 @@
 package diarsid.navigator.view.table;
 
-import diarsid.support.objects.references.impl.PossibleListenable;
+import diarsid.support.objects.references.PossibleProperty;
 
 import static java.util.Objects.nonNull;
 
-import static diarsid.support.objects.references.impl.References.listenablePossibleButEmpty;
+import static diarsid.support.objects.references.References.possiblePropertyButEmpty;
+
 
 public class SingleEditingPerTable {
 
-    private final PossibleListenable<FilesTableCellForName> editingCell;
+    private final PossibleProperty<FilesTableCellForName> editingCell;
 
     public SingleEditingPerTable() {
-        this.editingCell = listenablePossibleButEmpty();
+        this.editingCell = possiblePropertyButEmpty();
     }
 
     boolean isInProcess() {

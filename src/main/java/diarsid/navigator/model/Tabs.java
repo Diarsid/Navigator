@@ -3,27 +3,21 @@ package diarsid.navigator.model;
 import java.util.HashSet;
 import java.util.Set;
 
-import diarsid.navigator.filesystem.Directory;
-import diarsid.support.objects.references.Listening;
-import diarsid.support.objects.references.impl.Possible;
-import diarsid.support.objects.references.impl.PossibleListenable;
+import diarsid.support.objects.references.PossibleProperty;
 
-import static java.util.Objects.nonNull;
-
-import static diarsid.support.objects.references.impl.References.listenable;
-import static diarsid.support.objects.references.impl.References.possibleButEmpty;
+import static diarsid.support.objects.references.References.possiblePropertyButEmpty;
 
 public class Tabs {
 
     private final Identities<Tab> identities;
     private final Set<Tab> tabs;
-    private final PossibleListenable<Tab> selectedTab;
+    private final PossibleProperty<Tab> selectedTab;
 //    private final Possible<Listening<DirectoryAtTab>> currentTabListening;
 
     public Tabs() {
         this.identities = new Identities<>(Tab.class);
         this.tabs = new HashSet<>();
-        this.selectedTab = listenable(possibleButEmpty());
+        this.selectedTab = possiblePropertyButEmpty();
 //        this.currentTabListening = possibleButEmpty();
 
 //        this.selectedTab.listen(this::onSelectedTabChange);
@@ -47,7 +41,7 @@ public class Tabs {
         return unselectedTab;
     }
 
-    public PossibleListenable<Tab> selected() {
+    public PossibleProperty<Tab> selected() {
         return this.selectedTab;
     }
 
