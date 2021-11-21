@@ -23,6 +23,7 @@ public class FilesTableCellForName extends FilesTableCell<String> {
         this.setAlignment(CENTER_LEFT);
         this.uuid = randomUUID();
         this.editField = new TextField();
+        this.editField.getStyleClass().add("edit");
         this.onRename = onRename;
 
         this.editField.setOnAction(this::onActionCommitEdit);
@@ -51,11 +52,10 @@ public class FilesTableCellForName extends FilesTableCell<String> {
     public void startEdit() {
         FSEntry entry = super.getTableRow().getItem().fsEntry();
         super.setText(null);
-        this.requestFocus();
         this.editField.setText(entry.name());
-        this.editField.selectAll();
-        this.editField.requestFocus();
         super.setGraphic(this.editField);
+        this.editField.requestFocus();
+        this.editField.selectAll();
         super.startEdit();
     }
 

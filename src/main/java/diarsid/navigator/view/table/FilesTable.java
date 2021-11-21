@@ -3,10 +3,9 @@ package diarsid.navigator.view.table;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import javafx.application.Platform;
@@ -17,6 +16,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.HBox;
@@ -32,6 +32,8 @@ import diarsid.support.javafx.ClickOrDragDetector;
 import diarsid.support.javafx.FrameSelection;
 import diarsid.support.objects.references.Possible;
 
+import static java.lang.String.format;
+import static java.util.concurrent.CompletableFuture.runAsync;
 import static java.util.stream.Collectors.toList;
 import static javafx.scene.control.SelectionMode.MULTIPLE;
 import static javafx.scene.layout.Priority.ALWAYS;
@@ -49,8 +51,12 @@ public class FilesTable implements ViewComponent {
     private final Possible<Directory> directory;
     private final Consumer<FilesTableItem> onItemInvoked;
     private final SingleEditingPerTable editing;
-    private final Set<Integer> selectedIndiciesCopy;
+    private final FilesTableFrameSelectionDragScrollListener selectionListener;
+//    private final Set<Integer> selectedIndiciesCopy;
     private final Object tableLock;
+
+    private final AtomicInteger scrollSelectionMaxIndex;
+    private final AtomicInteger scrollSelectionMinIndex;
 
     private boolean doSelectedIndiciesCopy = true;
 
@@ -68,6 +74,9 @@ public class FilesTable implements ViewComponent {
         this.dragAndDropFiles = dragAndDropFiles;
         this.onItemInvoked = onItemInvoked;
         this.directory = simplePossibleButEmpty();
+
+        this.scrollSelectionMaxIndex = new AtomicInteger(-1);
+        this.scrollSelectionMinIndex = new AtomicInteger(-1);
 
         this.contextMenuFactory = contextMenuFactory;
 
@@ -110,7 +119,7 @@ public class FilesTable implements ViewComponent {
         columnSizes.prefWidthProperty().bind(this.tableView.widthProperty().subtract(columnIcons.widthProperty()).multiply(0.15));
 
         this.tableView.getSelectionModel().setSelectionMode(MULTIPLE);
-        this.selectedIndiciesCopy = new HashSet<>();
+//        this.selectedIndiciesCopy = new HashSet<>();
         ListChangeListener<Integer> selectionListener = change -> {
             while (change.next()) {
                 if (change.wasPermutated()) {
@@ -122,32 +131,38 @@ public class FilesTable implements ViewComponent {
                 } else {
                     for (Integer removed : change.getRemoved()) {
                         System.out.println("[TABLE SELECTION] unselect " + this.tableView.getItems().get(removed).fsEntry().name());
-                        if ( doSelectedIndiciesCopy ) {
-                            System.out.println("[TABLE SELECTION] unselect copy");
-                            this.selectedIndiciesCopy.remove(removed);
-                        }
+//                        if ( doSelectedIndiciesCopy ) {
+//                            System.out.println("[TABLE SELECTION] unselect copy");
+//                            this.selectedIndiciesCopy.remove(removed);
+//                        }
                     }
                     for (Integer added : change.getAddedSubList()) {
                         System.out.println("[TABLE SELECTION] select   " + this.tableView.getItems().get(added).fsEntry().name());
-                        if ( doSelectedIndiciesCopy ) {
-                            System.out.println("[TABLE SELECTION] select copy");
-                            this.selectedIndiciesCopy.add(added);
-                        }
+//                        if ( doSelectedIndiciesCopy ) {
+//                            System.out.println("[TABLE SELECTION] select copy");
+//                            this.selectedIndiciesCopy.add(added);
+//                        }
                     }
                 }
             }
         };
-        this.tableView.getSelectionModel().getSelectedIndices().addListener(selectionListener);
+//        this.tableView.getSelectionModel().getSelectedIndices().addListener(selectionListener);
 
-        this.tableView.setOnScroll(scrollEvent -> {
-            double x = scrollEvent.getDeltaX();
-            double y = scrollEvent.getDeltaY();
-            System.out.println("scroll x: " + x + ", y: " + y);
-            this.selection.scrolled(x, y);
-        });
+//        this.tableView.setOnScroll(scrollEvent -> {
+//            double sceneMouseX = scrollEvent.getSceneX();
+//            double sceneMouseY = scrollEvent.getSceneY();
+//            double x = scrollEvent.getDeltaX();
+//            double y = scrollEvent.getDeltaY();
+//            System.out.println("scroll table x: " + x + ", y: " + y);
+//            this.selection.scrolled(sceneMouseX, sceneMouseY, x, y);
+//        });
 
         Platform.runLater(() -> {
                     ScrollBar scrollBar = (ScrollBar) this.tableView.lookup(".scroll-bar:vertical");
+
+                    scrollBar.getUnitIncrement();
+                    scrollBar.getBlockIncrement();
+                    scrollBar.getVisibleAmount();
 
                     scrollBar.valueProperty().addListener((observable, oldValue, newValue) -> {
                         if ((Double) newValue == 1.0) {
@@ -155,10 +170,12 @@ public class FilesTable implements ViewComponent {
                         } else if ((Double) newValue == 0.0) {
                             System.out.println("Top!");
                         }
+                        System.out.println(format(""));
                     });
+
                 });
 
-        ClickOrDragDetector.DragListener dragListener = new FilesTableFrameSelectionDragListener(
+        this.selectionListener = new FilesTableFrameSelectionDragScrollListener(
                 this::isDraggingAllowed, this.tableView, this.selection, this.dragAndDropFiles);
 
         ClickOrDragDetector clickOrDragDetector = ClickOrDragDetector.Builder
@@ -166,7 +183,7 @@ public class FilesTable implements ViewComponent {
                 .withOnClickNotDrag(mouseEvent -> {
                     System.out.println("table clicked");
                 })
-                .withOnDragNotClick(dragListener)
+                .withOnDragNotClick(this.selectionListener)
                 .withPressedDurationThreshold(200)
                 .build();
 
@@ -209,7 +226,7 @@ public class FilesTable implements ViewComponent {
 
     private void addAll(List<FSEntry> entries) {
         synchronized ( this.tableLock ) {
-            System.out.println("[TABLE SELECTION] restore selection: " + this.selectedIndiciesCopy);
+//            System.out.println("[TABLE SELECTION] restore selection: " + this.selectedIndiciesCopy);
             this.doSelectedIndiciesCopy = false;
 
             FilesTableItem item;
@@ -223,7 +240,7 @@ public class FilesTable implements ViewComponent {
             Collections.sort(this.tableView.getItems());
 
             this.tableView.getSelectionModel().clearSelection();
-            this.selectedIndiciesCopy.forEach(this::selectIndex);
+//            this.selectedIndiciesCopy.forEach(this::selectIndex);
             this.doSelectedIndiciesCopy = true;
             System.out.println("[TABLE SELECTION] restore selection stop");
         }
@@ -277,9 +294,9 @@ public class FilesTable implements ViewComponent {
         newDirectory.feedChildren(this::set);
 
         if ( sameDirectory ) {
-            System.out.println("[TABLE SELECTION] restore selection: " + this.selectedIndiciesCopy);
+//            System.out.println("[TABLE SELECTION] restore selection: " + this.selectedIndiciesCopy);
             this.doSelectedIndiciesCopy = false;
-            this.selectedIndiciesCopy.forEach(this::selectIndex);
+//            this.selectedIndiciesCopy.forEach(this::selectIndex);
             this.doSelectedIndiciesCopy = true;
             System.out.println("[TABLE SELECTION] restore selection stop");
         }
@@ -374,10 +391,15 @@ public class FilesTable implements ViewComponent {
 
     private TableRow<FilesTableItem> newTableRow(TableView<FilesTableItem> tableView) {
         return new FilesTableRow(
-                this.contextMenuFactory, this.directory, this.onItemInvoked, this.dragAndDropFiles, this.editing, this::onScrolled);
+                this.contextMenuFactory,
+                this.directory,
+                this.onItemInvoked,
+                this.dragAndDropFiles,
+                this.editing,
+                this::onRowScrolled);
     }
 
-    private void onScrolled(ScrollEvent scrollEvent) {
-        this.selection.scrolled(scrollEvent.getDeltaX(), scrollEvent.getDeltaY());
+    private void onRowScrolled(ScrollEvent scrollEvent, FilesTableRow rowScrolled) {
+        this.selectionListener.onScrolled(scrollEvent, rowScrolled);
     }
 }

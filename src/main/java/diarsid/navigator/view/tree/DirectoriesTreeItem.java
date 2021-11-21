@@ -1,8 +1,6 @@
 package diarsid.navigator.view.tree;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -16,8 +14,6 @@ import diarsid.support.strings.MultilineMessage;
 
 import static java.util.Objects.nonNull;
 import static java.util.stream.Collectors.toList;
-
-import static diarsid.support.concurrency.ThreadUtils.currentThreadTrack;
 
 public class DirectoriesTreeItem extends TreeItem<String> implements Comparable<DirectoriesTreeItem> {
 
@@ -65,7 +61,7 @@ public class DirectoriesTreeItem extends TreeItem<String> implements Comparable<
 //        }
 //    }
 
-    private void fillItem() {
+    public void fill() {
         if ( this.directory.isAbsent() ) {
             super.getChildren().clear();
             return;
@@ -182,7 +178,7 @@ public class DirectoriesTreeItem extends TreeItem<String> implements Comparable<
 
     public DirectoriesTreeItem getInChildrenOrCreate(Directory someDirectory) {
         if ( this.isNotFilled() ) {
-            this.fillItem();
+            this.fill();
         }
 
         DirectoriesTreeItem directoryItem = this.getInChildrenOrNull(someDirectory);
@@ -212,7 +208,7 @@ public class DirectoriesTreeItem extends TreeItem<String> implements Comparable<
 
     boolean removeInChildren(String name) {
         if ( this.isNotFilled() ) {
-            this.fillItem();
+            this.fill();
         }
 
         if ( super.getChildren().isEmpty() ) {
@@ -242,7 +238,7 @@ public class DirectoriesTreeItem extends TreeItem<String> implements Comparable<
 
     boolean removeInChildren(Directory someDirectory) {
         if ( this.isNotFilled() ) {
-            this.fillItem();
+            this.fill();
         }
 
         TreeItem<String> childToRemove = null;
@@ -267,7 +263,7 @@ public class DirectoriesTreeItem extends TreeItem<String> implements Comparable<
     }
 
     private void onTreeItemExpanded() {
-        this.fillItem();
+        this.fill();
         this.onTreeItemExpanded.accept(this);
 //        event.consume();
     }

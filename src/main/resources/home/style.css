@@ -84,6 +84,16 @@
     -fx-text-background-color: black;
 }
 
+.table-view .table-cell .edit {
+    -fx-padding: 0px;
+    -fx-background-color: white;
+    -fx-border-color: gainsboro;
+    -fx-table-cell-border-color: transparent;
+    -fx-text-fill: black;
+    -fx-highlight-fill: dodgerblue;
+    -fx-highlight-text-fill: white;
+}
+
 .table-row-cell:odd {
     -fx-background-color: transparent;
 }

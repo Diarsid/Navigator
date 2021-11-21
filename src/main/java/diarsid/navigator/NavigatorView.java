@@ -113,7 +113,7 @@ class NavigatorView {
         Region view = (Region) filesView.node();
 
         Group group = new Group();
-        group.getChildren().addAll(view, frameSelection.rectangle());
+        group.getChildren().addAll(view, frameSelection);
         group.setAutoSizeChildren(true);
         group.autosize();
 

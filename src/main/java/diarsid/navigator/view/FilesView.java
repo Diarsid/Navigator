@@ -24,13 +24,14 @@ public class FilesView implements ViewComponent {
 
         VBox vBox = new VBox();
 
-        SplitPane splitPane2 = new SplitPane();
-        splitPane2.getStyleClass().add("files-view");
-        splitPane2.getItems().addAll(directoriesTree.node(), filesTable.node());
-        splitPane2.setDividerPositions(0.3, 0.7);
-        VBox.setVgrow(splitPane2, ALWAYS);
+        SplitPane filesViewSplitPane = new SplitPane();
+        filesViewSplitPane.getStyleClass().add("files-view");
 
-        vBox.getChildren().addAll(pathBreadcrumbsBar.node(), splitPane2);
+        filesViewSplitPane.getItems().addAll(directoriesTree.node(), filesTable.node());
+        filesViewSplitPane.setDividerPositions(0.3, 0.7);
+        VBox.setVgrow(filesViewSplitPane, ALWAYS);
+
+        vBox.getChildren().addAll(pathBreadcrumbsBar.node(), filesViewSplitPane);
         vBox.autosize();
 
 

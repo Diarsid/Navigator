@@ -1,6 +1,7 @@
 package diarsid.navigator.view.table;
 
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import javafx.scene.Node;
@@ -18,6 +19,9 @@ import diarsid.support.javafx.ClickTypeDetector;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static javafx.geometry.Pos.CENTER;
+import static javafx.scene.input.MouseEvent.MOUSE_DRAGGED;
+import static javafx.scene.input.MouseEvent.MOUSE_ENTERED;
+import static javafx.scene.input.MouseEvent.MOUSE_EXITED;
 import static javafx.scene.input.MouseEvent.MOUSE_PRESSED;
 import static javafx.scene.input.TransferMode.MOVE;
 
@@ -41,7 +45,7 @@ class FilesTableRow extends TableRow<FilesTableItem> implements Supplier<FSEntry
             Consumer<FilesTableItem> onItemInvoked,
             DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles,
             SingleEditingPerTable singleEditingPerTable,
-            Consumer<ScrollEvent> onScrolled) {
+            BiConsumer<ScrollEvent, FilesTableRow> onScrolled) {
         super();
         this.dragAndDropFiles = dragAndDropFiles;
         this.nameCellEditing = singleEditingPerTable;
@@ -70,6 +74,27 @@ class FilesTableRow extends TableRow<FilesTableItem> implements Supplier<FSEntry
             super.getTableView().getSelectionModel().select(super.getIndex());
         });
 
+//        super.addEventHandler(MOUSE_ENTERED, mouseEvent -> {
+//            var item = super.getItem();
+//            if ( nonNull(item) ) {
+//                System.out.println("     " + item.getName() + " ENTERED");
+//            }
+//        });
+//
+//        super.addEventHandler(MOUSE_DRAGGED, mouseEvent -> {
+//            var item = super.getItem();
+//            if ( nonNull(item) ) {
+//                System.out.println("     " + item.getName() + " DRAGGED");
+//            }
+//        });
+//
+//        super.addEventHandler(MOUSE_EXITED, mouseEvent -> {
+//            var item = super.getItem();
+//            if ( nonNull(item) ) {
+//                System.out.println("     " + item.getName() + " EXITED");
+//            }
+//        });
+
         this.clickTypeDetector = ClickTypeDetector.Builder
                 .createFor(this)
                 .withMillisAfterLastClickForType(DOUBLE_CLICK, 0)
@@ -81,12 +106,7 @@ class FilesTableRow extends TableRow<FilesTableItem> implements Supplier<FSEntry
                 .build();
 
         super.setOnScroll(scrollEvent -> {
-
-            double x = scrollEvent.getDeltaX();
-            double y = scrollEvent.getDeltaY();
-
-            onScrolled.accept(scrollEvent);
-            System.out.println("scroll x: " + x + ", y: " + y + " on row");
+            onScrolled.accept(scrollEvent, this);
         });
     }
 

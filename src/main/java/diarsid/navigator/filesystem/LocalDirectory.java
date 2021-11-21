@@ -145,45 +145,39 @@ class LocalDirectory implements Directory, ChangeableFSEntry {
 
     @Override
     public void feedChildren(Consumer<List<FSEntry>> consumer) {
-        Stream<FSEntry> entriesStream = this.fileSystem.list(this);
+        try ( Stream<FSEntry> entriesStream = this.fileSystem.list(this) ) {
+            List<FSEntry> entries = entriesStream
+                    .sorted()
+                    .collect(toList());
 
-        List<FSEntry> entries = entriesStream
-                .sorted()
-                .collect(toList());
-
-        entriesStream.close();
-
-        consumer.accept(entries);
+            consumer.accept(entries);
+        }
     }
 
     @Override
     public void feedDirectories(Consumer<List<Directory>> consumer) {
-        Stream<FSEntry> entriesStream = this.fileSystem.list(this);
+        try ( Stream<FSEntry> entriesStream = this.fileSystem.list(this) ) {
+            List<Directory> directories = entriesStream
+                    .filter(FSEntry::isDirectory)
+                    .map(FSEntry::asDirectory)
+                    .sorted()
+                    .collect(toList());
 
-        List<Directory> directories = entriesStream
-                .filter(FSEntry::isDirectory)
-                .map(FSEntry::asDirectory)
-                .sorted()
-                .collect(toList());
-
-        entriesStream.close();
-
-        consumer.accept(directories);
+            consumer.accept(directories);
+        }
     }
 
     @Override
     public void feedFiles(Consumer<List<File>> consumer) {
-        Stream<FSEntry> entriesStream = this.fileSystem.list(this);
+        try ( Stream<FSEntry> entriesStream = this.fileSystem.list(this) ) {
+            List<File> files = entriesStream
+                    .filter(FSEntry::isFile)
+                    .map(FSEntry::asFile)
+                    .sorted()
+                    .collect(toList());
 
-        List<File> files = entriesStream
-                .filter(FSEntry::isFile)
-                .map(FSEntry::asFile)
-                .sorted()
-                .collect(toList());
-
-        entriesStream.close();
-
-        consumer.accept(files);
+            consumer.accept(files);
+        }
     }
 
     @Override

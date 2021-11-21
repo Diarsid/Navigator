@@ -351,6 +351,12 @@ public class DirectoriesTree implements ViewComponent {
         treeItem.setExpanded(true);
     }
 
+    private static void fillIfNotFilled(DirectoriesTreeItem treeItem) {
+        if ( treeItem.isNotFilled() ) {
+            treeItem.fill();
+        }
+    }
+
     private void addInternally(Directory directory) {
         System.out.println("[TREE] add " + directory.path());
         for ( TreeItem<String> root : this.tabsTreeRoots.values() ) {
@@ -359,7 +365,7 @@ public class DirectoriesTree implements ViewComponent {
             DirectoriesTreeItem prevParentItem = machineItem;
             DirectoriesTreeItem parentItem = null;
             for ( Directory parent : directory.parents() ) {
-                expandIfNotExpanded(prevParentItem);
+                fillIfNotFilled(prevParentItem);
                 parentItem = prevParentItem.getInChildrenOrCreate(parent);
                 prevParentItem = parentItem;
             }

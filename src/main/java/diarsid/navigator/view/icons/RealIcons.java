@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -51,9 +52,11 @@ class RealIcons implements Icons {
         this.predefinedImagesByPaths = new HashMap<>();
         this.predefinedImagesByNames = new HashMap<>();
 
-        try {
-            Files.list(Paths.get("./home/icons/by_names"))
-                    .forEach((path) -> {
+        try (
+                Stream<Path> iconsByNames = Files.list(Paths.get("./home/icons/by_names"));
+                Stream<Path> iconsByExtensions = Files.list(Paths.get("./home/icons/by_extensions"))) {
+
+            iconsByNames.forEach((path) -> {
                         try {
                             Image icon = this.loadFrom(path.toAbsolutePath().toString());
                             String fileName = path.getFileName().toString().toLowerCase();
@@ -68,8 +71,8 @@ class RealIcons implements Icons {
                         }
                     });
 
-            Files.list(Paths.get("./home/icons/by_extensions"))
-                    .forEach((path) -> {
+
+            iconsByExtensions.forEach((path) -> {
                         Image icon = this.loadFrom(path.toAbsolutePath().toString());
                         String fileName = path.getFileName().toString().toLowerCase();
 
