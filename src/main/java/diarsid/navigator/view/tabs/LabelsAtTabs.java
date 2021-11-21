@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import javafx.scene.control.Label;
 
-import diarsid.navigator.filesystem.FSEntry;
+import diarsid.filesystem.api.FSEntry;
 import diarsid.navigator.model.Tab;
 import diarsid.navigator.view.dragdrop.DragAndDropNodes;
 import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;

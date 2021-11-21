@@ -4,7 +4,7 @@ import javafx.event.ActionEvent;
 import javafx.scene.Node;
 import javafx.scene.control.MenuItem;
 
-import diarsid.navigator.filesystem.FSEntry;
+import diarsid.filesystem.api.FSEntry;
 import diarsid.support.objects.references.PossibleProperty;
 
 import static java.util.Objects.isNull;

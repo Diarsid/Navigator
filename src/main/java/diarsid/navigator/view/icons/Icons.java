@@ -2,13 +2,14 @@ package diarsid.navigator.view.icons;
 
 import javafx.beans.property.ReadOnlyDoubleProperty;
 
-import diarsid.navigator.filesystem.FSEntry;
-import diarsid.navigator.filesystem.FileSystem;
+import diarsid.filesystem.api.FSEntry;
 import diarsid.support.objects.references.PresentProperty;
+
+import static diarsid.navigator.Navigator.NAVIGATOR_FILE_SYSTEM;
 
 public interface Icons {
 
-    Icons INSTANCE = new RealIcons(FileSystem.INSTANCE);
+    Icons INSTANCE = new RealIcons(NAVIGATOR_FILE_SYSTEM);
 
     Icon getFor(FSEntry fsEntry);
 

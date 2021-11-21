@@ -1,9 +1,7 @@
 package diarsid.navigator.view.table;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import javafx.application.Platform;
 import javafx.geometry.Bounds;
@@ -17,7 +15,7 @@ import javafx.scene.input.ScrollEvent;
 import javafx.scene.robot.Robot;
 import javafx.scene.text.Text;
 
-import diarsid.navigator.filesystem.FSEntry;
+import diarsid.filesystem.api.FSEntry;
 import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;
 import diarsid.support.javafx.ClickOrDragDetector;
 import diarsid.support.javafx.FrameSelection;
@@ -25,11 +23,9 @@ import diarsid.support.javafx.FrameSelection;
 import static java.lang.String.format;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
-import static java.util.UUID.randomUUID;
-import static java.util.concurrent.CompletableFuture.runAsync;
 import static java.util.stream.Collectors.toList;
 
-import static diarsid.navigator.filesystem.Directory.Edit.MOVED;
+import static diarsid.filesystem.api.Directory.Edit.MOVED;
 
 public class FilesTableFrameSelectionDragScrollListener implements ClickOrDragDetector.DragListener {
 

@@ -3,7 +3,7 @@ package diarsid.navigator.view.fsentry.contextmenu;
 import java.util.function.Consumer;
 import javafx.scene.Node;
 
-import diarsid.navigator.filesystem.FSEntry;
+import diarsid.filesystem.api.FSEntry;
 import diarsid.support.objects.references.PossibleProperty;
 
 import static java.lang.String.format;

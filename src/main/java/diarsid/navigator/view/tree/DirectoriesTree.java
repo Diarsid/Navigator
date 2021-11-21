@@ -10,9 +10,9 @@ import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 
-import diarsid.navigator.filesystem.Directory;
-import diarsid.navigator.filesystem.FSEntry;
-import diarsid.navigator.filesystem.FileSystem;
+import diarsid.filesystem.api.Directory;
+import diarsid.filesystem.api.FSEntry;
+import diarsid.filesystem.api.FileSystem;
 import diarsid.navigator.model.Tab;
 import diarsid.navigator.model.Tabs;
 import diarsid.navigator.view.ViewComponent;

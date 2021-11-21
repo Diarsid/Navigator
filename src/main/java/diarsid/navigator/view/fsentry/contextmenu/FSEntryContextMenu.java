@@ -7,8 +7,8 @@ import java.util.function.Supplier;
 import javafx.scene.control.ContextMenu;
 import javafx.stage.WindowEvent;
 
-import diarsid.navigator.filesystem.FSEntry;
-import diarsid.navigator.filesystem.FileSystem;
+import diarsid.filesystem.api.FSEntry;
+import diarsid.filesystem.api.FileSystem;
 import diarsid.support.objects.references.Possible;
 import diarsid.support.objects.references.PossibleProperty;
 

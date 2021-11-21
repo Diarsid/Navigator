@@ -10,8 +10,8 @@ import javafx.scene.input.DragEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 
-import diarsid.navigator.filesystem.Directory;
-import diarsid.navigator.filesystem.FSEntry;
+import diarsid.filesystem.api.Directory;
+import diarsid.filesystem.api.FSEntry;
 import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;
 import diarsid.navigator.view.fsentry.contextmenu.FSEntryContextMenuFactory;
 import diarsid.support.javafx.ClickTypeDetector;
@@ -19,14 +19,11 @@ import diarsid.support.javafx.ClickTypeDetector;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static javafx.geometry.Pos.CENTER;
-import static javafx.scene.input.MouseEvent.MOUSE_DRAGGED;
-import static javafx.scene.input.MouseEvent.MOUSE_ENTERED;
-import static javafx.scene.input.MouseEvent.MOUSE_EXITED;
 import static javafx.scene.input.MouseEvent.MOUSE_PRESSED;
 import static javafx.scene.input.TransferMode.MOVE;
 
-import static diarsid.navigator.filesystem.Directory.Edit.FILLED;
-import static diarsid.navigator.filesystem.ProgressTracker.DEFAULT;
+import static diarsid.filesystem.api.Directory.Edit.FILLED;
+import static diarsid.filesystem.api.ProgressTracker.DEFAULT;
 import static diarsid.support.javafx.ClickType.DOUBLE_CLICK;
 import static diarsid.support.javafx.ClickType.SEQUENTIAL_CLICK;
 import static diarsid.support.javafx.ClickType.USUAL_CLICK;

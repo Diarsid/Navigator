@@ -9,8 +9,8 @@ import java.util.function.Predicate;
 import javafx.scene.Node;
 import javafx.scene.input.MouseEvent;
 
-import diarsid.navigator.filesystem.Directory;
-import diarsid.navigator.filesystem.FileSystem;
+import diarsid.filesystem.api.Directory;
+import diarsid.filesystem.api.FileSystem;
 import diarsid.navigator.model.Tab;
 import diarsid.navigator.model.Tabs;
 import diarsid.navigator.view.icons.Icon;
@@ -18,7 +18,6 @@ import diarsid.navigator.view.icons.Icons;
 import diarsid.support.objects.references.Listening;
 import diarsid.support.objects.references.Possible;
 import diarsid.support.objects.references.PossibleProperty;
-import diarsid.support.objects.references.Reference;
 
 import static java.util.Objects.nonNull;
 

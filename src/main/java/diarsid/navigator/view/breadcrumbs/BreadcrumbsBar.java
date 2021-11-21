@@ -24,7 +24,6 @@ import diarsid.support.objects.StatefulClearable;
 import diarsid.support.objects.references.Possible;
 import diarsid.support.objects.references.PossibleProperty;
 import diarsid.support.objects.references.PresentProperty;
-import diarsid.support.objects.references.Reference;
 
 import static java.util.Objects.isNull;
 import static javafx.geometry.Pos.CENTER_LEFT;

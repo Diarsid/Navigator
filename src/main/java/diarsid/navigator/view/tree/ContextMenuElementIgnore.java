@@ -6,7 +6,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 
-import diarsid.navigator.filesystem.FSEntry;
+import diarsid.filesystem.api.FSEntry;
 
 import static java.util.Objects.isNull;
 

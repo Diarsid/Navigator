@@ -8,7 +8,7 @@ import java.util.function.Consumer;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.control.TreeItem;
 
-import diarsid.navigator.filesystem.Directory;
+import diarsid.filesystem.api.Directory;
 import diarsid.navigator.model.Tab;
 import diarsid.support.strings.MultilineMessage;
 

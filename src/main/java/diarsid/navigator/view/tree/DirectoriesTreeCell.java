@@ -9,9 +9,9 @@ import javafx.scene.input.DragEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 
-import diarsid.navigator.filesystem.Directory;
-import diarsid.navigator.filesystem.FSEntry;
-import diarsid.navigator.filesystem.ProgressTracker;
+import diarsid.filesystem.api.Directory;
+import diarsid.filesystem.api.FSEntry;
+import diarsid.filesystem.api.ProgressTracker;
 import diarsid.navigator.view.fsentry.contextmenu.FSEntryContextMenu;
 import diarsid.navigator.view.fsentry.contextmenu.FSEntryContextMenuFactory;
 import diarsid.navigator.view.icons.Icon;
@@ -23,7 +23,7 @@ import static javafx.scene.input.ContextMenuEvent.CONTEXT_MENU_REQUESTED;
 import static javafx.scene.input.MouseEvent.MOUSE_PRESSED;
 import static javafx.scene.input.TransferMode.MOVE;
 
-import static diarsid.navigator.filesystem.Directory.Edit.MOVED;
+import static diarsid.filesystem.api.Directory.Edit.MOVED;
 
 public class DirectoriesTreeCell extends TreeCell<String> {
 

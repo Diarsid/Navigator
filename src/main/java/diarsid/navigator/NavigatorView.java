@@ -1,5 +1,6 @@
 package diarsid.navigator;
 
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,12 +15,9 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 
-import diarsid.navigator.filesystem.Directory;
-import diarsid.navigator.filesystem.FSEntry;
-import diarsid.navigator.filesystem.File;
-import diarsid.navigator.filesystem.FileSystem;
-import diarsid.navigator.filesystem.ignoring.Ignores;
-import diarsid.navigator.model.Identity;
+import diarsid.filesystem.api.Directory;
+import diarsid.filesystem.api.FSEntry;
+import diarsid.filesystem.api.File;
 import diarsid.navigator.model.Tab;
 import diarsid.navigator.model.Tabs;
 import diarsid.navigator.view.FilesView;
@@ -38,10 +36,11 @@ import diarsid.support.objects.references.Possible;
 
 import static javafx.stage.StageStyle.DECORATED;
 
+import static diarsid.navigator.Navigator.NAVIGATOR_FILE_SYSTEM;
+import static diarsid.navigator.Navigator.NAVIGATOR_IGNORES;
+
 class NavigatorView {
 
-    private Ignores ignores;
-    private FileSystem fileSystem;
     private Tabs tabs;
     private Icons icons;
     private DirectoriesTree directoriesTree;
@@ -52,9 +51,7 @@ class NavigatorView {
         Stage stage = new Stage();
         stage.initStyle(DECORATED);
 
-        this.ignores = Ignores.INSTANCE;
         DragAndDropNodes<Label> dragAndDropLabels = new DragAndDropNodes<>("tab");
-        this.fileSystem = FileSystem.INSTANCE;
         this.icons = Icons.INSTANCE;
         this.tabs = new Tabs();
 
@@ -69,22 +66,22 @@ class NavigatorView {
 
         Consumer<FSEntry> onFSEntryIgnored = (fsEntry) -> {
             if ( fsEntry.canBeIgnored() ) {
-                this.ignores.ignore(fsEntry);
+                NAVIGATOR_IGNORES.ignore(fsEntry);
                 this.directoriesTree.remove(fsEntry);
                 this.filesTable.remove(fsEntry);
             }
         };
 
-        FSEntryContextMenuFactory contextMenuFactory = new FSEntryContextMenuFactory(fileSystem, onFSEntryIgnored);
+        FSEntryContextMenuFactory contextMenuFactory = new FSEntryContextMenuFactory(NAVIGATOR_FILE_SYSTEM, onFSEntryIgnored);
 
         BiConsumer<FSEntry, String> onRename = (entry, newName) -> {
-            this.fileSystem.rename(entry, newName);
+            NAVIGATOR_FILE_SYSTEM.rename(entry, newName);
         };
 
-        this.filesTable = new FilesTable(this.fileSystem, contextMenuFactory, this.icons, frameSelection, this::onTableItemInvoked, onRename, dragAndDropFiles);
+        this.filesTable = new FilesTable(NAVIGATOR_FILE_SYSTEM, contextMenuFactory, this.icons, frameSelection, this::onTableItemInvoked, onRename, dragAndDropFiles);
 
         this.directoriesTree = new DirectoriesTree(
-                this.fileSystem,
+                NAVIGATOR_FILE_SYSTEM,
                 this.icons,
                 this.tabs,
                 contextMenuFactory,
@@ -102,7 +99,7 @@ class NavigatorView {
 
         PathBreadcrumbsBar pathBreadcrumbsBar = new PathBreadcrumbsBar(
                 this.tabs,
-                this.fileSystem,
+                NAVIGATOR_FILE_SYSTEM,
                 this.icons,
                 this::onBreadcrumbsBarDirectorySelected,
                 this.directoriesTree::select);
@@ -127,14 +124,34 @@ class NavigatorView {
         stage.show();
     }
 
-    public void openInNewTab(Directory directory) {
+    public void openInNewTab(String path) {
+        Directory directory = NAVIGATOR_FILE_SYSTEM.toDirectory(Paths.get(path)).get();
+        if ( Platform.isFxApplicationThread() ) {
+            this.openInNewTab(directory);
+        }
+        else {
+            Platform.runLater(() -> this.openInNewTab(directory));
+        }
+    }
+
+    public void openInCurrentTab(String path) {
+        Directory directory = NAVIGATOR_FILE_SYSTEM.toDirectory(Paths.get(path)).get();
+        if ( Platform.isFxApplicationThread() ) {
+            this.openInCurrentTab(directory);
+        }
+        else {
+            Platform.runLater(() -> this.openInCurrentTab(directory));
+        }
+    }
+
+    private void openInNewTab(Directory directory) {
         Tab tab = this.tabsPanel.newTab();
         tab.selectedDirectory().resetTo(directory);
         this.tabs.select(tab);
         this.directoriesTree.add(tab, true);
     }
 
-    public void openInCurrentTab(Directory directory) {
+    private void openInCurrentTab(Directory directory) {
         Tab tab = this.tabs.selected().orThrow();
         tab.selectedDirectory().resetTo(directory);
         this.directoriesTree.select(directory);
@@ -153,7 +170,7 @@ class NavigatorView {
     }
 
     private void onTabCreated(Tab tab) {
-        tab.selectedDirectory().resetTo(fileSystem.machineDirectory());
+        tab.selectedDirectory().resetTo(NAVIGATOR_FILE_SYSTEM.machineDirectory());
         this.tabs.select(tab);
         this.directoriesTree.add(tab, true);
         this.onTabSelected(tab);

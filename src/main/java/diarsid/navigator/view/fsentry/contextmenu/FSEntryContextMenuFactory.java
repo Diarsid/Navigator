@@ -3,8 +3,8 @@ package diarsid.navigator.view.fsentry.contextmenu;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import diarsid.navigator.filesystem.FSEntry;
-import diarsid.navigator.filesystem.FileSystem;
+import diarsid.filesystem.api.FSEntry;
+import diarsid.filesystem.api.FileSystem;
 
 public class FSEntryContextMenuFactory {
 

@@ -16,14 +16,13 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.HBox;
 
-import diarsid.navigator.filesystem.Directory;
-import diarsid.navigator.filesystem.FSEntry;
-import diarsid.navigator.filesystem.FileSystem;
+import diarsid.filesystem.api.Directory;
+import diarsid.filesystem.api.FSEntry;
+import diarsid.filesystem.api.FileSystem;
 import diarsid.navigator.view.ViewComponent;
 import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;
 import diarsid.navigator.view.fsentry.contextmenu.FSEntryContextMenuFactory;
@@ -33,7 +32,6 @@ import diarsid.support.javafx.FrameSelection;
 import diarsid.support.objects.references.Possible;
 
 import static java.lang.String.format;
-import static java.util.concurrent.CompletableFuture.runAsync;
 import static java.util.stream.Collectors.toList;
 import static javafx.scene.control.SelectionMode.MULTIPLE;
 import static javafx.scene.layout.Priority.ALWAYS;

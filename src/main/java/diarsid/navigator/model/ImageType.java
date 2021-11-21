@@ -6,11 +6,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import diarsid.navigator.filesystem.Extension;
-import diarsid.navigator.filesystem.FileSystem;
+import diarsid.files.Extension;
 
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toSet;
+
+import static diarsid.navigator.Navigator.NAVIGATOR_FILE_SYSTEM;
 
 public enum ImageType {
 
@@ -33,7 +34,7 @@ public enum ImageType {
 
     ImageType(String... extensions) {
         this.extensions = stream(extensions)
-                .map(extensionName -> FileSystem.INSTANCE.extensions().getBy(extensionName))
+                .map(extensionName -> NAVIGATOR_FILE_SYSTEM.extensions().getBy(extensionName))
                 .collect(toSet());
     }
 

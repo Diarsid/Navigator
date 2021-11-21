@@ -3,7 +3,7 @@ package diarsid.navigator.view.table;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.scene.image.ImageView;
 
-import diarsid.navigator.filesystem.FSEntry;
+import diarsid.filesystem.api.FSEntry;
 import diarsid.navigator.view.icons.Icons;
 import diarsid.support.objects.references.Possible;
 

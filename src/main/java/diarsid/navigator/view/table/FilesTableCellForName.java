@@ -7,7 +7,7 @@ import java.util.function.BiConsumer;
 import javafx.event.ActionEvent;
 import javafx.scene.control.TextField;
 
-import diarsid.navigator.filesystem.FSEntry;
+import diarsid.filesystem.api.FSEntry;
 
 import static java.util.Objects.isNull;
 import static java.util.UUID.randomUUID;

@@ -2,15 +2,16 @@ package diarsid.navigator.view.fsentry.contextmenu;
 
 import javafx.scene.Node;
 
-import diarsid.navigator.filesystem.Directory;
-import diarsid.navigator.filesystem.FSEntry;
-import diarsid.navigator.filesystem.FileSystem;
+import diarsid.filesystem.api.Directory;
+import diarsid.filesystem.api.FSEntry;
+import diarsid.filesystem.api.FileSystem;
 import diarsid.support.objects.references.PossibleProperty;
 
 import static java.lang.String.format;
 
-import static diarsid.navigator.filesystem.Directory.Edit.DELETED;
-import static diarsid.navigator.filesystem.Directory.Edit.RENAMED;
+import static diarsid.filesystem.api.Directory.Edit.DELETED;
+import static diarsid.filesystem.api.Directory.Edit.RENAMED;
+
 
 public class FSEntryMenuItemRemove extends FSEntryMenuItem {
 

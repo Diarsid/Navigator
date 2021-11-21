@@ -13,10 +13,10 @@ import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.image.Image;
 
-import diarsid.navigator.filesystem.Extension;
-import diarsid.navigator.filesystem.FSEntry;
-import diarsid.navigator.filesystem.File;
-import diarsid.navigator.filesystem.FileSystem;
+import diarsid.files.Extension;
+import diarsid.filesystem.api.FSEntry;
+import diarsid.filesystem.api.File;
+import diarsid.filesystem.api.FileSystem;
 import diarsid.navigator.model.ImageType;
 import diarsid.support.javafx.FilesNativeIconImageExtractor;
 import diarsid.support.objects.references.PresentProperty;

@@ -2,7 +2,7 @@ package diarsid.navigator.view.icons;
 
 import javafx.scene.image.Image;
 
-import diarsid.navigator.filesystem.FSEntry;
+import diarsid.filesystem.api.FSEntry;
 
 public interface Icon {
 

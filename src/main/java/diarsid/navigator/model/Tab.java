@@ -3,7 +3,7 @@ package diarsid.navigator.model;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
-import diarsid.navigator.filesystem.Directory;
+import diarsid.filesystem.api.Directory;
 import diarsid.support.objects.references.Listening;
 import diarsid.support.objects.references.PossibleProperty;
 import diarsid.support.objects.references.PresentProperty;

@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import diarsid.navigator.filesystem.Directory;
+import diarsid.filesystem.api.Directory;
 import diarsid.navigator.model.Tab;
 
 import static java.util.Objects.nonNull;
