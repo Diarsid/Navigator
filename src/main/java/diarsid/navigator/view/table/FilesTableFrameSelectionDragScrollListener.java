@@ -58,9 +58,31 @@ public class FilesTableFrameSelectionDragScrollListener implements ClickOrDragDe
             lastRow = row;
             lastIndex = lastRow.getIndex();
 
+            int indexFrom;
+            int indexTo;
+            int diff;
+            if ( firstIndex < lastIndex ) {
+                indexFrom = firstIndex;
+                indexTo = lastIndex;
+            }
+            else {
+                indexFrom = lastIndex;
+                indexTo = firstIndex;
+            }
+            diff = indexTo - indexFrom;
+
             this.tableView.getSelectionModel().clearSelection();
-            for (int i = firstIndex; i <= lastIndex; i++) {
-                this.tableView.getSelectionModel().select(i);
+            if ( diff == 0 ) {
+                this.tableView.getSelectionModel().select(indexFrom);
+            }
+            else if ( diff == 1) {
+                this.tableView.getSelectionModel().select(indexFrom);
+                this.tableView.getSelectionModel().select(indexFrom + 1);
+            }
+            else {
+                for (int i = indexFrom; i <= indexTo; i++) {
+                    this.tableView.getSelectionModel().select(i);
+                }
             }
         }
 
@@ -118,7 +140,6 @@ public class FilesTableFrameSelectionDragScrollListener implements ClickOrDragDe
         }
         else {
             this.dragMode = DragMode.SELECT;
-            this.selectSession.startWith(row);
         }
     }
 
@@ -134,6 +155,10 @@ public class FilesTableFrameSelectionDragScrollListener implements ClickOrDragDe
             case SELECT:
                 Bounds bounds = this.tableViewRows.localToScene(this.tableViewRows.getBoundsInLocal());
                 this.selection.start(mouseEvent, bounds);
+                FilesTableRow selectedRow = this.getClickedRowFrom(mouseEvent);
+                if ( nonNull(selectedRow) ) {
+                    this.selectSession.startWith(selectedRow);
+                }
                 break;
             case MOVE:
                 AtomicBoolean containsNotMovableEntries = new AtomicBoolean(false);

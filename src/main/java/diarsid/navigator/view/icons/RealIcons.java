@@ -40,7 +40,7 @@ class RealIcons implements Icons {
     private final boolean extractNativeIcon = true;
 
     RealIcons(FileSystem fileSystem) {
-        this.imageExtractor = new FilesNativeIconImageExtractor();
+        this.imageExtractor = new FilesNativeIconImageExtractor(fileSystem.extensions());
         this.size = presentPropertyOf(18d, "Icons.size");
         this.sizeProperty = new SimpleDoubleProperty(this.size.get());
         this.size.listen((oldSize, newSize) -> this.sizeProperty.set(newSize));
@@ -160,7 +160,10 @@ class RealIcons implements Icons {
 
             if ( isNull(image) ) {
                 if ( extractNativeIcon ) {
-                    image = this.imageExtractor.getFrom(file.path().toFile());
+                    image = this.imageExtractor.getFrom(
+                            file.path().toFile(),
+                            FilesNativeIconImageExtractor.PathCache.USE,
+                            FilesNativeIconImageExtractor.ExtensionCache.NO_USE);
                 }
                 else {
                     image = this.file;
