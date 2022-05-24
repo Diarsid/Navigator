@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 import javafx.application.Platform;
 import javafx.collections.ListChangeListener;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
@@ -79,25 +80,30 @@ public class FilesTable implements ViewComponent {
         this.contextMenuFactory = contextMenuFactory;
 
         this.tableView.setContextMenu(this.contextMenuFactory.createNewFor(this.directory));
+        this.tableView.setPlaceholder(new Label("empty directory"));
 
         TableColumn<FilesTableItem, ImageView> columnIcons = new TableColumn<>();
         TableColumn<FilesTableItem, String> columnNames = new TableColumn<>("Name");
+        TableColumn<FilesTableItem, String> columnTypes = new TableColumn<>("Type");
         TableColumn<FilesTableItem, String> columnSizes = new TableColumn<>("Size");
 
         this.editing = new SingleEditingPerTable();
 
         columnIcons.setCellFactory(column -> new FilesTableCellForIcon());
         columnNames.setCellFactory(column -> new FilesTableCellForName(onRename));
+        columnTypes.setCellFactory(column -> new FilesTableCellForExtType());
         columnSizes.setCellFactory(column -> new FilesTableCellForSize());
 
         columnIcons.setCellValueFactory(new PropertyValueFactory<>("icon"));
         columnNames.setCellValueFactory(new PropertyValueFactory<>("name"));
+        columnTypes.setCellValueFactory(new PropertyValueFactory<>("extType"));
         columnSizes.setCellValueFactory(new PropertyValueFactory<>("sizeFormat"));
 
         columnIcons.setResizable(false);
 
         columnIcons.setReorderable(false);
         columnNames.setReorderable(false);
+        columnTypes.setReorderable(false);
         columnSizes.setReorderable(false);
 
         columnNames.setEditable(true);
@@ -111,10 +117,12 @@ public class FilesTable implements ViewComponent {
 
         this.tableView.getColumns().add(columnIcons);
         this.tableView.getColumns().add(columnNames);
+        this.tableView.getColumns().add(columnTypes);
         this.tableView.getColumns().add(columnSizes);
 
-        columnNames.prefWidthProperty().bind(this.tableView.widthProperty().subtract(columnIcons.widthProperty()).multiply(0.8));
-        columnSizes.prefWidthProperty().bind(this.tableView.widthProperty().subtract(columnIcons.widthProperty()).multiply(0.15));
+        columnNames.prefWidthProperty().bind(this.tableView.widthProperty().subtract(columnIcons.widthProperty()).multiply(0.7));
+        columnTypes.prefWidthProperty().bind(this.tableView.widthProperty().subtract(columnIcons.widthProperty()).multiply(0.15));
+        columnSizes.prefWidthProperty().bind(this.tableView.widthProperty().subtract(columnIcons.widthProperty()).multiply(0.1));
 
         this.tableView.getSelectionModel().setSelectionMode(MULTIPLE);
 //        this.selectedIndiciesCopy = new HashSet<>();
@@ -290,6 +298,9 @@ public class FilesTable implements ViewComponent {
         this.editing.cancel();
         this.directory.resetTo(newDirectory);
         newDirectory.feedChildren(this::set);
+        if ( this.tableView.getItems().size() > 0 ) {
+            this.tableView.scrollTo(0);
+        }
 
         if ( sameDirectory ) {
 //            System.out.println("[TABLE SELECTION] restore selection: " + this.selectedIndiciesCopy);

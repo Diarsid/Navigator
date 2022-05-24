@@ -11,6 +11,8 @@ public interface Icons {
 
     Icons INSTANCE = new RealIcons(NAVIGATOR_FILE_SYSTEM);
 
+    Icon getDefaultFor(FSEntry fsEntry);
+
     Icon getFor(FSEntry fsEntry);
 
     ReadOnlyDoubleProperty sizeProperty();

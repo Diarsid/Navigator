@@ -14,7 +14,8 @@ public class FilesTableCellForSize extends FilesTableCell<String> {
 
         if (empty || sizeFormat == null ) {
             super.setText(null);
-        } else {
+        }
+        else {
             FilesTableItem item = super.getTableRow().getItem();
             super.setText(sizeFormat);
         }

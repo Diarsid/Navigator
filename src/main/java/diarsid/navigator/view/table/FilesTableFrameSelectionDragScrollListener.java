@@ -75,7 +75,7 @@ public class FilesTableFrameSelectionDragScrollListener implements ClickOrDragDe
             if ( diff == 0 ) {
                 this.tableView.getSelectionModel().select(indexFrom);
             }
-            else if ( diff == 1) {
+            else if ( diff == 1 ) {
                 this.tableView.getSelectionModel().select(indexFrom);
                 this.tableView.getSelectionModel().select(indexFrom + 1);
             }

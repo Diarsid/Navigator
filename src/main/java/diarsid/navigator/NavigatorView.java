@@ -4,8 +4,6 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import javafx.application.Platform;
 import javafx.scene.Group;
 import javafx.scene.Node;
@@ -41,11 +39,11 @@ import static diarsid.navigator.Navigator.NAVIGATOR_IGNORES;
 
 class NavigatorView {
 
-    private Tabs tabs;
-    private Icons icons;
-    private DirectoriesTree directoriesTree;
-    private FilesTable filesTable;
-    private TabsPanel tabsPanel;
+    private final Tabs tabs;
+    private final Icons icons;
+    private final DirectoriesTree directoriesTree;
+    private final FilesTable filesTable;
+    private final TabsPanel tabsPanel;
 
     NavigatorView() {
         Stage stage = new Stage();
@@ -64,21 +62,16 @@ class NavigatorView {
 
         FrameSelection frameSelection = new FrameSelection();
 
-        Consumer<FSEntry> onFSEntryIgnored = (fsEntry) -> {
-            if ( fsEntry.canBeIgnored() ) {
-                NAVIGATOR_IGNORES.ignore(fsEntry);
-                this.directoriesTree.remove(fsEntry);
-                this.filesTable.remove(fsEntry);
-            }
-        };
+        FSEntryContextMenuFactory contextMenuFactory = new FSEntryContextMenuFactory(NAVIGATOR_FILE_SYSTEM, this::onFSEntryIgnored);
 
-        FSEntryContextMenuFactory contextMenuFactory = new FSEntryContextMenuFactory(NAVIGATOR_FILE_SYSTEM, onFSEntryIgnored);
-
-        BiConsumer<FSEntry, String> onRename = (entry, newName) -> {
-            NAVIGATOR_FILE_SYSTEM.rename(entry, newName);
-        };
-
-        this.filesTable = new FilesTable(NAVIGATOR_FILE_SYSTEM, contextMenuFactory, this.icons, frameSelection, this::onTableItemInvoked, onRename, dragAndDropFiles);
+        this.filesTable = new FilesTable(
+                NAVIGATOR_FILE_SYSTEM,
+                contextMenuFactory,
+                this.icons,
+                frameSelection,
+                this::onTableItemInvoked,
+                this::onFSEntryRenamed,
+                dragAndDropFiles);
 
         this.directoriesTree = new DirectoriesTree(
                 NAVIGATOR_FILE_SYSTEM,
@@ -86,7 +79,6 @@ class NavigatorView {
                 this.tabs,
                 contextMenuFactory,
                 this::onDirectorySelectedInTreeView,
-                onFSEntryIgnored,
                 dragAndDropFiles);
 
         this.tabsPanel = new TabsPanel(
@@ -221,5 +213,17 @@ class NavigatorView {
     private void onDirectorySelectedInTreeViewInFXThread(Directory directory) {
         this.tabs.selected().orThrow().selectedDirectory().resetTo(directory);
         this.filesTable.show(directory);
+    }
+
+    private void onFSEntryIgnored(FSEntry fsEntry) {
+        if ( fsEntry.canBeIgnored() ) {
+            NAVIGATOR_IGNORES.ignore(fsEntry);
+            this.directoriesTree.remove(fsEntry);
+            this.filesTable.remove(fsEntry);
+        }
+    }
+
+    private void onFSEntryRenamed(FSEntry entry, String newName) {
+        NAVIGATOR_FILE_SYSTEM.rename(entry, newName);
     }
 }

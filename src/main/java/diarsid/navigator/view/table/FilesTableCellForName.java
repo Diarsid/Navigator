@@ -41,7 +41,8 @@ public class FilesTableCellForName extends FilesTableCell<String> {
 
         if (empty || name == null ) {
             super.setText(null);
-        } else {
+        }
+        else {
 //            FileTableItem item = super.getTableRow().getItem();
             super.setText(name);
             this.editField.setText(name);

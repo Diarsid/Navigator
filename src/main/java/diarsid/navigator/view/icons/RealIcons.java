@@ -128,6 +128,16 @@ class RealIcons implements Icons {
     }
 
     @Override
+    public Icon getDefaultFor(FSEntry fsEntry) {
+        if ( fsEntry.isDirectory() ) {
+            return new RealIcon(this.folder, fsEntry);
+        }
+        else {
+            return new RealIcon(this.file, fsEntry);
+        }
+    }
+
+    @Override
     public Icon getFor(FSEntry fsEntry) {
         Image image;
 
