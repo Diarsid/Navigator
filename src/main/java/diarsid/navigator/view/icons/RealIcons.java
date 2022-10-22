@@ -19,12 +19,10 @@ import diarsid.filesystem.api.File;
 import diarsid.filesystem.api.FileSystem;
 import diarsid.navigator.model.ImageType;
 import diarsid.support.javafx.FilesNativeIconImageExtractor;
-import diarsid.support.objects.references.PresentProperty;
 
 import static java.util.Objects.isNull;
 
 import static diarsid.navigator.model.ImageType.findTypeIn;
-import static diarsid.support.objects.references.References.presentPropertyOf;
 
 class RealIcons implements Icons {
 
@@ -35,15 +33,15 @@ class RealIcons implements Icons {
     private final Map<Extension, Image> imagesByExtensions;
     private final Map<Path, Image> predefinedImagesByPaths;
     private final Map<String, Image> predefinedImagesByNames;
-    private final PresentProperty<Double> size;
-    private final DoubleProperty sizeProperty;
+//    private final PresentProperty<Double> size;
+    private final DoubleProperty iconSize;
+    private final DoubleProperty iconMarginSize;
     private final boolean extractNativeIcon = true;
 
     RealIcons(FileSystem fileSystem) {
         this.imageExtractor = new FilesNativeIconImageExtractor(fileSystem.extensions());
-        this.size = presentPropertyOf(18d, "Icons.size");
-        this.sizeProperty = new SimpleDoubleProperty(this.size.get());
-        this.size.listen((oldSize, newSize) -> this.sizeProperty.set(newSize));
+        this.iconSize = new SimpleDoubleProperty(18);
+        this.iconMarginSize = new SimpleDoubleProperty(10);
 
         this.file = this.loadFrom("./home/icons/by_types/file.png");
         this.folder = this.loadFrom("./home/icons/by_types/folder.png");
@@ -104,27 +102,22 @@ class RealIcons implements Icons {
             e.printStackTrace();
         }
 
-//        new Thread(() -> {
-//            while ( this.size.get() > 10 ) {
-//                try{
-//                    Thread.sleep(3000);
-//                    this.size.resetTo(this.size.get() - 1);
-//                    System.out.println("do resize");
-//                }
-//                catch (InterruptedException e) {
-//
-//                }
-//            }
-//        }).start();
+        new Thread(() -> {
+            while ( this.iconSize.get() < 30 ) {
+                try{
+                    Thread.sleep(3000);
+                    this.iconSize.set(this.iconSize.get() + 1);
+                    System.out.println("do resize");
+                }
+                catch (InterruptedException e) {
+
+                }
+            }
+        }).start();
     }
 
     private Image loadFrom(String url) {
         return new Image("file:" + url, false);
-    }
-
-    @Override
-    public ReadOnlyDoubleProperty sizeProperty() {
-        return this.sizeProperty;
     }
 
     @Override
@@ -149,7 +142,7 @@ class RealIcons implements Icons {
             }
 
             if ( isNull(image) ) {
-                image = folder;
+                image = this.folder;
             }
         }
         else {
@@ -185,7 +178,23 @@ class RealIcons implements Icons {
     }
 
     @Override
-    public PresentProperty<Double> size() {
-        return this.size;
+    public Image getDefaultImageForDirectory() {
+        return this.folder;
     }
+
+    @Override
+    public Image getDefaultImageForFile() {
+        return this.file;
+    }
+
+    @Override
+    public ReadOnlyDoubleProperty iconSize() {
+        return this.iconSize;
+    }
+
+    @Override
+    public ReadOnlyDoubleProperty iconMarginSize() {
+        return this.iconMarginSize;
+    }
+
 }

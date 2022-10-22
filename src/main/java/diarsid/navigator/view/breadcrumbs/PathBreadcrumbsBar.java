@@ -17,7 +17,6 @@ import diarsid.navigator.view.icons.Icon;
 import diarsid.navigator.view.icons.Icons;
 import diarsid.support.objects.references.Listening;
 import diarsid.support.objects.references.Possible;
-import diarsid.support.objects.references.PossibleProperty;
 
 import static java.util.Objects.nonNull;
 
@@ -61,10 +60,14 @@ public class PathBreadcrumbsBar {
             this.onNewDirectoryInput.accept(directory.get());
             return true;
         };
-        this.bar = new BreadcrumbsBar<>(">", Directory::name, directoriesListToPath, onDirectoryClicked, validatorAndConsumer);
 
-        this.tabs.selected().listen(this::onTabsChange);
-        this.tabs.selected().ifPresent(this::acceptNewTab);
+        this.bar = new BreadcrumbsBar<>(">", Directory::name, directoriesListToPath, onDirectoryClicked, validatorAndConsumer);
+        this.bar.size().bind(this.icons.iconSize());
+
+        this.tabs.listenForSelectedTabChange(this::onTabsChange);
+        if ( this.tabs.hasSelected() ) {
+            this.acceptNewTab(this.tabs.selectedTabOrThrow());
+        }
     }
 
     private void onTabsChange(Tab oldTab, Tab newTab) {
@@ -102,10 +105,6 @@ public class PathBreadcrumbsBar {
     private void addToBar(Directory directory) {
         Icon icon = this.icons.getFor(directory);
         this.bar.add(icon.image(), directory);
-    }
-
-    public PossibleProperty<Double> iconsSize() {
-        return this.bar.size();
     }
 
     public Node node() {

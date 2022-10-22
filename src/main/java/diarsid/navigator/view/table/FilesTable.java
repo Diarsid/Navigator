@@ -33,6 +33,7 @@ import diarsid.support.javafx.FrameSelection;
 import diarsid.support.objects.references.Possible;
 
 import static java.lang.String.format;
+import static java.lang.System.currentTimeMillis;
 import static java.util.stream.Collectors.toList;
 import static javafx.scene.control.SelectionMode.MULTIPLE;
 import static javafx.scene.layout.Priority.ALWAYS;
@@ -111,8 +112,8 @@ public class FilesTable implements ViewComponent {
             int a = 5;
         });
 
-        columnIcons.minWidthProperty().bind(this.icons.sizeProperty().add(10));
-        columnIcons.maxWidthProperty().bind(this.icons.sizeProperty().add(10));
+        columnIcons.minWidthProperty().bind(this.icons.iconSize().add(10));
+        columnIcons.maxWidthProperty().bind(this.icons.iconSize().add(10));
         columnIcons.setSortable(false);
 
         this.tableView.getColumns().add(columnIcons);
@@ -208,7 +209,7 @@ public class FilesTable implements ViewComponent {
     }
 
     private FilesTableItem createItem(FSEntry fsEntry) {
-        return new FilesTableItem(icons, fsEntry);
+        return new FilesTableItem(this.icons, fsEntry);
     }
 
     private void onEntriesAdded(List<FSEntry> fsEntries) {
@@ -252,7 +253,7 @@ public class FilesTable implements ViewComponent {
         }
     }
 
-    public boolean contains(FSEntry fsEntry) {
+    private boolean contains(FSEntry fsEntry) {
         return this.tableView.getItems().stream().anyMatch(item -> item.is(fsEntry));
     }
 
@@ -297,7 +298,12 @@ public class FilesTable implements ViewComponent {
         boolean sameDirectory = this.directory.equalsTo(newDirectory);
         this.editing.cancel();
         this.directory.resetTo(newDirectory);
-        newDirectory.feedChildren(this::set);
+        List<FSEntry> children = new ArrayList<>();
+        long start = currentTimeMillis();
+        newDirectory.feedChildren(children::addAll);
+        long stop = currentTimeMillis();
+        System.out.println("[TABLE] [feed] " + (stop - start));
+        this.set(children);
         if ( this.tableView.getItems().size() > 0 ) {
             this.tableView.scrollTo(0);
         }
@@ -320,12 +326,17 @@ public class FilesTable implements ViewComponent {
     }
 
     private void set(List<FSEntry> entries) {
+        long start = currentTimeMillis();
         synchronized ( this.tableLock ) {
             List<FilesTableItem> items = entries
                     .stream()
                     .map(this::createItem)
                     .collect(toList());
             this.tableView.getItems().setAll(items);
+        }
+        long stop = currentTimeMillis();
+        if ( entries.size() > 20 ) {
+            System.out.println("[TABLE] [set] " + (stop - start));
         }
     }
 
@@ -346,7 +357,7 @@ public class FilesTable implements ViewComponent {
         }
     }
 
-    public void removeAll(List<FSEntry> fsEntries) {
+    void removeAll(List<FSEntry> fsEntries) {
         if ( fsEntries.isEmpty() ) {
             return;
         }
@@ -371,7 +382,7 @@ public class FilesTable implements ViewComponent {
         }
     }
 
-    public void removeAllPaths(List<Path> paths) {
+    private void removeAllPaths(List<Path> paths) {
 
         if ( paths.isEmpty() ) {
             return;

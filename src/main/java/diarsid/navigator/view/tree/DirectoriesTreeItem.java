@@ -28,7 +28,8 @@ public class DirectoriesTreeItem extends TreeItem<String> implements Comparable<
         }
     };
 
-    private final static TreeItem<String> PLACEHOLDER = new TreeItem<>("...");
+    private static final TreeItem<String> PLACEHOLDER = new TreeItem<>("...");
+
     private final Tab tab;
     private final Directory directory;
     private final Consumer<DirectoriesTreeItem> onTreeItemExpanded;
@@ -45,23 +46,12 @@ public class DirectoriesTreeItem extends TreeItem<String> implements Comparable<
         this.onTreeItemExpanded = onTreeItemExpanded;
         this.onTreeItemCollapsed = onTreeItemCollapsed;
 
-//        this.directory.listenForContentChanges(this::fillItem);
-
         this.setPlaceholderIfChildrenPresent();
 
         super.expandedProperty().addListener(this::onExpandedPropertyChange);
     }
 
-//    private void fillItemOrSetPlaceholder() {
-//        if ( super.expandedProperty().get() ) {
-//            this.fillItem();
-//        }
-//        else {
-//            this.setPlaceholderIfChildrenPresent();
-//        }
-//    }
-
-    public void fill() {
+    void fill() {
         if ( this.directory.isAbsent() ) {
             super.getChildren().clear();
             return;
@@ -139,7 +129,6 @@ public class DirectoriesTreeItem extends TreeItem<String> implements Comparable<
 
     private void setPlaceholderIfChildrenPresent() {
         this.directory.checkDirectoriesPresence(this::setPlaceholderIfChildrenPresent);
-
     }
 
     private void setPlaceholderIfChildrenPresent(boolean childrenPresent) {
@@ -158,7 +147,7 @@ public class DirectoriesTreeItem extends TreeItem<String> implements Comparable<
         return this.directory.isIndirectParentOf(other.directory);
     }
 
-    public DirectoriesTreeItem getInChildrenOrNull(Directory someDirectory) {
+    DirectoriesTreeItem getInChildrenOrNull(Directory someDirectory) {
         for ( TreeItem<String> child : super.getChildren() ) {
             if ( child.getValue().equalsIgnoreCase(someDirectory.name()) ) {
                 return (DirectoriesTreeItem) child;
@@ -167,7 +156,7 @@ public class DirectoriesTreeItem extends TreeItem<String> implements Comparable<
         return null;
     }
 
-    public DirectoriesTreeItem getInChildrenOrNull(String someDirectory) {
+    DirectoriesTreeItem getInChildrenOrNull(String someDirectory) {
         for ( TreeItem<String> child : super.getChildren() ) {
             if ( child.getValue().equalsIgnoreCase(someDirectory) ) {
                 return (DirectoriesTreeItem) child;
@@ -176,7 +165,7 @@ public class DirectoriesTreeItem extends TreeItem<String> implements Comparable<
         return null;
     }
 
-    public DirectoriesTreeItem getInChildrenOrCreate(Directory someDirectory) {
+    DirectoriesTreeItem getInChildrenOrCreate(Directory someDirectory) {
         if ( this.isNotFilled() ) {
             this.fill();
         }
@@ -196,6 +185,18 @@ public class DirectoriesTreeItem extends TreeItem<String> implements Comparable<
         else {
             throw new IllegalArgumentException();
         }
+    }
+
+    void expandIfNotExpanded() {
+        if ( this.isExpanded() ) {
+            return;
+        }
+
+        if ( this.isLeaf() ) {
+            return;
+        }
+
+        this.setExpanded(true);
     }
 
     boolean isFilled() {
@@ -265,18 +266,16 @@ public class DirectoriesTreeItem extends TreeItem<String> implements Comparable<
     private void onTreeItemExpanded() {
         this.fill();
         this.onTreeItemExpanded.accept(this);
-//        event.consume();
     }
 
     private void onTreeItemCollapsed() {
-//        this.fillItem();
-//        super.getChildren().clear();
-//        super.getChildren().add(PLACEHOLDER);
         this.onTreeItemCollapsed.accept(this);
-//        event.consume();
     }
 
     private void onExpandedPropertyChange(ObservableValue<? extends Boolean> property, Boolean oldValue, Boolean newValue) {
+        if ( newValue == oldValue ) {
+            System.out.println("expanded : old=new");
+        }
         if ( newValue ) {
             this.onTreeItemExpanded();
         } else {

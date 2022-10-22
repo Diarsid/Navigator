@@ -41,7 +41,7 @@ public class Tab {
         return this.identity;
     }
 
-    public Listening<String> listenToRename(BiConsumer<String, String> listener) {
+    public Listening<String> listenToVisibleNameChange(BiConsumer<String, String> listener) {
         return this.visibleName.listen(listener);
     }
 

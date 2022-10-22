@@ -27,7 +27,7 @@ public class FilesTableItem implements Comparable<FilesTableItem> {
         this.row = simplePossibleButEmpty();
         this.iconView = new ImageView();
 
-        ReadOnlyDoubleProperty size = this.icons.sizeProperty();
+        ReadOnlyDoubleProperty size = this.icons.iconSize();
         this.iconView.fitWidthProperty().bind(size);
         this.iconView.fitHeightProperty().bind(size);
         this.iconView.setPreserveRatio(true);

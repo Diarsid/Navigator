@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 import javafx.scene.control.ContextMenu;
 import javafx.stage.WindowEvent;
 
+import diarsid.filesystem.api.Directory;
 import diarsid.filesystem.api.FSEntry;
 import diarsid.filesystem.api.FileSystem;
 import diarsid.support.objects.references.Possible;
@@ -21,7 +22,11 @@ public class FSEntryContextMenu extends ContextMenu {
     private final PossibleProperty<FSEntry> fsEntry;
     private final List<FSEntryMenuItem> items;
 
-    FSEntryContextMenu(Supplier<FSEntry> fsEntrySource, FileSystem fileSystem, Consumer<FSEntry> onIgnore) {
+    FSEntryContextMenu(
+            Supplier<FSEntry> fsEntrySource,
+            FileSystem fileSystem,
+            Consumer<FSEntry> onIgnore,
+            Consumer<Directory> onOpenInNewTab) {
         this.fsEntry = possiblePropertyButEmpty();
         this.fsEntrySource = fsEntrySource;
         this.items = new ArrayList<>();
@@ -32,10 +37,12 @@ public class FSEntryContextMenu extends ContextMenu {
         FSEntryMenuItem show = new FSEntryMenuItemShowInDefaultManager(this.fsEntry);
         FSEntryMenuItem remove = new FSEntryMenuItemRemove(this.fsEntry, fileSystem);
         FSEntryMenuItem ignore = new FSEntryMenuItemIgnore(this.fsEntry, onIgnore);
+        FSEntryMenuItem openInNewTab = new FSEntryMenuItemOpenInNewTab(this.fsEntry, onOpenInNewTab);
 
         this.items.add(show);
         this.items.add(remove);
         this.items.add(ignore);
+        this.items.add(openInNewTab);
 
         super.getItems().setAll(this.items);
     }

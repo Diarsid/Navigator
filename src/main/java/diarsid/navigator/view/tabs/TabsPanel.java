@@ -13,6 +13,7 @@ import diarsid.navigator.model.Tabs;
 import diarsid.navigator.view.ViewComponent;
 import diarsid.navigator.view.dragdrop.DragAndDropNodes;
 import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;
+import diarsid.navigator.view.icons.Icons;
 import diarsid.navigator.view.tree.DirectoriesTree;
 
 import static java.lang.Double.POSITIVE_INFINITY;
@@ -22,7 +23,7 @@ import static javafx.scene.input.TransferMode.MOVE;
 public class TabsPanel implements ViewComponent {
 
     private final Tabs tabs;
-    private final VBox tabsPanel;
+    private final VBox tabsVbox;
     private final Label addLabel;
     private final LabelsAtTabs labelsAtTabs;
     private final DragAndDropNodes<Label> dragAndDropLabels;
@@ -30,31 +31,31 @@ public class TabsPanel implements ViewComponent {
 
     public TabsPanel(
             Tabs tabs,
-            DirectoriesTree directoriesTree,
+            Icons icons,
             DragAndDropNodes<Label> dragAndDropLabels,
             DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles,
             Consumer<Tab> onTabCreated,
             Consumer<Tab> onTabSelected) {
         this.tabs = tabs;
-        this.labelsAtTabs = new LabelsAtTabs(onTabSelected, dragAndDropLabels, dragAndDropFiles);
+        this.labelsAtTabs = new LabelsAtTabs(icons, onTabSelected, dragAndDropLabels, dragAndDropFiles);
         this.labelsAtTabs.onTabsReordered(this::refresh);
         this.dragAndDropLabels = dragAndDropLabels;
         this.tabNames = new TabNames(new HashMap<>());
 
-        this.tabsPanel = new VBox();
-        this.tabsPanel.setFillWidth(true);
-        this.tabsPanel.setMinWidth(10);
-        this.tabsPanel.setPrefWidth(50);
-        this.tabsPanel.setMaxWidth(200);
+        this.tabsVbox = new VBox();
+        this.tabsVbox.setFillWidth(true);
+        this.tabsVbox.setMinWidth(10);
+        this.tabsVbox.setPrefWidth(50);
+        this.tabsVbox.setMaxWidth(200);
 
-        this.tabsPanel.setOnDragOver((dragEvent) -> {
+        this.tabsVbox.setOnDragOver((dragEvent) -> {
             if ( this.dragAndDropLabels.isDragOverAcceptable(dragEvent) ) {
                 dragEvent.acceptTransferModes(MOVE);
                 dragEvent.consume();
             }
         });
 
-        this.tabsPanel.setOnDragDropped(dragEvent -> {
+        this.tabsVbox.setOnDragDropped(dragEvent -> {
             boolean success;
             if ( this.dragAndDropLabels.isDropAcceptable(dragEvent) ) {
                 try {
@@ -77,7 +78,7 @@ public class TabsPanel implements ViewComponent {
             dragEvent.consume();
         });
 
-        this.tabsPanel.setAlignment(TOP_CENTER);
+        this.tabsVbox.setAlignment(TOP_CENTER);
 
         this.addLabel = new Label();
         this.addLabel.getStyleClass().add("add-tab-button");
@@ -94,7 +95,7 @@ public class TabsPanel implements ViewComponent {
 
     @Override
     public Node node() {
-        return this.tabsPanel;
+        return this.tabsVbox;
     }
 
     public Tab newTab() {
@@ -110,8 +111,8 @@ public class TabsPanel implements ViewComponent {
     }
 
     private void refresh() {
-        this.tabsPanel.getChildren().clear();
-        this.tabsPanel.getChildren().addAll(this.labelsAtTabs.tabLabels());
-        this.tabsPanel.getChildren().add(this.addLabel);
+        this.tabsVbox.getChildren().clear();
+        this.tabsVbox.getChildren().addAll(this.labelsAtTabs.tabLabels());
+        this.tabsVbox.getChildren().add(this.addLabel);
     }
 }

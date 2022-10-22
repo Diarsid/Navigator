@@ -62,7 +62,10 @@ class NavigatorView {
 
         FrameSelection frameSelection = new FrameSelection();
 
-        FSEntryContextMenuFactory contextMenuFactory = new FSEntryContextMenuFactory(NAVIGATOR_FILE_SYSTEM, this::onFSEntryIgnored);
+        FSEntryContextMenuFactory contextMenuFactory = new FSEntryContextMenuFactory(
+                NAVIGATOR_FILE_SYSTEM,
+                this::onFSEntryIgnored,
+                this::openInNewTab);
 
         this.filesTable = new FilesTable(
                 NAVIGATOR_FILE_SYSTEM,
@@ -83,19 +86,18 @@ class NavigatorView {
 
         this.tabsPanel = new TabsPanel(
                 this.tabs,
-                this.directoriesTree,
+                this.icons,
                 dragAndDropLabels,
                 dragAndDropFiles,
-                this::onTabCreated,
-                this::onTabSelected);
+                this::onNewTabCreated,
+                this::onExistingTabSelected);
 
         PathBreadcrumbsBar pathBreadcrumbsBar = new PathBreadcrumbsBar(
                 this.tabs,
                 NAVIGATOR_FILE_SYSTEM,
                 this.icons,
                 this::onBreadcrumbsBarDirectorySelected,
-                this.directoriesTree::select);
-        pathBreadcrumbsBar.iconsSize().bindTo(this.icons.size());
+                this.directoriesTree::selectDirectoryInCurrentTab);
 
         FilesView filesView = new FilesView(this.tabsPanel, this.directoriesTree, this.filesTable, pathBreadcrumbsBar);
 
@@ -118,11 +120,15 @@ class NavigatorView {
 
     public void openInNewTab(String path) {
         Directory directory = NAVIGATOR_FILE_SYSTEM.toDirectory(Paths.get(path)).get();
+        this.openInNewTab(directory);
+    }
+
+    public void openInNewTab(Directory directory) {
         if ( Platform.isFxApplicationThread() ) {
-            this.openInNewTab(directory);
+            this.openInNewTabInFXApplicationThread(directory);
         }
         else {
-            Platform.runLater(() -> this.openInNewTab(directory));
+            Platform.runLater(() -> this.openInNewTabInFXApplicationThread(directory));
         }
     }
 
@@ -136,24 +142,27 @@ class NavigatorView {
         }
     }
 
-    private void openInNewTab(Directory directory) {
+    private void openInNewTabInFXApplicationThread(Directory directory) {
         Tab tab = this.tabsPanel.newTab();
         tab.selectedDirectory().resetTo(directory);
         this.tabs.select(tab);
-        this.directoriesTree.add(tab, true);
+        this.directoriesTree.addNewTab(tab);
+        this.directoriesTree.activateTabAndSelectItsDirectory(tab);
+        this.filesTable.show(tab.selectedDirectory().orThrow());
     }
 
     private void openInCurrentTab(Directory directory) {
-        Tab tab = this.tabs.selected().orThrow();
+        Tab tab = this.tabs.selectedTabOrThrow();
         tab.selectedDirectory().resetTo(directory);
-        this.directoriesTree.select(directory);
+        this.directoriesTree.selectDirectoryInCurrentTab(directory);
+        this.filesTable.show(tab.selectedDirectory().orThrow());
     }
 
     private void onTableItemInvoked(FilesTableItem tableItem) {
         FSEntry itemFsEntry = tableItem.fsEntry();
         if ( itemFsEntry.isDirectory() ) {
             Directory directory = itemFsEntry.asDirectory();
-            this.directoriesTree.select(directory);
+            this.directoriesTree.selectDirectoryInCurrentTab(directory);
         }
         else {
             File file = itemFsEntry.asFile();
@@ -161,29 +170,31 @@ class NavigatorView {
         }
     }
 
-    private void onTabCreated(Tab tab) {
+    private void onNewTabCreated(Tab tab) {
         tab.selectedDirectory().resetTo(NAVIGATOR_FILE_SYSTEM.machineDirectory());
         this.tabs.select(tab);
-        this.directoriesTree.add(tab, true);
-        this.onTabSelected(tab);
+        this.directoriesTree.addNewTab(tab);
+        this.directoriesTree.activateTabAndSelectItsDirectory(tab);
+        this.filesTable.show(tab.selectedDirectory().orThrow());
     }
 
-    private void onTabSelected(Tab tab) {
-        if ( this.tabs.selected().isNotPresent() || this.tabs.selected().notEqualsTo(tab) ) {
+    private void onExistingTabSelected(Tab tab) {
+        if ( this.tabs.isNotSelected(tab) ) {
             this.tabs.select(tab);
-            this.directoriesTree.setActive(tab);
-        }
-
-//        this.directoriesTree.setActive(tab);
-        Possible<Directory> directorySelection = tab.selectedDirectory();
-
-        if ( directorySelection.isPresent() ) {
-            Directory selectedDirectory = directorySelection.orThrow();
-            this.directoriesTree.select(selectedDirectory);
-            this.filesTable.show(selectedDirectory);
+            this.directoriesTree.activateTabAndSelectItsDirectory(tab);
+            this.filesTable.show(tab.selectedDirectory().orThrow());
         }
         else {
-            this.filesTable.clear();
+            Possible<Directory> directorySelection = tab.selectedDirectory();
+
+            if ( directorySelection.isPresent() ) {
+                Directory selectedDirectory = directorySelection.orThrow();
+                this.directoriesTree.selectDirectoryInCurrentTab(selectedDirectory);
+                this.filesTable.show(selectedDirectory);
+            }
+            else {
+                this.filesTable.clear();
+            }
         }
     }
 
@@ -197,8 +208,8 @@ class NavigatorView {
     }
 
     private void onBreadcrumbsBarDirectorySelectedInFXThread(Directory directory) {
-        this.tabs.selected().orThrow().selectedDirectory().resetTo(directory);
-        this.directoriesTree.select(directory);
+        this.tabs.selectedTabOrThrow().selectedDirectory().resetTo(directory);
+        this.directoriesTree.selectDirectoryInCurrentTab(directory);
     }
 
     private void onDirectorySelectedInTreeView(Directory directory) {
@@ -211,7 +222,7 @@ class NavigatorView {
     }
 
     private void onDirectorySelectedInTreeViewInFXThread(Directory directory) {
-        this.tabs.selected().orThrow().selectedDirectory().resetTo(directory);
+        this.tabs.selectedTabOrThrow().selectedDirectory().resetTo(directory);
         this.filesTable.show(directory);
     }
 

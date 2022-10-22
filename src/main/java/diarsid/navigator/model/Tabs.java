@@ -2,7 +2,9 @@ package diarsid.navigator.model;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
+import diarsid.support.objects.references.Listening;
 import diarsid.support.objects.references.PossibleProperty;
 
 import static diarsid.support.objects.references.References.possiblePropertyButEmpty;
@@ -41,9 +43,26 @@ public class Tabs {
         return unselectedTab;
     }
 
-    public PossibleProperty<Tab> selected() {
-        return this.selectedTab;
+    public Tab selectedTabOrThrow() {
+        return this.selectedTab.orThrow();
     }
+
+    public boolean isNotSelected(Tab otherTab) {
+        return this.selectedTab.isNotPresent() || this.selectedTab.notEqualsTo(otherTab);
+    }
+
+    public Listening<Tab> listenForSelectedTabChange(BiConsumer<Tab, Tab> change) {
+        Listening<Tab> listening = this.selectedTab.listen(change);
+        return listening;
+    }
+
+    public boolean hasSelected() {
+        return this.selectedTab.isPresent();
+    }
+
+//    public PossibleProperty<Tab> selected() {
+//        return this.selectedTab;
+//    }
 
 //    private void onSelectedTabChange(Tab oldTab, Tab newTab) {
 //        if (nonNull(oldTab) && this.currentTabListening.isPresent()) {

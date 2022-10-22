@@ -20,7 +20,6 @@ import diarsid.navigator.view.icons.Icons;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static javafx.scene.input.ContextMenuEvent.CONTEXT_MENU_REQUESTED;
-import static javafx.scene.input.MouseEvent.MOUSE_PRESSED;
 import static javafx.scene.input.TransferMode.MOVE;
 
 import static diarsid.filesystem.api.Directory.Edit.MOVED;
@@ -39,7 +38,7 @@ public class DirectoriesTreeCell extends TreeCell<String> {
         this.getStyleClass().add("directories-tree-cell");
 
         this.iconView = new ImageView();
-        ReadOnlyDoubleProperty size = this.icons.sizeProperty();
+        ReadOnlyDoubleProperty size = this.icons.iconSize();
         this.iconView.fitWidthProperty().bind(size);
         this.iconView.fitHeightProperty().bind(size);
         this.iconView.setPreserveRatio(true);
@@ -92,7 +91,7 @@ public class DirectoriesTreeCell extends TreeCell<String> {
         if ( ! arrowClicked ) {
             Directory directory = this.directoriesTreeItem().directory();
             if ( nonNull(directory) ) {
-                this.directoriesTree.select(directory);
+                this.directoriesTree.selectDirectoryInCurrentTab(directory);
             }
         }
         mouseEvent.consume();

@@ -9,6 +9,7 @@ import diarsid.filesystem.api.FSEntry;
 import diarsid.navigator.model.Tab;
 import diarsid.navigator.view.dragdrop.DragAndDropNodes;
 import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;
+import diarsid.navigator.view.icons.Icons;
 import diarsid.support.objects.references.Possible;
 
 import static diarsid.support.objects.references.References.simplePossibleButEmpty;
@@ -16,6 +17,7 @@ import static diarsid.support.objects.references.References.simplePossibleButEmp
 
 public class LabelsAtTabs {
 
+    private final Icons icons;
     private final List<Label> draggableTabLabels;
     protected final DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles;
     protected final DragAndDropNodes<Label> dragAndDropLabels;
@@ -23,10 +25,12 @@ public class LabelsAtTabs {
     protected final Consumer<Tab> onTabTabLabelClicked;
 
     public LabelsAtTabs(
+            Icons icons,
             Consumer<Tab> onTabTabLabelClicked,
             DragAndDropNodes<Label> dragAndDropLabels,
             DragAndDropObjectTransfer<List<FSEntry>> dragAndDropFiles) {
         this.draggableTabLabels = new ArrayList<>();
+        this.icons = icons;
         this.dragAndDropLabels = dragAndDropLabels;
         this.dragAndDropFiles = dragAndDropFiles;
         this.onTabsReorderedAction = simplePossibleButEmpty();
@@ -42,7 +46,7 @@ public class LabelsAtTabs {
     }
 
     private LabelAtTab addInternally(Tab tab) {
-        LabelAtTab labelAtTab = new LabelAtTab(tab, this);
+        LabelAtTab labelAtTab = new LabelAtTab(tab, this, icons);
 
         Label label = labelAtTab.label();
 

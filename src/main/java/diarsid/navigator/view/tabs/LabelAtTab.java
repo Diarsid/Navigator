@@ -1,12 +1,16 @@
 package diarsid.navigator.view.tabs;
 
 import java.util.List;
+import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.css.PseudoClass;
 import javafx.scene.control.Label;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.MouseEvent;
 
+import diarsid.filesystem.api.Directory;
 import diarsid.navigator.model.Tab;
+import diarsid.navigator.view.icons.Icons;
 
 import static java.lang.Double.POSITIVE_INFINITY;
 import static javafx.scene.input.TransferMode.MOVE;
@@ -27,20 +31,42 @@ public class LabelAtTab {
 
     private final Tab tab;
     private final Label label;
+    private final ImageView iconView;
     private final LabelsAtTabs labelsAtTabs;
+    private final Icons icons;
 
-    LabelAtTab(Tab tab, LabelsAtTabs labelsAtTabs) {
+    LabelAtTab(Tab tab, LabelsAtTabs labelsAtTabs, Icons icons) {
         this.tab = tab;
         this.label = new Label();
         this.labelsAtTabs = labelsAtTabs;
+        this.icons = icons;
+
+        this.iconView = new ImageView();
+
+        ReadOnlyDoubleProperty size = this.icons.iconSize();
+        this.iconView.fitWidthProperty().bind(size);
+        this.iconView.fitHeightProperty().bind(size);
+        this.iconView.setPreserveRatio(true);
+        this.iconView.getStyleClass().add("icon");
+
+        if ( tab.selectedDirectory().isPresent() ) {
+            this.iconView.setImage(this.icons.getFor(tab.selectedDirectory().orThrow()).image());
+        }
+        else {
+            this.iconView.setImage(this.icons.getDefaultImageForDirectory());
+        }
 
         this.label.setPrefWidth(POSITIVE_INFINITY);
         this.label.setText(tab.name());
+        this.label.setGraphic(this.iconView);
+        this.label.minHeightProperty().bind(this.icons.iconSize().add(10));
+        this.label.maxHeightProperty().bind(this.icons.iconSize().add(10));
 
         this.label.getStyleClass().add(FX_CSS_CLASS);
 
-        tab.listenToRename(this::onTabNameChanged);
+        tab.listenToVisibleNameChange(this::onTabVisibleNameChanged);
         tab.active().listen(this::onTabActivityChanged);
+        tab.selectedDirectory().listen(this::onTabSelectedDirectoryChanged);
         this.onTabActivityChanged(null, tab.active().get());
 
         this.label.setOnMouseClicked(this::onMouseClicked);
@@ -58,8 +84,12 @@ public class LabelAtTab {
         return this.label;
     }
 
-    private void onTabNameChanged(String oldName, String newName) {
+    private void onTabVisibleNameChanged(String oldName, String newName) {
         this.label.setText(newName);
+    }
+
+    private void onTabSelectedDirectoryChanged(Directory oldDirectory, Directory newDirectory) {
+        this.iconView.setImage(this.icons.getFor(newDirectory).image());
     }
 
     private void onTabActivityChanged(Boolean oldActivity, Boolean newActivity) {

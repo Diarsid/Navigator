@@ -120,7 +120,7 @@ public class DirectoriesTree implements ViewComponent {
                     .map(FSEntry::asDirectory)
                     .forEach(this::addInternally);
 
-            this.selectedDirectory.ifPresent(this::selectInternally);
+            this.selectedDirectory.ifPresent(this::selectDirectoryInCurrentTab);
         }
     }
 
@@ -130,7 +130,7 @@ public class DirectoriesTree implements ViewComponent {
 
             paths.forEach(this::removeInternally);
 
-            this.selectedDirectory.ifPresent(this::selectInternally);
+            this.selectedDirectory.ifPresent(this::selectDirectoryInCurrentTab);
         }
     }
 
@@ -140,7 +140,7 @@ public class DirectoriesTree implements ViewComponent {
             System.out.println("EXPANDED " + expandedItem.directory().path());
             // 28.05.2021 uncomment
             if ( expandedItem.directory().isIndirectParentOf(selectedDirectory) ) {
-                this.selectInternally(selectedDirectory);
+                this.selectDirectoryInCurrentTab(selectedDirectory);
             }
 //            this.selectInternally(selectedDirectory);
         }
@@ -159,21 +159,17 @@ public class DirectoriesTree implements ViewComponent {
             } else {
                 TreeItem<String> item = this.treeView.getSelectionModel().getSelectedItem();
                 if ( item.isExpanded() ) {
-                    this.selectInternally(this.selectedDirectory.orThrow());
+                    this.selectDirectoryInCurrentTab(this.selectedDirectory.orThrow());
                 }
             }
         }
     }
 
-    public void add(Tab tab, boolean select) {
+    public void addNewTab(Tab tab) {
         this.assignRootTreeItemToTab(tab);
-
-        if ( select ) {
-            this.setActive(tab);
-        }
     }
 
-    public void setActive(Tab tab) {
+    public void activateTabAndSelectItsDirectory(Tab tab) {
         if ( this.selectedTab.equalsTo(tab) ) {
             return;
         }
@@ -186,33 +182,25 @@ public class DirectoriesTree implements ViewComponent {
 
         this.selectedTab.resetTo(tab);
         Directory tabDirectory = tab.selectedDirectory().orThrow();
-        this.selectedDirectory.resetTo(tabDirectory);
+        this.selectedDirectory.resetTo(tabDirectory); //?
 
         this.treeView.setRoot(tabTreeRoot);
-        this.select(tabDirectory);
+        this.selectDirectoryInCurrentTab(tabDirectory);
     }
 
-    public void select(Directory directory) {
-        // TODO
-//        if ( this.selectedDirectory.equalsTo(directory) ) {
-//            return;
-//        }
-
-        this.selectInternally(directory);
-    }
-
-    private void selectInternally(Directory directory) {
+    public void selectDirectoryInCurrentTab(Directory directory) {
         if ( directory.isAbsent() ) {
             directory = directory.existedParent().orElse(this.fileSystem.machineDirectory());
         }
         Directory oldDirectory = this.selectedDirectory.resetTo(directory);
         boolean same = nonNull(oldDirectory) && oldDirectory.equals(directory);
+
         DirectoriesTreeItem machineItem = this.getMachineItemFromSelectedRoot();
 
         DirectoriesTreeItem prevParentItem = machineItem;
         DirectoriesTreeItem parentItem = null;
         for ( Directory parent : directory.parents() ) {
-            expandIfNotExpanded(prevParentItem);
+            prevParentItem.expandIfNotExpanded();
             parentItem = prevParentItem.getInChildrenOrCreate(parent);
             prevParentItem = parentItem;
         }
@@ -258,23 +246,12 @@ public class DirectoriesTree implements ViewComponent {
                 machineDirectoryItem = (DirectoriesTreeItem) rootChild;
             }
         }
+
         if ( isNull(machineDirectoryItem) ) {
             throw new IllegalStateException();
         }
 
         return machineDirectoryItem;
-    }
-
-    private static void expandIfNotExpanded(TreeItem<?> treeItem) {
-        if ( treeItem.isExpanded() ) {
-            return;
-        }
-
-        if ( treeItem.isLeaf() ) {
-            return;
-        }
-
-        treeItem.setExpanded(true);
     }
 
     private static void fillIfNotFilled(DirectoriesTreeItem treeItem) {
@@ -382,7 +359,7 @@ public class DirectoriesTree implements ViewComponent {
                     newSelection = directory.existedParent().orElse(this.fileSystem.machineDirectory());
                 }
 
-                this.selectInternally(newSelection);
+                this.selectDirectoryInCurrentTab(newSelection);
             }
         }
     }

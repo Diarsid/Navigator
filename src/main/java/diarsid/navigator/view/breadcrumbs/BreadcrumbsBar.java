@@ -7,6 +7,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import javafx.application.Platform;
+import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -123,7 +124,7 @@ public class BreadcrumbsBar<T> {
     private final TextField pathField;
     private final SimplePool<Element<T>> elementsPool;
     private final SimplePool<Label> separatorsPool;
-    private final PossibleProperty<Double> iconsSize;
+//    private final PossibleProperty<Double> iconsSize;
     private final SimpleDoubleProperty iconsSizeProperty;
     private final PresentProperty<State> state;
 
@@ -151,9 +152,9 @@ public class BreadcrumbsBar<T> {
 
         this.separatorsPool = new SimplePool<>(this::createNewSeparatorLabel);
 
-        this.iconsSize = possiblePropertyButEmpty();
+//        this.iconsSize = possiblePropertyButEmpty();
         this.iconsSizeProperty = new SimpleDoubleProperty();
-        this.iconsSize.listen((oldValue, newValue) -> this.iconsSizeProperty.set(newValue));
+//        this.iconsSize.listen((oldValue, newValue) -> this.iconsSizeProperty.set(newValue));
 
         this.pathField = new TextField();
         this.pathField.setEditable(true);
@@ -224,8 +225,8 @@ public class BreadcrumbsBar<T> {
         return separatorLabel;
     }
 
-    public PossibleProperty<Double> size() {
-        return this.iconsSize;
+    public DoubleProperty size() {
+        return this.iconsSizeProperty;
     }
 
     public void clear() {
