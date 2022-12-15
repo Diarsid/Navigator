@@ -14,7 +14,7 @@ import diarsid.filesystem.api.Directory;
 import diarsid.filesystem.api.FSEntry;
 import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;
 import diarsid.navigator.view.fsentry.contextmenu.FSEntryContextMenuFactory;
-import diarsid.support.javafx.ClickTypeDetector;
+import diarsid.support.javafx.mouse.ClickTypeDetector;
 
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
@@ -24,9 +24,9 @@ import static javafx.scene.input.TransferMode.MOVE;
 
 import static diarsid.filesystem.api.Directory.Edit.FILLED;
 import static diarsid.filesystem.api.ProgressTracker.DEFAULT;
-import static diarsid.support.javafx.ClickType.DOUBLE_CLICK;
-import static diarsid.support.javafx.ClickType.SEQUENTIAL_CLICK;
-import static diarsid.support.javafx.ClickType.USUAL_CLICK;
+import static diarsid.support.javafx.mouse.ClickType.DOUBLE_CLICK;
+import static diarsid.support.javafx.mouse.ClickType.SEQUENTIAL_CLICK;
+import static diarsid.support.javafx.mouse.ClickType.USUAL_CLICK;
 
 class FilesTableRow extends TableRow<FilesTableItem> implements Supplier<FSEntry> {
 
@@ -94,9 +94,6 @@ class FilesTableRow extends TableRow<FilesTableItem> implements Supplier<FSEntry
 
         this.clickTypeDetector = ClickTypeDetector.Builder
                 .createFor(this)
-                .withMillisAfterLastClickForType(DOUBLE_CLICK, 0)
-                .withMillisAfterLastClickForType(SEQUENTIAL_CLICK, 200)
-                .withMillisAfterLastClickForType(USUAL_CLICK, 1000)
                 .withDoOn(DOUBLE_CLICK, this::doOnDoubleClick)
                 .withDoOn(SEQUENTIAL_CLICK, this::doOnSequentialClick)
                 .withDoOn(USUAL_CLICK, this::doOnUsualClick)

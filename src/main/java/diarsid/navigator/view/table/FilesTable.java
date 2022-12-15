@@ -28,8 +28,8 @@ import diarsid.navigator.view.ViewComponent;
 import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;
 import diarsid.navigator.view.fsentry.contextmenu.FSEntryContextMenuFactory;
 import diarsid.navigator.view.icons.Icons;
-import diarsid.support.javafx.ClickOrDragDetector;
-import diarsid.support.javafx.FrameSelection;
+import diarsid.support.javafx.mouse.ClickOrDragDetector;
+import diarsid.support.javafx.controls.FrameSelection;
 import diarsid.support.objects.references.Possible;
 
 import static java.lang.String.format;

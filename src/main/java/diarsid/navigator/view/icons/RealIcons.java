@@ -18,7 +18,7 @@ import diarsid.filesystem.api.FSEntry;
 import diarsid.filesystem.api.File;
 import diarsid.filesystem.api.FileSystem;
 import diarsid.navigator.model.ImageType;
-import diarsid.support.javafx.FilesNativeIconImageExtractor;
+import diarsid.support.javafx.images.FilesNativeIconImageExtractor;
 
 import static java.util.Objects.isNull;
 

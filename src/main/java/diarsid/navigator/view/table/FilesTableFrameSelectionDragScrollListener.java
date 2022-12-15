@@ -17,8 +17,8 @@ import javafx.scene.text.Text;
 
 import diarsid.filesystem.api.FSEntry;
 import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;
-import diarsid.support.javafx.ClickOrDragDetector;
-import diarsid.support.javafx.FrameSelection;
+import diarsid.support.javafx.mouse.ClickOrDragDetector;
+import diarsid.support.javafx.controls.FrameSelection;
 
 import static java.lang.String.format;
 import static java.util.Objects.isNull;

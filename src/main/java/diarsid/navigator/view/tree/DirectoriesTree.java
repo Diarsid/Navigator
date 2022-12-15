@@ -190,7 +190,7 @@ public class DirectoriesTree implements ViewComponent {
 
     public void selectDirectoryInCurrentTab(Directory directory) {
         if ( directory.isAbsent() ) {
-            directory = directory.existedParent().orElse(this.fileSystem.machineDirectory());
+            directory = directory.firstExistingParent().or(this.fileSystem.machineDirectory());
         }
         Directory oldDirectory = this.selectedDirectory.resetTo(directory);
         boolean same = nonNull(oldDirectory) && oldDirectory.equals(directory);
@@ -356,7 +356,7 @@ public class DirectoriesTree implements ViewComponent {
                 Directory newSelection = selectedDirectory;
 
                 if ( selectedDirectory.equals(directory) || directory.isParentOf(selectedDirectory) ) {
-                    newSelection = directory.existedParent().orElse(this.fileSystem.machineDirectory());
+                    newSelection = directory.firstExistingParent().or(this.fileSystem.machineDirectory());
                 }
 
                 this.selectDirectoryInCurrentTab(newSelection);

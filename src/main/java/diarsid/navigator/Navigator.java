@@ -7,7 +7,7 @@ import javafx.application.Platform;
 import diarsid.filesystem.api.FileSystem;
 import diarsid.filesystem.api.ignoring.Ignores;
 import diarsid.support.concurrency.threads.NamedThreadSource;
-import diarsid.support.javafx.PlatformStartup;
+import diarsid.support.javafx.PlatformActions;
 
 import static java.nio.file.FileSystems.getDefault;
 
@@ -22,7 +22,7 @@ public class Navigator {
     private final NavigatorView navigatorView;
 
     public Navigator() {
-        PlatformStartup.await();
+        PlatformActions.awaitStartup();
         AtomicReference<NavigatorView> viewRef = new AtomicReference<>();
 
         CountDownLatch lock = new CountDownLatch(1);

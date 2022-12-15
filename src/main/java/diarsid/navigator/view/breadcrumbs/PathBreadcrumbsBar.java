@@ -17,6 +17,7 @@ import diarsid.navigator.view.icons.Icon;
 import diarsid.navigator.view.icons.Icons;
 import diarsid.support.objects.references.Listening;
 import diarsid.support.objects.references.Possible;
+import diarsid.support.objects.references.Result;
 
 import static java.util.Objects.nonNull;
 
@@ -53,7 +54,7 @@ public class PathBreadcrumbsBar {
         };
 
         Predicate<String> validatorAndConsumer = (path) -> {
-            Optional<Directory> directory = fileSystem.toDirectory(path);
+            Result<Directory> directory = fileSystem.toDirectory(path);
             if ( directory.isEmpty() ) {
                 return false;
             }

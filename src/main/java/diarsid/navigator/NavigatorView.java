@@ -4,6 +4,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import javafx.application.Platform;
 import javafx.scene.Group;
 import javafx.scene.Node;
@@ -29,7 +30,7 @@ import diarsid.navigator.view.table.FilesTableItem;
 import diarsid.navigator.view.tabs.TabsPanel;
 import diarsid.navigator.view.tree.DirectoriesTree;
 import diarsid.navigator.view.tree.DirectoriesTreeCell;
-import diarsid.support.javafx.FrameSelection;
+import diarsid.support.javafx.controls.FrameSelection;
 import diarsid.support.objects.references.Possible;
 
 import static javafx.stage.StageStyle.DECORATED;
