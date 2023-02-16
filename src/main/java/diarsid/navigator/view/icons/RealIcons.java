@@ -102,18 +102,18 @@ class RealIcons implements Icons {
             e.printStackTrace();
         }
 
-        new Thread(() -> {
-            while ( this.iconSize.get() < 30 ) {
-                try{
-                    Thread.sleep(3000);
-                    this.iconSize.set(this.iconSize.get() + 1);
-                    System.out.println("do resize");
-                }
-                catch (InterruptedException e) {
-
-                }
-            }
-        }).start();
+//        new Thread(() -> {
+//            while ( this.iconSize.get() < 30 ) {
+//                try{
+//                    Thread.sleep(3000);
+//                    this.iconSize.set(this.iconSize.get() + 1);
+//                    System.out.println("do resize");
+//                }
+//                catch (InterruptedException e) {
+//
+//                }
+//            }
+//        }).start();
     }
 
     private Image loadFrom(String url) {

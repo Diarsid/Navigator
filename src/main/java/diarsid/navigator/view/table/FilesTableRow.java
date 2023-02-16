@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+
+import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.control.TableRow;
 import javafx.scene.input.DragEvent;
@@ -14,6 +16,7 @@ import diarsid.filesystem.api.Directory;
 import diarsid.filesystem.api.FSEntry;
 import diarsid.navigator.view.dragdrop.DragAndDropObjectTransfer;
 import diarsid.navigator.view.fsentry.contextmenu.FSEntryContextMenuFactory;
+import diarsid.support.javafx.mouse.ClickType;
 import diarsid.support.javafx.mouse.ClickTypeDetector;
 
 import static java.util.Objects.isNull;
@@ -94,14 +97,39 @@ class FilesTableRow extends TableRow<FilesTableItem> implements Supplier<FSEntry
 
         this.clickTypeDetector = ClickTypeDetector.Builder
                 .createFor(this)
-                .withDoOn(DOUBLE_CLICK, this::doOnDoubleClick)
-                .withDoOn(SEQUENTIAL_CLICK, this::doOnSequentialClick)
-                .withDoOn(USUAL_CLICK, this::doOnUsualClick)
+                .withDoOnAll(this::onClickInJavaFxApplicationThreadIfNot)
                 .build();
 
         super.setOnScroll(scrollEvent -> {
             onScrolled.accept(scrollEvent, this);
         });
+    }
+
+    private void onClickInJavaFxApplicationThreadIfNot(ClickType clickType, MouseEvent click) {
+        if ( Platform.isFxApplicationThread() ) {
+            this.doOnClick(clickType, click);
+        }
+        else {
+            Platform.runLater(() -> {
+                this.doOnClick(clickType, click);
+            });
+        }
+    }
+
+    private void doOnClick(ClickType clickType, MouseEvent click) {
+        switch ( clickType ) {
+            case USUAL_CLICK:
+                this.doOnUsualClick(click);
+                break;
+            case SEQUENTIAL_CLICK:
+                this.doOnSequentialClick(click);
+                break;
+            case DOUBLE_CLICK:
+                this.doOnDoubleClick(click);
+                break;
+            default:
+                throw clickType.unsupported();
+        }
     }
 
     private FilesTableCellForName nameCell() {
